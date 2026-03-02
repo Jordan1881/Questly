@@ -16,14 +16,14 @@ This project was built as a final-year Information Systems capstone project.
 ## UI Screenshots
 
 ### Hero Page
-![Hero Page](<UI Screenshots/hero page screenshot.png>)
+![Hero Page](<UI screenshots/hero page.png>)
 
 The landing page greets users with the Questly brand and a clear value proposition. A soft purple animated gradient background with floating blob animations creates an immersive first impression. The headline — *"Turn your daily tasks into epic quests"* — immediately communicates the app's gamified concept, with CTA buttons to sign in or get started.
 
 ---
 
 ### Task List
-![Task List](<UI Screenshots/task list screenshot.png>)
+![Task List](<UI screenshots/task list page.png>)
 
 The Task List page displays all Jira-synced tasks as interactive quest cards. Each task shows:
 - **Difficulty badge** (Easy / Medium / Hard) with color-coded borders
@@ -37,7 +37,7 @@ A filter bar at the top lets users slice tasks by status (All, Completed, High P
 ---
 
 ### Profile
-![Profile](<UI Screenshots/profile screenshot.png>)
+![Profile](<UI screenshots/profile page.png>)
 
 The Profile page gives users a full picture of their progress and account:
 - **Profile hero card** — avatar, name, email, Level 3 badge, and a Dashboard-style XP progress bar (650 / 1000 XP) with tick markers and a glowing fill
