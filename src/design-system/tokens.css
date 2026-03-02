@@ -1,0 +1,189 @@
+/* ============================================================
+   Questly Design System — Tokens
+   All CSS variables derived from the Figma design system.
+   Import this file once in index.css.
+   ============================================================ */
+
+:root {
+
+  /* ----------------------------------------------------------
+     COLORS — Primary (Purple)
+  ---------------------------------------------------------- */
+  --color-primary-50:  #FAF5FF;
+  --color-primary-100: #F3F4F6;
+  --color-primary-200: #E2CCF9;
+  --color-primary-300: #D4B5F5;
+  --color-primary-400: #CA9AF4;
+  --color-primary-500: #B565E4;
+  --color-primary-600: #942FCD;   /* ← main brand color */
+  --color-primary-700: #8527B8;
+  --color-primary-800: #7B23A8;
+  --color-primary-900: #4D166A;
+
+  /* ----------------------------------------------------------
+     COLORS — Secondary (Teal)
+  ---------------------------------------------------------- */
+  --color-secondary-50:  #F0FDFA;
+  --color-secondary-100: #CCFBF1;
+  --color-secondary-200: #99F6E4;
+  --color-secondary-300: #5EEAD4;
+  --color-secondary-400: #2DD4BF;
+  --color-secondary-500: #14B8A6;
+  --color-secondary-600: #0D9488;
+  --color-secondary-700: #115E59;
+  --color-secondary-800: #134E4A;
+  --color-secondary-900: #0F766E;
+
+  /* ----------------------------------------------------------
+     COLORS — Success (Green)
+  ---------------------------------------------------------- */
+  --color-success-50:  #F0FDF4;
+  --color-success-100: #DCFCE7;
+  --color-success-200: #BBF7D0;
+  --color-success-300: #86EFAC;
+  --color-success-400: #4ADE80;
+  --color-success-500: #22C55E;
+  --color-success-600: #16A34A;
+  --color-success-700: #15803D;
+
+  /* ----------------------------------------------------------
+     COLORS — Warning (Amber)
+  ---------------------------------------------------------- */
+  --color-warning-50:  #FFFBEB;
+  --color-warning-100: #FEF3C7;
+  --color-warning-200: #FDE68A;
+  --color-warning-300: #FCD34D;
+  --color-warning-400: #FBBF24;
+  --color-warning-500: #F59E0B;
+  --color-warning-600: #D97706;
+  --color-warning-700: #B45309;
+
+  /* ----------------------------------------------------------
+     COLORS — Error (Red)
+  ---------------------------------------------------------- */
+  --color-error-50:  #FEF2F2;
+  --color-error-100: #FEE2E2;
+  --color-error-200: #FECACA;
+  --color-error-300: #FCA5A5;
+  --color-error-400: #F87171;
+  --color-error-500: #EF4444;
+  --color-error-600: #DC2626;
+  --color-error-700: #B91C1C;
+
+  /* ----------------------------------------------------------
+     COLORS — Gray (Neutral)
+  ---------------------------------------------------------- */
+  --color-gray-50:  #F9FAFB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-200: #E5E7EB;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #6B7280;
+  --color-gray-600: #4B5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1F2937;
+  --color-gray-900: #111827;
+
+  /* ----------------------------------------------------------
+     SEMANTIC COLOR ALIASES
+  ---------------------------------------------------------- */
+  --color-brand:            var(--color-primary-600);
+  --color-brand-hover:      var(--color-primary-700);
+  --color-brand-light:      var(--color-primary-400);
+
+  --color-bg:               #FFFFFF;
+  --color-bg-subtle:        var(--color-gray-50);
+  --color-bg-muted:         var(--color-gray-100);
+
+  --color-text:             var(--color-gray-900);
+  --color-text-muted:       var(--color-gray-500);
+  --color-text-subtle:      var(--color-gray-400);
+
+  --color-border:           var(--color-gray-200);
+  --color-border-strong:    var(--color-gray-300);
+
+  /* ----------------------------------------------------------
+     TYPOGRAPHY — Font Families
+  ---------------------------------------------------------- */
+  --font-heading: 'Poppins', sans-serif;
+  --font-body:    'Inter',   sans-serif;
+
+  /* ----------------------------------------------------------
+     TYPOGRAPHY — Font Sizes
+  ---------------------------------------------------------- */
+  --text-h1:      48px;
+  --text-h2:      36px;
+  --text-h3:      28px;
+  --text-h4:      24px;
+  --text-h5:      20px;
+  --text-h6:      16px;
+
+  --text-body-lg: 16px;
+  --text-body:    14px;
+  --text-body-sm: 13px;
+  --text-caption: 12px;
+  --text-button:  14px;
+
+  /* ----------------------------------------------------------
+     TYPOGRAPHY — Font Weights
+  ---------------------------------------------------------- */
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+
+  /* ----------------------------------------------------------
+     TYPOGRAPHY — Line Heights
+  ---------------------------------------------------------- */
+  --leading-h1:      56px;
+  --leading-h2:      44px;
+  --leading-h3:      36px;
+  --leading-h4:      32px;
+  --leading-h5:      28px;
+  --leading-h6:      24px;
+  --leading-body-lg: 24px;
+  --leading-body:    20px;
+  --leading-body-sm: 20px;
+  --leading-caption: 16px;
+
+  /* ----------------------------------------------------------
+     SPACING (8px base grid)
+  ---------------------------------------------------------- */
+  --space-xs:  8px;
+  --space-sm:  16px;
+  --space-md:  24px;
+  --space-lg:  32px;
+  --space-xl:  40px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ----------------------------------------------------------
+     BORDER RADIUS
+  ---------------------------------------------------------- */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-full: 9999px;
+
+  /* ----------------------------------------------------------
+     SHADOWS
+  ---------------------------------------------------------- */
+  --shadow-sm:      0px 1px 3px 0px rgba(0, 0, 0, 0.10);
+  --shadow-md:      0px 4px 12px 0px rgba(0, 0, 0, 0.10);
+  --shadow-lg:      0px 8px 24px 0px rgba(0, 0, 0, 0.12);
+  --shadow-primary: 0px 4px 16px 0px rgba(148, 47, 205, 0.30);
+  --shadow-primary-sm: 0px 4px 16px 0px rgba(148, 47, 205, 0.24);
+
+  /* ----------------------------------------------------------
+     COMPONENT DIMENSIONS
+  ---------------------------------------------------------- */
+  --btn-height-sm:   36px;
+  --btn-height-md:   56px;
+  --btn-height-lg:   65px;
+
+  --input-height:    36px;
+  --input-width:     256px;
+
+  --card-padding:    24px;
+  --card-radius:     var(--radius-md);
+}
