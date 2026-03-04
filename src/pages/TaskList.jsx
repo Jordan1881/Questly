@@ -1,27 +1,10 @@
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
+import PageHeader from '../components/PageHeader'
+import DifficultyBadge, { DIFFICULTY_STYLES } from '../components/DifficultyBadge'
+import { CheckmarkIcon, StarIcon } from '../components/icons'
 
-// ── Icons ───────────────────────────────────────────────────
-
-const BurgerIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-    <path d="M3 6h18M3 12h18M3 18h18" stroke="#374151" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-)
-
-const AvatarPlaceholder = () => (
-  <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-    <circle cx="24" cy="54" r="22" fill="#9ca3af" />
-    <circle cx="24" cy="18" r="10" fill="#6b7280" />
-  </svg>
-)
-
-const XpStarIcon = ({ earned }) => (
-  <svg viewBox="0 0 16 16" fill="none" className="w-5 h-5 shrink-0">
-    <path d="M8 1.5l1.5 3.5 3.5.5-2.5 2.5.5 3.5L8 9.5 5.5 11l.5-3.5L3.5 5l3.5-.5z"
-      fill={earned ? '#10b981' : '#942fcd'} />
-  </svg>
-)
+// ── Icons (local — not shared with other pages) ─────────────
 
 const ClockIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 shrink-0">
@@ -30,15 +13,10 @@ const ClockIcon = () => (
   </svg>
 )
 
+// Green check — used in the "Completed" status badge on a task card
 const CheckIcon = () => (
   <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3 shrink-0">
     <path d="M1.5 6l3 3 5.5-6" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-
-const CheckmarkIcon = () => (
-  <svg viewBox="0 0 10 10" fill="none" className="w-3 h-3">
-    <path d="M1.5 5l2.5 2.5 4-4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 
@@ -63,13 +41,6 @@ const ChevronRightIcon = () => (
 )
 
 // ── Data ────────────────────────────────────────────────────
-
-const NAV_LINKS = [
-  { id: 'dashboard',  label: 'Dashboard'   },
-  { id: 'profile',    label: 'Profile'     },
-  { id: 'tasklist',   label: 'Tasks'       },
-  { id: 'rewardshop', label: 'Reward Shop' },
-]
 
 const INITIAL_TASKS = [
   {
@@ -98,25 +69,17 @@ const INITIAL_TASKS = [
   },
 ]
 
+// Filter tab definitions — group 1 = status, group 2 = difficulty
+const FILTERS = [
+  { id: 'all',          label: 'All',           group: 1 },
+  { id: 'completed',    label: 'Completed',     group: 1 },
+  { id: 'highpriority', label: 'High Priority', group: 1 },
+  { id: 'easy',   label: 'Easy',   group: 2, border: DIFFICULTY_STYLES.EASY.border,   color: DIFFICULTY_STYLES.EASY.color   },
+  { id: 'medium', label: 'Medium', group: 2, border: DIFFICULTY_STYLES.MEDIUM.border, color: DIFFICULTY_STYLES.MEDIUM.color },
+  { id: 'hard',   label: 'Hard',   group: 2, border: DIFFICULTY_STYLES.HARD.border,   color: DIFFICULTY_STYLES.HARD.color   },
+]
+
 // ── Sub-components ──────────────────────────────────────────
-
-const DIFFICULTY_STYLES = {
-  HARD:   { bg: '#fef2f2', border: '#fca5a5', color: '#dc2626' },
-  MEDIUM: { bg: '#fff7ed', border: '#fdba74', color: '#ea580c' },
-  EASY:   { bg: '#f0fdf4', border: '#86efac', color: '#16a34a' },
-}
-
-const DifficultyBadge = ({ level }) => {
-  const s = DIFFICULTY_STYLES[level]
-  return (
-    <span
-      className="px-[11px] py-[5px] rounded-[6px] text-[11px] font-medium tracking-[0.5px] uppercase border shrink-0"
-      style={{ background: s.bg, borderColor: s.border, color: s.color }}
-    >
-      {level}
-    </span>
-  )
-}
 
 const JiraBadge = ({ id }) => (
   <span className="bg-[#f3f4f6] text-[#6b7280] text-[11px] font-medium px-[10px] py-[4px] rounded-[6px] shrink-0">
@@ -132,7 +95,7 @@ const TaskCard = ({ task, onToggle }) => {
       style={{ opacity: isCompleted ? 0.6 : 1, background: isCompleted ? '#f9fafb' : 'white' }}
     >
       <div className="flex items-start gap-4">
-        {/* Checkbox */}
+        {/* Completion checkbox */}
         <button
           onClick={() => onToggle(task.id)}
           className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 mt-[3px] cursor-pointer transition-colors duration-200"
@@ -155,14 +118,12 @@ const TaskCard = ({ task, onToggle }) => {
             )}
           </div>
 
-          {/* Title */}
           <h3
             className={`text-[18px] font-semibold mb-2 leading-[1.5] ${isCompleted ? 'line-through text-[#1f2937]' : 'text-[#1f2937]'}`}
           >
             {task.title}
           </h3>
 
-          {/* Description */}
           <p className="text-[14px] text-[#6b7280] leading-[1.6] mb-3">{task.desc}</p>
 
           {/* Meta row */}
@@ -182,7 +143,7 @@ const TaskCard = ({ task, onToggle }) => {
 
         {/* XP reward */}
         <div className="flex items-center gap-2 shrink-0 ml-2">
-          <XpStarIcon earned={isCompleted} />
+          <StarIcon color={isCompleted ? '#10b981' : '#942fcd'} size={20} />
           <span
             className="text-[24px] font-bold"
             style={{ color: isCompleted ? '#10b981' : '#942fcd' }}
@@ -227,9 +188,9 @@ function CalendarCard({ tasks }) {
     )
 
   // Build calendar grid
-  const firstWeekday  = new Date(year, month, 1).getDay()
-  const daysInMonth   = new Date(year, month + 1, 0).getDate()
-  const daysInPrev    = new Date(year, month, 0).getDate()
+  const firstWeekday = new Date(year, month, 1).getDay()
+  const daysInMonth  = new Date(year, month + 1, 0).getDate()
+  const daysInPrev   = new Date(year, month, 0).getDate()
 
   const cells = []
   for (let i = firstWeekday - 1; i >= 0; i--)
@@ -247,7 +208,7 @@ function CalendarCard({ tasks }) {
 
   return (
     <div className="bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] p-6 sticky top-6">
-      {/* Header */}
+      {/* Month header */}
       <div className="flex items-center justify-between mb-5">
         <span className="text-[15px] font-semibold text-[#1f2937]">
           {MONTH_NAMES[month]} {year}
@@ -268,7 +229,7 @@ function CalendarCard({ tasks }) {
         </div>
       </div>
 
-      {/* Day-name header */}
+      {/* Day-name header row */}
       <div className="grid grid-cols-7 mb-1">
         {DAY_NAMES.map(d => (
           <div key={d} className="text-center text-[11px] font-medium text-[#9ca3af] py-1">
@@ -281,9 +242,9 @@ function CalendarCard({ tasks }) {
       <div className="grid grid-cols-7 gap-y-1">
         {cells.map((cell, i) => {
           const dayTasks  = cell.current ? getTasksForDay(cell.day) : []
-          const hasPending  = dayTasks.some(t => !t.done)
-          const hasDone     = dayTasks.some(t =>  t.done)
-          const today       = cell.current && isToday(cell.day)
+          const hasPending = dayTasks.some(t => !t.done)
+          const hasDone    = dayTasks.some(t =>  t.done)
+          const today      = cell.current && isToday(cell.day)
 
           return (
             <div key={i} className="flex flex-col items-center py-0.5">
@@ -298,7 +259,7 @@ function CalendarCard({ tasks }) {
               >
                 {cell.day}
               </div>
-              {/* Dot indicators */}
+              {/* Dot indicators for task due dates */}
               {(hasPending || hasDone) && (
                 <div className="flex gap-[3px] mt-0.5">
                   {hasPending && <span className="w-1 h-1 rounded-full bg-[#942fcd]" />}
@@ -327,15 +288,6 @@ function CalendarCard({ tasks }) {
 
 // ── TaskList page ────────────────────────────────────────────
 
-const FILTERS = [
-  { id: 'all',         label: 'All',          group: 1 },
-  { id: 'completed',   label: 'Completed',    group: 1 },
-  { id: 'highpriority',label: 'High Priority',group: 1 },
-  { id: 'easy',        label: 'Easy',         group: 2, border: '#86efac', color: '#16a34a' },
-  { id: 'medium',      label: 'Medium',       group: 2, border: '#fdba74', color: '#ea580c' },
-  { id: 'hard',        label: 'Hard',         group: 2, border: '#fca5a5', color: '#dc2626' },
-]
-
 export default function TaskList({ onNavigate }) {
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all')
@@ -363,47 +315,11 @@ export default function TaskList({ onNavigate }) {
         onNavigate={onNavigate}
       />
 
-      {/* ── Header ── */}
-      <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
-        <div className="w-full flex items-center justify-between">
-
-          {/* Burger + Nav */}
-          <div className="flex items-stretch gap-6 h-full">
-            <button
-              onClick={() => setShowSidebar(true)}
-              className="flex items-center justify-center cursor-pointer bg-transparent hover:bg-[#f9fafb] rounded-[8px] px-2 transition-colors duration-200"
-              aria-label="Open menu"
-            >
-              <BurgerIcon />
-            </button>
-
-            <nav className="flex items-stretch gap-10 h-full">
-              {NAV_LINKS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => onNavigate?.(id)}
-                  className={`h-full border-b-2 text-[16px] cursor-pointer transition-colors duration-200 bg-transparent ${
-                    id === 'tasklist'
-                      ? 'border-[#942fcd] text-[#942fcd] font-semibold'
-                      : 'border-transparent text-[#6b7280] font-normal hover:text-[#1f2937]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* User info */}
-          <div className="flex items-center gap-3">
-            <span className="text-[16px] font-semibold text-[#1f2937]">Ashton_44</span>
-            <div className="w-12 h-12 rounded-full bg-[#e5e7eb] overflow-hidden shrink-0">
-              <AvatarPlaceholder />
-            </div>
-          </div>
-
-        </div>
-      </header>
+      <PageHeader
+        activePage="tasklist"
+        onNavigate={onNavigate}
+        onOpenSidebar={() => setShowSidebar(true)}
+      />
 
       {/* ── Main content ── */}
       <main className="px-12 py-9">
@@ -412,7 +328,7 @@ export default function TaskList({ onNavigate }) {
           {/* ── Left column ── */}
           <div className="flex-1 min-w-0">
 
-            {/* Page heading + Jira badge */}
+            {/* Page heading + Jira sync badge */}
             <div className="flex items-start justify-between mb-8 gap-4">
               <div>
                 <h1 className="text-[32px] font-semibold text-[#1f2937] leading-tight">Task List</h1>
@@ -486,14 +402,13 @@ export default function TaskList({ onNavigate }) {
               </div>
             </div>
 
-            {/* Footer count */}
             <p className="text-center text-[14px] text-[#9ca3af]">
               Showing {filtered.length} of {tasks.length} tasks
             </p>
 
           </div>
 
-          {/* ── Right column ── */}
+          {/* ── Right column — Calendar ── */}
           <div className="w-[260px] shrink-0">
             <CalendarCard tasks={tasks} />
           </div>

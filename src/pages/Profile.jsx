@@ -1,35 +1,24 @@
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
+import PageHeader from '../components/PageHeader'
+import {
+  StarIcon,
+  CoffeeIcon, PackageIcon, ShoeIcon, FoodIcon,
+  HeadphonesIcon, FilmIcon, BookIcon, ControllerIcon,
+} from '../components/icons'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
-import starIcon from '../assets/Icons /Star.svg'
 
-// ── Icons ────────────────────────────────────────────────────
+// ── Tailwind class constants ────────────────────────────────
+const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
 
-const BurgerIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-    <path d="M3 6h18M3 12h18M3 18h18" stroke="#374151" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-)
+// ── Icons (local — not shared with other pages) ─────────────
 
-const AvatarPlaceholder = () => (
-  <svg viewBox="0 0 120 120" fill="none" className="w-full h-full">
-    <circle cx="60" cy="80" r="38" fill="rgba(255,255,255,0.25)" />
-    <circle cx="60" cy="44" r="22" fill="rgba(255,255,255,0.45)" />
-  </svg>
-)
-
-const StarIcon = ({ color = '#942fcd', size = 16 }) => (
-  <svg viewBox="0 0 16 16" fill="none" width={size} height={size} className="shrink-0">
-    <path d="M8 1.5l1.5 3.5 3.5.5-2.5 2.5.5 3.5L8 9.5 5.5 11l.5-3.5L3.5 5l3.5-.5z" fill={color} />
-  </svg>
-)
-
+// Small check — used in "Connected" and "Purchased" badges
 const CheckIcon = () => (
   <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 shrink-0">
     <path d="M2 7l3.5 3.5 6.5-6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
-
 
 const ShopBagIcon = ({ color = '#942fcd' }) => (
   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
@@ -45,65 +34,8 @@ const TrendUpIcon = () => (
   </svg>
 )
 
-// ── Reward Icons (same as RewardShop) ────────────────────────
-
-const CoffeeIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <path d="M5 8h14v10a5 5 0 01-5 5H10a5 5 0 01-5-5V8z" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M19 10h2a3 3 0 010 6h-2" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M9 5c0-1.5 2-1.5 2-3M13 5c0-1.5 2-1.5 2-3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-)
-const PackageIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <path d="M22 9.5L14 14M14 14L6 9.5M14 14V23" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M6 9.5l8-4.5 8 4.5v9l-8 4.5L6 18.5V9.5z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-const ShoeIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <path d="M3 17c0 2 1.5 4 4 4h15c1.5 0 3-1 3-3 0-1.5-1-2.5-2.5-3L19 14l-4-6-3 3-2-1.5L3 14v3z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M12 11l4 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-)
-const FoodIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <path d="M9 4v6c0 2.5 2 4 4 4s4-1.5 4-4V4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M13 14v10M9 22h10" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M19 4v20" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-)
-const HeadphonesIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <path d="M5 16V13a9 9 0 0118 0v3" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <rect x="3" y="16" width="5" height="7" rx="2" stroke={color} strokeWidth="1.8" />
-    <rect x="20" y="16" width="5" height="7" rx="2" stroke={color} strokeWidth="1.8" />
-  </svg>
-)
-const FilmIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <rect x="3" y="5" width="22" height="18" rx="2" stroke={color} strokeWidth="1.8" />
-    <path d="M3 10h22M3 18h22M8 5v5M8 18v5M20 5v5M20 18v5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M12 13l5 3-5 3V13z" fill={color} />
-  </svg>
-)
-const BookIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <path d="M4 5a2 2 0 012-2h10v20H6a2 2 0 01-2-2V5z" stroke={color} strokeWidth="1.8" />
-    <path d="M16 3h6a2 2 0 012 2v16a2 2 0 01-2 2h-6V3z" stroke={color} strokeWidth="1.8" />
-    <path d="M7 9h5M7 13h5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-)
-const ControllerIcon = ({ color = 'white' }) => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-6 h-6">
-    <path d="M6 10h16l-2 10H8L6 10z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M11 13v4M9 15h4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <circle cx="18" cy="13.5" r="1" fill={color} />
-    <circle cx="20.5" cy="15.5" r="1" fill={color} />
-  </svg>
-)
-
 // ── Rewards data ──────────────────────────────────────────────
+// Mirrors RewardShop, but each entry includes a gradient for the icon background in "My Rewards"
 
 const REWARDS = [
   { id: 1, title: 'Starbucks $10 Gift Card',     desc: 'Enjoy your favorite coffee on us',       cost: 400,  Icon: CoffeeIcon,      gradient: 'linear-gradient(135deg, #10b981, #059669)' },
@@ -114,15 +46,6 @@ const REWARDS = [
   { id: 6, title: 'Netflix 1 Month',              desc: 'Unlimited movies and TV shows',          cost: 500,  Icon: FilmIcon,        gradient: 'linear-gradient(135deg, #dc2626, #b91c1c)' },
   { id: 7, title: 'Audible Credits (3 Books)',    desc: 'Listen to your favorite audiobooks',     cost: 1800, Icon: BookIcon,        gradient: 'linear-gradient(135deg, #f97316, #ea580c)' },
   { id: 8, title: 'Steam $50 Gift Card',          desc: 'Buy the latest games on Steam',          cost: 1600, Icon: ControllerIcon,  gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
-]
-
-// ── Nav ───────────────────────────────────────────────────────
-
-const NAV_LINKS = [
-  { id: 'dashboard',  label: 'Dashboard'   },
-  { id: 'profile',    label: 'Profile'     },
-  { id: 'tasklist',   label: 'Tasks'       },
-  { id: 'rewardshop', label: 'Reward Shop' },
 ]
 
 // ── XP History Chart ──────────────────────────────────────────
@@ -153,7 +76,7 @@ function XPHistoryChart() {
     ...d,
   }))
 
-  // Catmull-Rom → cubic bezier smooth path
+  // Catmull-Rom → cubic bezier for smooth curve
   const makePath = (points) => {
     let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`
     for (let i = 0; i < points.length - 1; i++) {
@@ -172,10 +95,10 @@ function XPHistoryChart() {
 
   const linePath = makePath(pts)
   const areaPath = `${linePath} L ${pts[n - 1].x} ${PAD.t + cH} L ${pts[0].x} ${PAD.t + cH} Z`
-  const yLabels = [0, 150, 300, 450, 600]
-  const segW = cW / (n - 1)
+  const yLabels  = [0, 150, 300, 450, 600]
+  const segW     = cW / (n - 1)
 
-  // Tooltip clamping
+  // Clamp tooltip so it doesn't overflow the chart edges
   const ttW = 72, ttH = 28
   const getTooltipX = (pt) => Math.min(Math.max(pt.x - ttW / 2, PAD.l), W - PAD.r - ttW)
 
@@ -218,7 +141,7 @@ function XPHistoryChart() {
           </text>
         ))}
 
-        {/* Hover columns (invisible hit areas) + interaction */}
+        {/* Invisible hit areas + hover interaction */}
         {pts.map((pt, i) => (
           <g key={i}
             onMouseEnter={() => setHoveredIdx(i)}
@@ -229,12 +152,12 @@ function XPHistoryChart() {
               width={segW} height={cH}
               fill="transparent"
             />
-            {/* Vertical guide */}
+            {/* Vertical guide line on hover */}
             {hoveredIdx === i && (
               <line x1={pt.x} y1={PAD.t} x2={pt.x} y2={PAD.t + cH}
                 stroke="#942fcd" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.35" />
             )}
-            {/* Dot */}
+            {/* Data point dot */}
             <circle
               cx={pt.x} cy={pt.y}
               r={hoveredIdx === i ? 6 : 4}
@@ -272,12 +195,13 @@ function XPHistoryChart() {
   )
 }
 
-// ── Purchased Reward Card ────────────────────────────────────
+// ── Purchased Reward Card ─────────────────────────────────────
 
 function PurchasedRewardCard({ reward }) {
   const { title, desc, cost, Icon, gradient } = reward
   return (
-    <div className="border border-[#e5e7eb] rounded-[12px] p-5 flex flex-col gap-3 bg-white transition-all duration-200"
+    <div
+      className="border border-[#e5e7eb] rounded-[12px] p-5 flex flex-col gap-3 bg-white transition-all duration-200"
       style={{ boxShadow: '0px 1px 3px rgba(0,0,0,0.06)' }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = '0px 6px 20px rgba(0,0,0,0.10)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = '0px 1px 3px rgba(0,0,0,0.06)'; e.currentTarget.style.transform = 'translateY(0)' }}
@@ -288,7 +212,7 @@ function PurchasedRewardCard({ reward }) {
         <Icon color="white" />
       </div>
 
-      {/* Badge */}
+      {/* Purchased badge */}
       <span className="flex items-center gap-1 bg-[#d1fae5] text-[#059669] text-[11px] font-semibold px-2 py-0.5 rounded-[6px] w-fit">
         <CheckIcon />
         Purchased
@@ -309,14 +233,14 @@ function PurchasedRewardCard({ reward }) {
   )
 }
 
-// ── Profile Page ──────────────────────────────────────────────
+// ── Profile page ─────────────────────────────────────────────
 
 export default function Profile({ onNavigate, userXP = 1250, purchased = new Set([3]) }) {
   const [showSidebar, setShowSidebar] = useState(false)
 
-  const LEVEL_XP  = 650
-  const LEVEL_MAX = 1000
-  const LEVEL_NUM = 3
+  const LEVEL_XP   = 650
+  const LEVEL_MAX  = 1000
+  const LEVEL_NUM  = 3
   const levelPercent = (LEVEL_XP / LEVEL_MAX) * 100
 
   const purchasedRewards = REWARDS.filter(r => purchased.has(r.id))
@@ -331,48 +255,18 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
         onNavigate={onNavigate}
       />
 
-      {/* ── Header ── */}
-      <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
-        <div className="w-full flex items-center justify-between">
-          <div className="flex items-stretch gap-6 h-full">
-            <button
-              onClick={() => setShowSidebar(true)}
-              className="flex items-center justify-center cursor-pointer bg-transparent hover:bg-[#f9fafb] rounded-[8px] px-2 transition-colors duration-200"
-            >
-              <BurgerIcon />
-            </button>
-            <nav className="flex items-stretch gap-10 h-full">
-              {NAV_LINKS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => onNavigate?.(id)}
-                  className={`h-full border-b-2 text-[16px] cursor-pointer transition-colors duration-200 bg-transparent ${
-                    id === 'profile'
-                      ? 'border-[#942fcd] text-[#942fcd] font-semibold'
-                      : 'border-transparent text-[#6b7280] font-normal hover:text-[#1f2937]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[16px] font-semibold text-[#1f2937]">Ashton_44</span>
-            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0"
-              style={{ background: 'linear-gradient(to bottom, #942fcd, #ca9af4)' }}>
-              <AvatarPlaceholder />
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        activePage="profile"
+        onNavigate={onNavigate}
+        onOpenSidebar={() => setShowSidebar(true)}
+      />
 
       {/* ── Main ── */}
       <main className="px-12 py-9">
         <div className="flex flex-col gap-6">
 
           {/* ── Profile Hero Card ── */}
-          <div className="bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] p-8">
+          <div className={`${CARD} p-8`}>
             <div className="flex items-center gap-8">
 
               {/* Avatar */}
@@ -383,7 +277,11 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
                   boxShadow: '0px 8px 28px rgba(148,47,205,0.35)',
                 }}
               >
-                <AvatarPlaceholder />
+                {/* White/transparent silhouette on purple — defined inline since it's used only here */}
+                <svg viewBox="0 0 120 120" fill="none" className="w-full h-full">
+                  <circle cx="60" cy="80" r="38" fill="rgba(255,255,255,0.25)" />
+                  <circle cx="60" cy="44" r="22" fill="rgba(255,255,255,0.45)" />
+                </svg>
               </div>
 
               {/* Info */}
@@ -410,7 +308,7 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
                   {LEVEL_MAX - LEVEL_XP} XP to reach Level {LEVEL_NUM + 1}
                 </p>
 
-                {/* Dashboard-style XP progress */}
+                {/* XP progress bar (same style as Dashboard) */}
                 <div className="max-w-[440px] mt-1">
                   {/* Tick markers */}
                   <div className="flex items-center justify-between mb-1.5">
@@ -438,7 +336,6 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
                     />
                   </div>
 
-                  {/* Footer */}
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-medium text-[#6b7280]">Progress</span>
                     <span className="text-[11px] font-semibold text-[#942fcd]">{Math.round(levelPercent)}%</span>
@@ -457,7 +354,6 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
                   minWidth: '110px',
                 }}
               >
-                {/* Text */}
                 <div className="flex flex-col items-center gap-1">
                   <span
                     className="font-bold leading-[1.2]"
@@ -481,7 +377,7 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
           <div className="flex gap-6 items-start">
 
             {/* XP History Card */}
-            <div className="flex-1 min-w-0 bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] p-6">
+            <div className={`flex-1 min-w-0 ${CARD} p-6`}>
               <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
                 <div>
                   <h2 className="text-[16px] font-semibold text-[#1f2937]">XP History</h2>
@@ -499,7 +395,7 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
             </div>
 
             {/* Account Details Card */}
-            <div className="w-[288px] shrink-0 bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] p-6">
+            <div className={`w-[288px] shrink-0 ${CARD} p-6`}>
               <h2 className="text-[16px] font-semibold text-[#1f2937] mb-5">Account Details</h2>
 
               {/* Jira integration row */}
@@ -541,7 +437,7 @@ export default function Profile({ onNavigate, userXP = 1250, purchased = new Set
           </div>
 
           {/* ── My Rewards Card ── */}
-          <div className="bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] p-6">
+          <div className={`${CARD} p-6`}>
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-[16px] font-semibold text-[#1f2937]">My Rewards</h2>

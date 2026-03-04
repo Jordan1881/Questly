@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
+import PageHeader from '../components/PageHeader'
+import DifficultyBadge from '../components/DifficultyBadge'
+import { CheckmarkIcon, StarIcon } from '../components/icons'
 
-// ── SVG Icons ──────────────────────────────────────────────
+// ── Tailwind class constants ────────────────────────────────
+const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
+const BTN_GHOST = 'flex-1 h-12 rounded-[8px] border border-[#e5e7eb] bg-white flex items-center justify-center gap-2 text-[14px] text-[#374151] cursor-pointer hover:bg-[#f9fafb] transition-colors duration-200'
 
-const BurgerIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-    <path d="M3 6h18M3 12h18M3 18h18" stroke="#374151" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-)
+// ── Icons (local — not shared with other pages) ─────────────
 
 const ArrowUpIcon = () => (
   <svg viewBox="0 0 10 10" fill="none" className="w-[9px] h-[9px]">
@@ -53,43 +54,7 @@ const CodeIcon = ({ size = 24 }) => (
   </svg>
 )
 
-const XpStarIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
-    <path d="M8 1.5l1.5 3.5 3.5.5-2.5 2.5.5 3.5L8 9.5 5.5 11l.5-3.5L3.5 5l3.5-.5z" fill="#942fcd" />
-  </svg>
-)
-
-const CheckmarkIcon = () => (
-  <svg viewBox="0 0 10 10" fill="none" className="w-3 h-3">
-    <path d="M1.5 5l2.5 2.5 4-4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-
-const AvatarPlaceholder = () => (
-  <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-    <circle cx="24" cy="54" r="22" fill="#9ca3af" />
-    <circle cx="24" cy="18" r="10" fill="#6b7280" />
-  </svg>
-)
-
-// ── Reusable sub-components ────────────────────────────────
-
-const DifficultyBadge = ({ level }) => {
-  const styles = {
-    HARD:   { bg: '#fef2f2', border: '#fca5a5', color: '#dc2626' },
-    MEDIUM: { bg: '#fff7ed', border: '#fdba74', color: '#ea580c' },
-    EASY:   { bg: '#f0fdf4', border: '#86efac', color: '#16a34a' },
-  }
-  const s = styles[level]
-  return (
-    <span
-      className="px-[11px] py-[5px] rounded-[6px] text-[11px] font-medium tracking-[0.5px] uppercase border shrink-0"
-      style={{ background: s.bg, borderColor: s.border, color: s.color }}
-    >
-      {level}
-    </span>
-  )
-}
+// ── Sub-components ──────────────────────────────────────────
 
 const StatBar = ({ label, value, percent, color }) => (
   <div className="flex flex-col gap-2">
@@ -103,20 +68,15 @@ const StatBar = ({ label, value, percent, color }) => (
   </div>
 )
 
-// ── Dashboard ─────────────────────────────────────────────
-
-const NAV_LINKS = [
-  { id: 'dashboard',  label: 'Dashboard'   },
-  { id: 'profile',    label: 'Profile'     },
-  { id: 'tasklist',   label: 'Tasks'       },
-  { id: 'rewardshop', label: 'Reward Shop' },
-]
+// ── Data ────────────────────────────────────────────────────
 
 const INITIAL_TASKS = [
   { id: 1, title: 'Implement Zustand store',   difficulty: 'HARD',   xp: 70, due: 'Oct 20', done: true  },
   { id: 2, title: 'Design Add Task Modal',     difficulty: 'MEDIUM', xp: 40, due: 'Oct 28', done: true  },
   { id: 3, title: 'Create Calculation Logic',  difficulty: 'EASY',   xp: 20, due: 'Oct 31', done: true  },
 ]
+
+// ── Dashboard page ──────────────────────────────────────────
 
 export default function Dashboard({ onNavigate }) {
   const [tasks, setTasks] = useState(INITIAL_TASKS)
@@ -135,52 +95,15 @@ export default function Dashboard({ onNavigate }) {
         onNavigate={onNavigate}
       />
 
-      {/* ── Header ── */}
-      <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
-        <div className="w-full flex items-center justify-between">
-
-          {/* Burger + Nav links */}
-          <div className="flex items-stretch gap-6 h-full">
-            <button
-              onClick={() => setShowSidebar(true)}
-              className="flex items-center justify-center cursor-pointer bg-transparent hover:bg-[#f9fafb] rounded-[8px] px-2 transition-colors duration-200"
-              aria-label="Open menu"
-            >
-              <BurgerIcon />
-            </button>
-
-          <nav className="flex items-stretch gap-10 h-full">
-            {NAV_LINKS.map(({ id, label }) => (
-              <button
-                key={id}
-                onClick={() => onNavigate?.(id)}
-                className={`h-full border-b-2 text-[16px] cursor-pointer transition-colors duration-200 bg-transparent ${
-                  id === 'dashboard'
-                    ? 'border-[#942fcd] text-[#942fcd] font-semibold'
-                    : 'border-transparent text-[#6b7280] font-normal hover:text-[#1f2937]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-          </div>
-
-          {/* User info */}
-          <div className="flex items-center gap-3">
-            <span className="text-[16px] font-semibold text-[#1f2937]">Ashton_44</span>
-            <div className="w-12 h-12 rounded-full bg-[#e5e7eb] overflow-hidden shrink-0">
-              <AvatarPlaceholder />
-            </div>
-          </div>
-
-        </div>
-      </header>
+      <PageHeader
+        activePage="dashboard"
+        onNavigate={onNavigate}
+        onOpenSidebar={() => setShowSidebar(true)}
+      />
 
       {/* ── Main content ── */}
       <main className="px-12 py-9">
 
-        {/* Page heading */}
         <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Welcome back, Ashton</h1>
 
         {/* Two-column layout */}
@@ -190,7 +113,7 @@ export default function Dashboard({ onNavigate }) {
           <div className="w-[314px] flex flex-col gap-6 shrink-0">
 
             {/* XP Progress Card */}
-            <div className="bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] p-5">
+            <div className={`${CARD} p-5`}>
 
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[14px] font-semibold text-[#1f2937]">XP Progress</span>
@@ -211,7 +134,7 @@ export default function Dashboard({ onNavigate }) {
                 <span className="text-[#6b7280]"> to reach Level 4</span>
               </p>
 
-              {/* Markers */}
+              {/* Tick markers */}
               <div className="flex items-center justify-between mb-1.5">
                 {[0, 250, 500, 750].map(n => (
                   <div key={n} className="flex items-center gap-[3px]">
@@ -237,7 +160,6 @@ export default function Dashboard({ onNavigate }) {
                 />
               </div>
 
-              {/* Progress label */}
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-medium text-[#6b7280]">Progress</span>
                 <span className="text-[11px] font-semibold text-[#942fcd]">65%</span>
@@ -246,13 +168,13 @@ export default function Dashboard({ onNavigate }) {
             </div>
 
             {/* User Stats Card */}
-            <div className="bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] p-6">
+            <div className={`${CARD} p-6`}>
               <h3 className="text-[16px] font-medium text-[#374151] mb-6">User Stats</h3>
               <div className="flex flex-col gap-5">
-                <StatBar label="Tasks Completed" value="24/30"  percent={80} color="#60a5fa" />
+                <StatBar label="Tasks Completed" value="24/30"   percent={80} color="#60a5fa" />
                 <StatBar label="Current Streak"  value="12 days" percent={60} color="#c084fc" />
-                <StatBar label="Efficiency Score" value="85%"   percent={85} color="#4ade80" />
-                <StatBar label="Debugging"        value="45%"   percent={45} color="#facc15" />
+                <StatBar label="Efficiency Score" value="85%"    percent={85} color="#4ade80" />
+                <StatBar label="Debugging"        value="45%"    percent={45} color="#facc15" />
               </div>
             </div>
 
@@ -266,14 +188,8 @@ export default function Dashboard({ onNavigate }) {
                 Feed with Code
               </button>
               <div className="flex gap-3">
-                <button className="flex-1 h-12 rounded-[8px] border border-[#e5e7eb] bg-white flex items-center justify-center gap-2 text-[14px] text-[#374151] cursor-pointer hover:bg-[#f9fafb] transition-colors duration-200">
-                  <PlayIcon />
-                  Play
-                </button>
-                <button className="flex-1 h-12 rounded-[8px] border border-[#e5e7eb] bg-white flex items-center justify-center gap-2 text-[14px] text-[#374151] cursor-pointer hover:bg-[#f9fafb] transition-colors duration-200">
-                  <TrainIcon />
-                  Train
-                </button>
+                <button className={BTN_GHOST}><PlayIcon />Play</button>
+                <button className={BTN_GHOST}><TrainIcon />Train</button>
               </div>
             </div>
 
@@ -282,8 +198,8 @@ export default function Dashboard({ onNavigate }) {
           {/* ── Right column ── */}
           <div className="flex-1 flex flex-col gap-6">
 
-            {/* Questly Progress */}
-            <div className="bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] p-6">
+            {/* Questly Progress Card */}
+            <div className={`${CARD} p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-[18px] font-semibold text-[#1f2937]">Questly Progress</h2>
@@ -312,7 +228,7 @@ export default function Dashboard({ onNavigate }) {
             <div className="grid grid-cols-2 gap-6">
 
               {/* Tasking Streak */}
-              <div className="bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] p-6">
+              <div className={`${CARD} p-6`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div
                     className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
@@ -329,7 +245,7 @@ export default function Dashboard({ onNavigate }) {
               </div>
 
               {/* GitHub Commits */}
-              <div className="bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] p-6">
+              <div className={`${CARD} p-6`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div
                     className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
@@ -348,7 +264,7 @@ export default function Dashboard({ onNavigate }) {
             </div>
 
             {/* High Priority Tasks */}
-            <div className="bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)] p-6">
+            <div className={`${CARD} p-6`}>
               <h2 className="text-[18px] font-medium text-[#374151] mb-6">High Priority Tasks</h2>
 
               <div className="flex flex-col gap-4">
@@ -357,7 +273,7 @@ export default function Dashboard({ onNavigate }) {
                     <div className="flex items-start justify-between">
 
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {/* Checkbox */}
+                        {/* Completion checkbox */}
                         <button
                           onClick={() => toggleTask(task.id)}
                           className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 cursor-pointer transition-colors duration-200"
@@ -379,7 +295,7 @@ export default function Dashboard({ onNavigate }) {
 
                       {/* XP reward */}
                       <div className="flex items-center gap-1.5 shrink-0 ml-4">
-                        <XpStarIcon />
+                        <StarIcon color="#942fcd" size={16} />
                         <span className="text-[18px] font-semibold text-[#942fcd]">+{task.xp}XP</span>
                       </div>
 
@@ -388,7 +304,7 @@ export default function Dashboard({ onNavigate }) {
                 ))}
               </div>
 
-              {/* XP Info section */}
+              {/* XP info banner */}
               <div className="mt-6 border-t border-[#e5e7eb] pt-6">
                 <div className="bg-[#f9fafb] rounded-[8px] p-4">
                   <p className="text-[13px] font-medium text-[#374151] mb-2">💡 How XP Works</p>
