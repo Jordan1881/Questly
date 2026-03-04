@@ -1,40 +1,37 @@
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
+import PageHeader from '../components/PageHeader'
+import {
+  StarIcon,
+  CoffeeIcon, PackageIcon, ShoeIcon, FoodIcon,
+  HeadphonesIcon, FilmIcon, BookIcon, ControllerIcon,
+} from '../components/icons'
 
-// ── Icons ───────────────────────────────────────────────────
+// ── Tailwind class constants ────────────────────────────────
+const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
 
-const BurgerIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-    <path d="M3 6h18M3 12h18M3 18h18" stroke="#374151" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-)
-const AvatarPlaceholder = () => (
-  <svg viewBox="0 0 48 48" fill="none" className="w-full h-full">
-    <circle cx="24" cy="54" r="22" fill="#9ca3af" />
-    <circle cx="24" cy="18" r="10" fill="#6b7280" />
-  </svg>
-)
-const StarIcon = ({ color = '#942fcd', size = 16 }) => (
-  <svg viewBox="0 0 16 16" fill="none" width={size} height={size} className="shrink-0">
-    <path d="M8 1.5l1.5 3.5 3.5.5-2.5 2.5.5 3.5L8 9.5 5.5 11l.5-3.5L3.5 5l3.5-.5z" fill={color} />
-  </svg>
-)
+// ── Icons (local — not shared with other pages) ─────────────
+
 const CartIcon = ({ size = 20 }) => (
   <svg viewBox="0 0 24 24" fill="none" width={size} height={size} className="shrink-0">
     <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+
 const TrashIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
     <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9h8l1-9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+
+// Green check — used inside "Added to Cart" button and "Purchased" badge
 const CheckIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 shrink-0">
     <path d="M2.5 8l4 4 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
+
 const InfoIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
     <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.8" />
@@ -42,73 +39,7 @@ const InfoIcon = () => (
   </svg>
 )
 
-// ── Reward Icons ─────────────────────────────────────────────
-const CoffeeIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <path d="M5 8h14v10a5 5 0 01-5 5H10a5 5 0 01-5-5V8z" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M19 10h2a3 3 0 010 6h-2" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M9 5c0-1.5 2-1.5 2-3M13 5c0-1.5 2-1.5 2-3" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-)
-const PackageIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <path d="M22 9.5L14 14M14 14L6 9.5M14 14V23" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M6 9.5l8-4.5 8 4.5v9l-8 4.5L6 18.5V9.5z" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 7.5l8 4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-)
-const ShoeIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <path d="M3 17c0 2 1.5 4 4 4h15c1.5 0 3-1 3-3 0-1.5-1-2.5-2.5-3L19 14l-4-6-3 3-2-1.5L3 14v3z" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M12 11l4 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-)
-const FoodIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <path d="M9 4v6c0 2.5 2 4 4 4s4-1.5 4-4V4" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M13 14v10M9 22h10" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M19 4v20" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-)
-const HeadphonesIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <path d="M5 16V13a9 9 0 0118 0v3" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-    <rect x="3" y="16" width="5" height="7" rx="2" stroke="white" strokeWidth="1.8" />
-    <rect x="20" y="16" width="5" height="7" rx="2" stroke="white" strokeWidth="1.8" />
-  </svg>
-)
-const FilmIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <rect x="3" y="5" width="22" height="18" rx="2" stroke="white" strokeWidth="1.8" />
-    <path d="M3 10h22M3 18h22M8 5v5M8 18v5M20 5v5M20 18v5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M12 13l5 3-5 3V13z" fill="white" />
-  </svg>
-)
-const BookIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <path d="M4 5a2 2 0 012-2h10v20H6a2 2 0 01-2-2V5z" stroke="white" strokeWidth="1.8" />
-    <path d="M16 3h6a2 2 0 012 2v16a2 2 0 01-2 2h-6V3z" stroke="white" strokeWidth="1.8" />
-    <path d="M16 3v20" stroke="white" strokeWidth="1.5" />
-    <path d="M7 9h5M7 13h5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-)
-const ControllerIcon = () => (
-  <svg viewBox="0 0 28 28" fill="none" className="w-7 h-7">
-    <path d="M6 10h16l-2 10H8L6 10z" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M11 13v4M9 15h4" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-    <circle cx="18" cy="13.5" r="1" fill="white" />
-    <circle cx="20.5" cy="15.5" r="1" fill="white" />
-  </svg>
-)
-
 // ── Data ────────────────────────────────────────────────────
-
-const NAV_LINKS = [
-  { id: 'dashboard',  label: 'Dashboard'   },
-  { id: 'profile',    label: 'Profile'     },
-  { id: 'tasklist',   label: 'Tasks'       },
-  { id: 'rewardshop', label: 'Reward Shop' },
-]
 
 const XP_GOAL = 3000
 
@@ -127,13 +58,12 @@ const REWARDS = [
 
 function RewardCard({ reward, userXP, inCart, isPurchased, onToggleCart }) {
   const { title, desc, cost, Icon } = reward
-  const canAfford   = cost <= userXP
-  const isAdded     = inCart
+  const canAfford = cost <= userXP
 
   let status = 'available'
-  if (isPurchased) status = 'purchased'
-  else if (isAdded) status = 'in-cart'
-  else if (!canAfford) status = 'unaffordable'
+  if (isPurchased)      status = 'purchased'
+  else if (inCart)      status = 'in-cart'
+  else if (!canAfford)  status = 'unaffordable'
 
   return (
     <div
@@ -150,9 +80,7 @@ function RewardCard({ reward, userXP, inCart, isPurchased, onToggleCart }) {
       <div
         className="w-14 h-14 rounded-[12px] flex items-center justify-center shrink-0"
         style={{
-          background: isPurchased
-            ? '#f3f4f6'
-            : 'linear-gradient(to bottom, #942fcd, #ca9af4)',
+          background: isPurchased ? '#f3f4f6' : 'linear-gradient(to bottom, #942fcd, #ca9af4)',
           boxShadow: isPurchased ? 'none' : '0px 4px 12px rgba(148,47,205,0.2)',
         }}
       >
@@ -184,7 +112,7 @@ function RewardCard({ reward, userXP, inCart, isPurchased, onToggleCart }) {
         <span className="text-[13px] font-medium text-[#6b7280]">XP</span>
       </div>
 
-      {/* Button area */}
+      {/* Action button area — varies by status */}
       {status === 'purchased' && (
         <div className="h-[42px] flex items-center justify-center rounded-[8px] bg-[#f3f4f6]">
           <span className="text-[14px] font-medium text-[#9ca3af]">Purchased</span>
@@ -229,12 +157,12 @@ function RewardCard({ reward, userXP, inCart, isPurchased, onToggleCart }) {
 // ── Cart Panel ───────────────────────────────────────────────
 
 function CartPanel({ cartItems, userXP, onRemove, onConfirm }) {
-  const total   = cartItems.reduce((s, r) => s + r.cost, 0)
-  const after   = userXP - total
+  const total     = cartItems.reduce((s, r) => s + r.cost, 0)
+  const after     = userXP - total
   const canAfford = after >= 0
 
   return (
-    <div className="bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] sticky top-6 overflow-hidden">
+    <div className={`${CARD} sticky top-6 overflow-hidden`}>
       {/* Header */}
       <div
         className="px-5 py-4 flex items-center justify-between"
@@ -285,10 +213,9 @@ function CartPanel({ cartItems, userXP, onRemove, onConfirm }) {
             ))}
           </div>
 
-          {/* Divider */}
           <div className="border-t border-[#e5e7eb]" />
 
-          {/* Summary */}
+          {/* XP summary */}
           <div className="flex flex-col gap-2 text-[13px]">
             <div className="flex justify-between">
               <span className="text-[#6b7280]">Total cost</span>
@@ -306,7 +233,7 @@ function CartPanel({ cartItems, userXP, onRemove, onConfirm }) {
             </div>
           </div>
 
-          {/* Warning */}
+          {/* Insufficient XP warning */}
           {!canAfford && (
             <div className="bg-[#fef2f2] border border-[#fca5a5] rounded-[8px] px-3 py-2">
               <p className="text-[12px] text-[#dc2626] font-medium text-center">
@@ -350,9 +277,9 @@ function Toast({ message }) {
 // ── RewardShop page ──────────────────────────────────────────
 
 export default function RewardShop({ onNavigate, userXP, setUserXP, purchased, setPurchased }) {
-  const [showSidebar, setShowSidebar]   = useState(false)
-  const [cart, setCart]                 = useState([])
-  const [toast, setToast]               = useState(null)
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [cart, setCart]               = useState([])
+  const [toast, setToast]             = useState(null)
 
   const cartRewards = REWARDS.filter(r => cart.includes(r.id))
   const cartTotal   = cartRewards.reduce((s, r) => s + r.cost, 0)
@@ -387,40 +314,11 @@ export default function RewardShop({ onNavigate, userXP, setUserXP, purchased, s
         onNavigate={onNavigate}
       />
 
-      {/* ── Header ── */}
-      <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
-        <div className="w-full flex items-center justify-between">
-          <div className="flex items-stretch gap-6 h-full">
-            <button
-              onClick={() => setShowSidebar(true)}
-              className="flex items-center justify-center cursor-pointer bg-transparent hover:bg-[#f9fafb] rounded-[8px] px-2 transition-colors duration-200"
-            >
-              <BurgerIcon />
-            </button>
-            <nav className="flex items-stretch gap-10 h-full">
-              {NAV_LINKS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => onNavigate?.(id)}
-                  className={`h-full border-b-2 text-[16px] cursor-pointer transition-colors duration-200 bg-transparent ${
-                    id === 'rewardshop'
-                      ? 'border-[#942fcd] text-[#942fcd] font-semibold'
-                      : 'border-transparent text-[#6b7280] font-normal hover:text-[#1f2937]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[16px] font-semibold text-[#1f2937]">Ashton_44</span>
-            <div className="w-12 h-12 rounded-full bg-[#e5e7eb] overflow-hidden shrink-0">
-              <AvatarPlaceholder />
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        activePage="rewardshop"
+        onNavigate={onNavigate}
+        onOpenSidebar={() => setShowSidebar(true)}
+      />
 
       {/* ── Main ── */}
       <main className="px-12 py-9">
@@ -436,7 +334,7 @@ export default function RewardShop({ onNavigate, userXP, setUserXP, purchased, s
             </div>
 
             {/* XP Balance card */}
-            <div className="bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] p-8">
+            <div className={`${CARD} p-8`}>
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <p className="text-[14px] font-medium text-[#6b7280] mb-2">Your XP</p>
@@ -455,7 +353,7 @@ export default function RewardShop({ onNavigate, userXP, setUserXP, purchased, s
                 </div>
               </div>
 
-              {/* Progress bar */}
+              {/* XP progress bar */}
               <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden mb-2">
                 <div
                   className="h-full rounded-full transition-all duration-500"
