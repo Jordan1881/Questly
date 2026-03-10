@@ -173,3 +173,14 @@ npm run build
 
 > **MVP — UI complete, mock data only.**
 > Backend integration (real Jira OAuth, database, authentication) is planned for the next phase.
+
+---
+
+## Developers
+
+This project was built by:
+
+| Name | Role |
+|---|---|
+| Yarden Biton | Lead Developer |
+| Or Moskowitz | Developer |
