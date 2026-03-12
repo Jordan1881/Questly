@@ -69,14 +69,27 @@ function PasswordInput({ placeholder, value, onChange }) {
   )
 }
 
+const CodeBracketIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8">
+    <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M14 5l-4 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+const CrownIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8">
+    <path d="M3 17l2-8 5 4 4-8 4 8 2-4-1 8H3z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 export default function SignUp({ onNavigate, onSuccess }) {
   const [form, setForm] = useState({ email: '', username: '', password: '', confirmPassword: '' })
+  const [selectedRole, setSelectedRole] = useState('developer')
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSuccess?.()
+    onSuccess?.(selectedRole)
   }
 
   return (
@@ -141,6 +154,35 @@ export default function SignUp({ onNavigate, onSuccess }) {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            {/* Role toggle cards */}
+            <div className="flex gap-3">
+              {[
+                { role: 'developer', label: 'Developer',      desc: 'Complete quests & earn XP', Icon: CodeBracketIcon },
+                { role: 'admin',     label: 'Admin / Manager', desc: 'Manage your team & rewards', Icon: CrownIcon      },
+              ].map(({ role, label, desc, Icon }) => {
+                const active = selectedRole === role
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setSelectedRole(role)}
+                    className="flex-1 flex flex-col items-center gap-2 rounded-[12px] py-4 px-3 border-2 text-center cursor-pointer transition-all duration-200"
+                    style={{
+                      borderColor: active ? '#942fcd' : '#e5e7eb',
+                      background:  active ? 'rgba(148,47,205,0.06)' : 'white',
+                      boxShadow:   active ? '0px 0px 0px 3px rgba(148,47,205,0.12)' : 'none',
+                    }}
+                  >
+                    <div style={{ color: active ? '#942fcd' : '#9ca3af', transition: 'color 0.2s' }}>
+                      <Icon />
+                    </div>
+                    <span className="text-[13px] font-semibold" style={{ color: active ? '#942fcd' : '#374151' }}>{label}</span>
+                    <span className="text-[11px] text-[#9ca3af] leading-[1.4]">{desc}</span>
+                  </button>
+                )
+              })}
+            </div>
 
             {/* Email */}
             <div className="flex flex-col gap-2">

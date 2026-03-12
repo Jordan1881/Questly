@@ -1,20 +1,27 @@
 import { BurgerIcon, AvatarPlaceholder, ProfileAvatarPlaceholder } from './icons'
 
-// Navigation links shared across all inner pages
-const NAV_LINKS = [
+const DEV_NAV_LINKS = [
   { id: 'dashboard',  label: 'Dashboard'   },
   { id: 'profile',    label: 'Profile'     },
   { id: 'tasklist',   label: 'Tasks'       },
   { id: 'rewardshop', label: 'Reward Shop' },
 ]
 
-// Shared top header used by Dashboard, TaskList, RewardShop, and Profile.
+const ADMIN_NAV_LINKS = [
+  { id: 'rewardshop', label: 'Reward Shop' },
+  { id: 'profile',    label: 'Profile'     },
+  { id: 'admin',      label: 'Admin'       },
+]
+
+// Shared top header used by all inner pages.
 // Props:
-//   activePage    — id of the currently active nav link (controls underline + color)
+//   activePage    — id of the currently active nav link
 //   onNavigate    — called with the target page id when a nav link is clicked
 //   onOpenSidebar — called when the burger button is clicked
-export default function PageHeader({ activePage, onNavigate, onOpenSidebar }) {
+//   userRole      — 'developer' | 'admin' (controls which nav links are shown)
+export default function PageHeader({ activePage, onNavigate, onOpenSidebar, userRole = 'developer' }) {
   const isProfile = activePage === 'profile'
+  const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : DEV_NAV_LINKS
 
   return (
     <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
@@ -49,7 +56,9 @@ export default function PageHeader({ activePage, onNavigate, onOpenSidebar }) {
 
         {/* User info — avatar background differs on the Profile page */}
         <div className="flex items-center gap-3">
-          <span className="text-[16px] font-semibold text-[#1f2937]">Ashton_44</span>
+          <span className="text-[16px] font-semibold text-[#1f2937]">
+            {userRole === 'admin' ? 'Admin_User' : 'Ashton_44'}
+          </span>
           <div
             className="w-12 h-12 rounded-full overflow-hidden shrink-0"
             style={isProfile

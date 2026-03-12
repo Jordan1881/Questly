@@ -288,7 +288,7 @@ function CalendarCard({ tasks }) {
 
 // ── TaskList page ────────────────────────────────────────────
 
-export default function TaskList({ onNavigate }) {
+export default function TaskList({ onNavigate, userRole = 'developer' }) {
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all')
   const [tasks, setTasks] = useState(INITIAL_TASKS)
@@ -313,12 +313,14 @@ export default function TaskList({ onNavigate }) {
         onClose={() => setShowSidebar(false)}
         activePage="tasklist"
         onNavigate={onNavigate}
+        userRole={userRole}
       />
 
       <PageHeader
         activePage="tasklist"
         onNavigate={onNavigate}
         onOpenSidebar={() => setShowSidebar(true)}
+        userRole={userRole}
       />
 
       {/* ── Main content ── */}
