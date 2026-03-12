@@ -7,44 +7,30 @@
 
 ## Overview
 
-Questly bridges the gap between productivity and motivation. By connecting to your Jira workspace, it pulls your assigned tickets and presents them as quests with XP rewards based on difficulty. Complete tasks, level up, and redeem your earned XP for real-world coupons in the Reward Shop.
+Questly bridges the gap between productivity and motivation. By connecting to your Jira workspace, it pulls your assigned tickets and presents them as quests with XP rewards based on difficulty. Complete tasks, level up, and spend your earned Coins in the Reward Shop for real-world coupons.
+
+The platform supports two roles — **Developer** and **Admin / Manager** — each with a fully tailored experience.
 
 This project was built as a final-year Information Systems capstone project.
 
 ---
 
-## UI Screenshots
+## Role System
 
-### Hero Page
-![Hero Page](<UI screenshots/hero page.png>)
+### Developer
+Developers complete quests, earn XP and Coins, and redeem rewards. Their experience includes a Dashboard, Task List, Reward Shop (with a cart and approval flow), and a Profile with XP history and earned rewards.
 
-The landing page greets users with the Questly brand and a clear value proposition. A soft purple animated gradient background with floating blob animations creates an immersive first impression. The headline — *"Turn your daily tasks into epic quests"* — immediately communicates the app's gamified concept, with CTA buttons to sign in or get started.
+### Admin / Manager
+Admins are pure managers — they oversee their team, approve reward requests, configure XP settings, and manage users. They have no quests or XP of their own.
 
----
-
-### Task List
-![Task List](<UI screenshots/task list page.png>)
-
-The Task List page displays all Jira-synced tasks as interactive quest cards. Each task shows:
-- **Difficulty badge** (Easy / Medium / Hard) with color-coded borders
-- **Jira ticket ID** for traceability
-- **Task title and description**
-- **Due date** with high-priority flags
-- **XP reward** (+20 / +40 / +70 XP based on difficulty)
-
-A filter bar at the top lets users slice tasks by status (All, Completed, High Priority) and difficulty. A live **March 2026 calendar** on the right highlights task due dates and completion status at a glance. A Jira sync status badge confirms the last sync time.
-
----
-
-### Profile
-![Profile](<UI screenshots/profile page.png>)
-
-The Profile page gives users a full picture of their progress and account:
-- **Profile hero card** — avatar, name, email, Level 3 badge, and a Dashboard-style XP progress bar (650 / 1000 XP) with tick markers and a glowing fill
-- **Available XP badge** — shows spendable XP (1,250) that carries over from the Reward Shop
-- **XP History chart** — an interactive SVG line chart showing XP earned over the last 7 days, with hover tooltips and a smooth Catmull-Rom curve
-- **Account Details** — Jira integration status, total tasks completed, total XP earned, and member-since date
-- **My Rewards** — a grid of coupons redeemed in the Reward Shop, updated in real time as purchases are made
+| Feature | Developer | Admin |
+|---|---|---|
+| Dashboard | ✅ | ❌ |
+| Task List | ✅ | ❌ |
+| XP & Leveling | ✅ | ❌ |
+| Reward Shop (cart) | ✅ | ❌ |
+| Reward Shop (edit) | ❌ | ✅ |
+| Admin Panel | ❌ | ✅ |
 
 ---
 
@@ -58,36 +44,52 @@ The Profile page gives users a full picture of their progress and account:
 | Language | JavaScript (JSX) |
 | Routing | Custom state-based (no library) |
 | State | useState only (no Redux / Zustand) |
-| Icons | Inline SVGs + custom asset files |
-| Fonts | Poppins, Inter, Nabla (Google Fonts) |
+| Icons | Inline SVGs |
+| Fonts | Poppins (Google Fonts) |
 
 ---
 
 ## Features
 
+### Developer
 - **Jira Integration** — connect your Jira workspace to pull real tickets as quests
 - **XP & Leveling System** — earn XP on task completion, level up at 1000 XP milestones
-- **Reward Shop** — redeem accumulated XP for real-world coupons (Starbucks, Nike, Netflix, and more)
-- **Interactive Task List** — filter by difficulty and status, toggle completion with checkbox
+- **Dual Economy** — XP for leveling, Coins for spending (default: 100 XP = 10 Coins)
+- **Reward Shop** — spend Coins on real-world coupons (Starbucks, Netflix, Steam, and more)
+- **Pending Approval Flow** — reward requests go to admin for approval before Coins are deducted
+- **Interactive Task List** — filter by difficulty and status, toggle completion
 - **XP History Chart** — smooth interactive SVG line chart with hover tooltips
-- **Calendar Widget** — monthly calendar highlighting task due dates and completion status
-- **Shared State** — purchased rewards appear in the Profile "My Rewards" section in real time
-- **Sidebar Navigation** — slide-in drawer accessible from any page via burger button
+- **Calendar Widget** — monthly calendar highlighting task due dates
+- **Profile & My Rewards** — XP progress, account details, and a live grid of pending/purchased rewards
+
+### Admin
+- **Team Tab** — leaderboard and cards view of all developers ranked by XP, with medals for top 3
+- **Rewards Tab** — pending approval table with approve / deny actions; coins are deducted on approval
+- **XP Settings Tab** — configure XP per difficulty (Easy / Medium / Hard) and XP→Coins conversion rate
+- **Users Tab** — deactivate / reactivate developers and adjust XP inline
+- **Reward Shop Edit Mode** — add, edit, and delete rewards from the catalog
+- **Admin Profile** — team KPIs (developers managed, active members, pending approvals) and team summary grid
+
+### Shared
+- **Role-based Navigation** — header and sidebar links adapt to the user's role
+- **Sidebar with Log Out** — slide-in drawer with role-aware nav and a Log Out button for both roles
+- **Role Persistence** — selected role is saved in `localStorage` across page refreshes
 
 ---
 
 ## Pages
 
-| Page | Route Key | Description |
-|---|---|---|
-| Hero | `hero` | Landing page with animated background and CTA |
-| Sign In | `signin` | Login form |
-| Sign Up | `signup` | Registration form |
-| Jira Auth | overlay | Modal to connect Jira after sign-in |
-| Dashboard | `dashboard` | Main overview — XP, stats, high priority tasks |
-| Task List | `tasklist` | Full Jira-synced task list with filters and calendar |
-| Reward Shop | `rewardshop` | XP redemption store with cart and checkout |
-| Profile | `profile` | User profile, XP history chart, account details, my rewards |
+| Page | Route Key | Role | Description |
+|---|---|---|---|
+| Hero | `hero` | All | Landing page with animated gradient background and CTA |
+| Sign In | `signin` | All | Login form |
+| Sign Up | `signup` | All | Registration form with Developer / Admin role toggle cards |
+| Jira Auth | overlay | All | Modal to connect Jira after sign-in |
+| Dashboard | `dashboard` | Developer | XP progress, user stats, and high priority tasks |
+| Task List | `tasklist` | Developer | Jira-synced quest cards with filters and calendar |
+| Reward Shop | `rewardshop` | Both | Developer: cart + approval flow. Admin: catalog edit mode |
+| Profile | `profile` | Both | Developer: XP chart + My Rewards. Admin: team summary + KPIs |
+| Admin Panel | `admin` | Admin | 4 sub-tabs — Team, Rewards, XP Settings, Users |
 
 ---
 
@@ -98,13 +100,14 @@ src/
 ├── assets/
 │   ├── LOGO.svg
 │   ├── LOGO-HORIZENTAL.svg
-│   ├── Icons /                  # Custom icon SVGs (Star, Settings, Profile, etc.)
+│   ├── Icons /                  # Custom icon SVGs
 │   ├── cover hero.png
 │   └── jira-original-wordmark.svg
 ├── components/
-│   └── Sidebar.jsx              # Slide-in navigation drawer
+│   ├── Sidebar.jsx              # Slide-in navigation drawer (role-aware + Log Out)
+│   └── PageHeader.jsx           # Inline header (role-aware nav links)
 ├── design-system/
-│   ├── tokens.css               # CSS custom properties (colors, spacing, radius)
+│   ├── tokens.css
 │   └── components/
 │       ├── Button.jsx
 │       ├── FormButton.jsx
@@ -114,13 +117,14 @@ src/
 ├── pages/
 │   ├── Hero.jsx
 │   ├── SignIn.jsx
-│   ├── SignUp.jsx
-│   ├── Dashboard.jsx
-│   ├── TaskList.jsx
-│   ├── RewardShop.jsx
-│   └── Profile.jsx
-├── App.jsx                      # Root router + shared state (userXP, purchased)
-├── index.css                    # Tailwind import + global keyframes
+│   ├── SignUp.jsx               # Role toggle cards (Developer / Admin)
+│   ├── Dashboard.jsx            # Developer only
+│   ├── TaskList.jsx             # Developer only
+│   ├── RewardShop.jsx           # Dual mode: developer cart vs admin edit
+│   ├── Profile.jsx              # Dual content: developer XP vs admin team summary
+│   └── Admin.jsx                # Admin only — 4 sub-tabs
+├── App.jsx                      # Root router + shared state
+├── index.css                    # Tailwind + Google Fonts + keyframes
 └── main.jsx
 ```
 
@@ -130,13 +134,13 @@ src/
 
 ### Prerequisites
 - Node.js 18+
-- npm or yarn
+- npm
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/Jordan1881/Questly.git
 cd Questly_Development
 
 # Install dependencies
@@ -162,16 +166,18 @@ npm run build
 |---|---|
 | Primary color | `#942fcd` |
 | Gradient end | `#ca9af4` |
+| Admin accent | `#6366f1` (indigo) |
 | Card border radius | `12px` |
 | Card shadow | `0px 1px 3px rgba(0,0,0,0.10)` |
-| Font family | Poppins (primary), Inter |
+| Font family | Poppins |
 | Background | `#f9fafb` |
 
 ---
 
 ## Status
 
-> **MVP — UI complete, mock data only.**
+> **MVP v2 — UI complete, mock data only.**
+> Both Developer and Admin use cases are fully implemented.
 > Backend integration (real Jira OAuth, database, authentication) is planned for the next phase.
 
 ---
