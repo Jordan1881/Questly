@@ -52,9 +52,16 @@ const CloseIcon = () => (
   </svg>
 )
 
+const LogoutIcon = () => (
+  <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 shrink-0">
+    <path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M13 14l4-4-4-4M17 10H8" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 // ── Nav config ──────────────────────────────────────────────
 
-const NAV_LINKS = [
+const DEV_NAV_LINKS = [
   { id: 'dashboard',  label: 'Dashboard',   Icon: DashboardIcon  },
   { id: 'tasklist',   label: 'Tasks',        Icon: TasksIcon      },
   { id: 'rewardshop', label: 'Reward Shop',  Icon: RewardShopIcon, dot: true },
@@ -62,9 +69,17 @@ const NAV_LINKS = [
   { id: 'settings',   label: 'Settings',     Icon: SettingsIcon   },
 ]
 
+const ADMIN_NAV_LINKS = [
+  { id: 'rewardshop', label: 'Reward Shop',  Icon: RewardShopIcon },
+  { id: 'profile',    label: 'Profile',      Icon: ProfileIcon    },
+  { id: 'admin',      label: 'Admin',         Icon: SettingsIcon   },
+]
+
 // ── Sidebar ─────────────────────────────────────────────────
 
-export default function Sidebar({ isOpen, onClose, activePage = 'dashboard', onNavigate }) {
+export default function Sidebar({ isOpen, onClose, activePage = 'dashboard', onNavigate, userRole = 'developer' }) {
+  const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : DEV_NAV_LINKS
+
   const handleNav = (id) => {
     onNavigate?.(id)
     onClose?.()
@@ -125,7 +140,8 @@ export default function Sidebar({ isOpen, onClose, activePage = 'dashboard', onN
             )
           })}
 
-          {/* Level progress card */}
+          {/* Level progress card — only for developers */}
+          {userRole !== 'admin' && (
           <div
             className="mt-4 rounded-[12px] p-4 flex flex-col gap-3 shrink-0"
             style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)', boxShadow: '0px 4px 12px rgba(148,47,205,0.2)' }}
@@ -148,6 +164,22 @@ export default function Sidebar({ isOpen, onClose, activePage = 'dashboard', onN
             <div className="h-[6px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.2)' }}>
               <div className="h-full bg-white rounded-full" style={{ width: '65%' }} />
             </div>
+          </div>
+          )}
+
+          {/* Logout button */}
+          <div className="mt-auto pt-3 border-t border-[#f3f4f6]">
+            <button
+              onClick={() => {
+                localStorage.removeItem('questlyUserRole')
+                onClose?.()
+                onNavigate?.('hero')
+              }}
+              className="flex items-center gap-3 h-[46.5px] pl-4 rounded-[8px] w-full text-left cursor-pointer hover:bg-[#fff5f5] transition-colors duration-200"
+            >
+              <LogoutIcon />
+              <span className="text-[15px] font-normal text-[#ef4444]">Log Out</span>
+            </button>
           </div>
         </nav>
 
