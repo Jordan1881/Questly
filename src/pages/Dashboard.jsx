@@ -78,7 +78,7 @@ const INITIAL_TASKS = [
 
 // ── Dashboard page ──────────────────────────────────────────
 
-export default function Dashboard({ onNavigate }) {
+export default function Dashboard({ onNavigate, userRole = 'developer' }) {
   const [tasks, setTasks] = useState(INITIAL_TASKS)
   const [showSidebar, setShowSidebar] = useState(false)
 
@@ -93,12 +93,14 @@ export default function Dashboard({ onNavigate }) {
         onClose={() => setShowSidebar(false)}
         activePage="dashboard"
         onNavigate={onNavigate}
+        userRole={userRole}
       />
 
       <PageHeader
         activePage="dashboard"
         onNavigate={onNavigate}
         onOpenSidebar={() => setShowSidebar(true)}
+        userRole={userRole}
       />
 
       {/* ── Main content ── */}
