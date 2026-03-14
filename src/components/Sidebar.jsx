@@ -1,5 +1,7 @@
+import { useNavigate, useLocation } from 'react-router'
 import logoIcon from '../assets/LOGO.svg'
 import logoHorizental from '../assets/LOGO-HORIZENTAL.svg'
+import { useAuthStore } from '../stores/authStore'
 
 // ── Icons — paths lifted from asset SVGs; active color controlled via prop ──
 
@@ -61,6 +63,14 @@ const LogoutIcon = () => (
 
 // ── Nav config ──────────────────────────────────────────────
 
+const PAGE_PATHS = {
+  dashboard:  '/dashboard',
+  tasklist:   '/tasks',
+  rewardshop: '/shop',
+  profile:    '/profile',
+  admin:      '/admin',
+}
+
 const DEV_NAV_LINKS = [
   { id: 'dashboard',  label: 'Dashboard',   Icon: DashboardIcon  },
   { id: 'tasklist',   label: 'Tasks',        Icon: TasksIcon      },
@@ -77,13 +87,19 @@ const ADMIN_NAV_LINKS = [
 
 // ── Sidebar ─────────────────────────────────────────────────
 
-export default function Sidebar({ isOpen, onClose, activePage = 'dashboard', onNavigate, userRole = 'developer' }) {
+export default function Sidebar({ isOpen, onClose }) {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const userRole = useAuthStore((s) => s.userRole)
+  const setLoggedIn = useAuthStore((s) => s.setLoggedIn)
   const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : DEV_NAV_LINKS
 
   const handleNav = (id) => {
-    onNavigate?.(id)
+    if (PAGE_PATHS[id]) navigate(PAGE_PATHS[id])
     onClose?.()
   }
+
+  const isActive = (id) => pathname === PAGE_PATHS[id]
 
   return (
     <>
@@ -120,7 +136,7 @@ export default function Sidebar({ isOpen, onClose, activePage = 'dashboard', onN
         {/* Navigation */}
         <nav className="flex flex-col gap-[12px] p-4 flex-1 overflow-y-auto">
           {NAV_LINKS.map(({ id, label, Icon, dot }) => {
-            const active = activePage === id
+            const active = isActive(id)
             return (
               <button
                 key={id}
@@ -171,9 +187,9 @@ export default function Sidebar({ isOpen, onClose, activePage = 'dashboard', onN
           <div className="mt-auto pt-3 border-t border-[#f3f4f6]">
             <button
               onClick={() => {
-                localStorage.removeItem('questlyUserRole')
+                setLoggedIn(false)
                 onClose?.()
-                onNavigate?.('hero')
+                navigate('/')
               }}
               className="flex items-center gap-3 h-[46.5px] pl-4 rounded-[8px] w-full text-left cursor-pointer hover:bg-[#fff5f5] transition-colors duration-200"
             >

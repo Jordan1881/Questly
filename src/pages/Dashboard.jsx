@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import DifficultyBadge from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
+import { useAuthStore } from '../stores/authStore'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
@@ -78,7 +79,8 @@ const INITIAL_TASKS = [
 
 // ── Dashboard page ──────────────────────────────────────────
 
-export default function Dashboard({ onNavigate, userRole = 'developer' }) {
+export default function Dashboard() {
+  const userRole = useAuthStore((s) => s.userRole)
   const [tasks, setTasks] = useState(INITIAL_TASKS)
   const [showSidebar, setShowSidebar] = useState(false)
 
@@ -91,16 +93,10 @@ export default function Dashboard({ onNavigate, userRole = 'developer' }) {
       <Sidebar
         isOpen={showSidebar}
         onClose={() => setShowSidebar(false)}
-        activePage="dashboard"
-        onNavigate={onNavigate}
-        userRole={userRole}
       />
 
       <PageHeader
-        activePage="dashboard"
-        onNavigate={onNavigate}
         onOpenSidebar={() => setShowSidebar(true)}
-        userRole={userRole}
       />
 
       {/* ── Main content ── */}

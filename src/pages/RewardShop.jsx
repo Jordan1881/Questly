@@ -6,6 +6,9 @@ import {
   CoffeeIcon, PackageIcon, ShoeIcon, FoodIcon,
   HeadphonesIcon, FilmIcon, BookIcon, ControllerIcon,
 } from '../components/icons'
+import { useAuthStore } from '../stores/authStore'
+import { useXpStore } from '../stores/xpStore'
+import { useShopContext } from '../AppProviders'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
@@ -335,16 +338,11 @@ function Toast({ message }) {
 
 // ── RewardShop page ──────────────────────────────────────────
 
-export default function RewardShop({
-  onNavigate,
-  userRole = 'developer',
-  userCoins = 125,
-  setUserCoins,
-  purchased,
-  setPurchased,
-  pendingRequests,
-  setPendingRequests,
-}) {
+export default function RewardShop() {
+  const userRole = useAuthStore((s) => s.userRole)
+  const userCoins = useXpStore((s) => s.userCoins)
+  const setUserCoins = useXpStore((s) => s.setUserCoins)
+  const { purchased, setPurchased, pendingRequests, setPendingRequests } = useShopContext()
   const [showSidebar, setShowSidebar] = useState(false)
   const [cart, setCart]               = useState([])
   const [toast, setToast]             = useState(null)
@@ -380,16 +378,10 @@ export default function RewardShop({
       <Sidebar
         isOpen={showSidebar}
         onClose={() => setShowSidebar(false)}
-        activePage="rewardshop"
-        onNavigate={onNavigate}
-        userRole={userRole}
       />
 
       <PageHeader
-        activePage="rewardshop"
-        onNavigate={onNavigate}
         onOpenSidebar={() => setShowSidebar(true)}
-        userRole={userRole}
       />
 
       {/* ── Main ── */}

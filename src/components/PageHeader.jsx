@@ -1,4 +1,15 @@
+import { useNavigate, useLocation } from 'react-router'
 import { BurgerIcon, AvatarPlaceholder, ProfileAvatarPlaceholder } from './icons'
+import { useAuthStore } from '../stores/authStore'
+
+// Maps old page IDs to URL paths
+const PAGE_PATHS = {
+  dashboard:  '/dashboard',
+  profile:    '/profile',
+  tasklist:   '/tasks',
+  rewardshop: '/shop',
+  admin:      '/admin',
+}
 
 const DEV_NAV_LINKS = [
   { id: 'dashboard',  label: 'Dashboard'   },
@@ -15,13 +26,15 @@ const ADMIN_NAV_LINKS = [
 
 // Shared top header used by all inner pages.
 // Props:
-//   activePage    — id of the currently active nav link
-//   onNavigate    — called with the target page id when a nav link is clicked
 //   onOpenSidebar — called when the burger button is clicked
-//   userRole      — 'developer' | 'admin' (controls which nav links are shown)
-export default function PageHeader({ activePage, onNavigate, onOpenSidebar, userRole = 'developer' }) {
-  const isProfile = activePage === 'profile'
+export default function PageHeader({ onOpenSidebar }) {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const userRole = useAuthStore((s) => s.userRole)
+
   const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : DEV_NAV_LINKS
+  const isProfile = pathname === '/profile'
+  const isActive = (id) => pathname === PAGE_PATHS[id]
 
   return (
     <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
@@ -41,9 +54,9 @@ export default function PageHeader({ activePage, onNavigate, onOpenSidebar, user
             {NAV_LINKS.map(({ id, label }) => (
               <button
                 key={id}
-                onClick={() => onNavigate?.(id)}
+                onClick={() => navigate(PAGE_PATHS[id])}
                 className={`h-full border-b-2 text-[16px] cursor-pointer transition-colors duration-200 bg-transparent ${
-                  id === activePage
+                  isActive(id)
                     ? 'border-[#942fcd] text-[#942fcd] font-semibold'
                     : 'border-transparent text-[#6b7280] font-normal hover:text-[#1f2937]'
                 }`}
