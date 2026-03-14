@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import {
@@ -7,6 +8,9 @@ import {
   HeadphonesIcon, FilmIcon, BookIcon, ControllerIcon,
 } from '../components/icons'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
+import { useAuthStore } from '../stores/authStore'
+import { useXpStore } from '../stores/xpStore'
+import { useShopContext } from '../AppProviders'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
@@ -293,7 +297,12 @@ function PendingRewardCard({ reward }) {
 
 // ── Profile page ─────────────────────────────────────────────
 
-export default function Profile({ onNavigate, userRole = 'developer', userXP = 1250, userCoins = 125, purchased = new Set([3]), pendingRequests = new Set() }) {
+export default function Profile() {
+  const navigate = useNavigate()
+  const userRole = useAuthStore((s) => s.userRole)
+  const userXP = useXpStore((s) => s.userXP)
+  const userCoins = useXpStore((s) => s.userCoins)
+  const { purchased, pendingRequests } = useShopContext()
   const [showSidebar, setShowSidebar] = useState(false)
 
   const LEVEL_XP   = 650
@@ -311,16 +320,10 @@ export default function Profile({ onNavigate, userRole = 'developer', userXP = 1
       <Sidebar
         isOpen={showSidebar}
         onClose={() => setShowSidebar(false)}
-        activePage="profile"
-        onNavigate={onNavigate}
-        userRole={userRole}
       />
 
       <PageHeader
-        activePage="profile"
-        onNavigate={onNavigate}
         onOpenSidebar={() => setShowSidebar(true)}
-        userRole={userRole}
       />
 
       {/* ── Main ── */}
@@ -577,7 +580,7 @@ export default function Profile({ onNavigate, userRole = 'developer', userXP = 1
                     <p className="text-[13px] text-[#9ca3af] mt-1">Head over to the Reward Shop to redeem your XP for coupons</p>
                   </div>
                   <button
-                    onClick={() => onNavigate?.('rewardshop')}
+                    onClick={() => navigate('/shop')}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-medium text-white cursor-pointer transition-all duration-200 hover:opacity-90 active:scale-95"
                     style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)', boxShadow: '0px 4px 12px rgba(148,47,205,0.3)' }}
                   >
