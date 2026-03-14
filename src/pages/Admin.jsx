@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
+import { useAuthStore } from '../stores/authStore'
+import { useXpStore } from '../stores/xpStore'
+import { useShopContext } from '../AppProviders'
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -587,16 +590,11 @@ function UsersTab({ developers, setDevelopers }) {
 
 // ── Admin page ────────────────────────────────────────────
 
-export default function Admin({
-  onNavigate,
-  userRole = 'admin',
-  pendingRequests,
-  setPendingRequests,
-  purchased,
-  setPurchased,
-  userCoins,
-  setUserCoins,
-}) {
+export default function Admin() {
+  const userRole = useAuthStore((s) => s.userRole)
+  const userCoins = useXpStore((s) => s.userCoins)
+  const setUserCoins = useXpStore((s) => s.setUserCoins)
+  const { pendingRequests, setPendingRequests, purchased, setPurchased } = useShopContext()
   const [showSidebar, setShowSidebar]     = useState(false)
   const [activeTab, setActiveTab]         = useState('team')
   const [developers, setDevelopers]       = useState(INITIAL_DEVELOPERS)
@@ -617,16 +615,10 @@ export default function Admin({
       <Sidebar
         isOpen={showSidebar}
         onClose={() => setShowSidebar(false)}
-        activePage="admin"
-        onNavigate={onNavigate}
-        userRole={userRole}
       />
 
       <PageHeader
-        activePage="admin"
-        onNavigate={onNavigate}
         onOpenSidebar={() => setShowSidebar(true)}
-        userRole={userRole}
       />
 
       <main className="px-12 py-9">

@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import FormButton from '../design-system/components/FormButton'
+import JiraAuth from '../overlays/JiraAuth'
+import { useAuthStore } from '../stores/authStore'
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -45,14 +48,18 @@ const inputClass = `
   transition-colors duration-200
 `
 
-export default function SignIn({ onNavigate, onSuccess }) {
+export default function SignIn() {
+  const navigate = useNavigate()
+  const { setUserRole, setLoggedIn } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showJiraAuth, setShowJiraAuth] = useState(false)
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSuccess?.()
+    setUserRole('developer')
+    setShowJiraAuth(true)
   }
 
   return (
@@ -63,7 +70,7 @@ export default function SignIn({ onNavigate, onSuccess }) {
         src={logoHorizontal}
         alt="Questly"
         className="absolute top-[60px] left-[75px] w-[180px] cursor-pointer"
-        onClick={() => onNavigate?.('hero')}
+        onClick={() => navigate('/')}
         style={{ height: 'auto' }}
       />
 
@@ -88,7 +95,7 @@ export default function SignIn({ onNavigate, onSuccess }) {
               You can{' '}
               <span
                 className="text-[#4d47c3] cursor-pointer hover:underline"
-                onClick={() => onNavigate?.('signup')}
+                onClick={() => navigate('/signup')}
               >
                 Register here !
               </span>
@@ -192,6 +199,18 @@ export default function SignIn({ onNavigate, onSuccess }) {
           </form>
         </div>
       </div>
+
+      {showJiraAuth && (
+        <JiraAuth
+          onClose={() => setShowJiraAuth(false)}
+          onConnect={() => {
+            setLoggedIn(true)
+            setShowJiraAuth(false)
+            navigate('/dashboard')
+          }}
+        />
+      )}
+
     </div>
   )
 }
