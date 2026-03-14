@@ -62,7 +62,7 @@ jobs:
           FRONTEND_URL: http://localhost:5173
 
       - name: Run backend tests
-        run: npm test -- --passWithNoTests --coverage
+        run: npm test -- --passWithNoTests
         working-directory: server
         env:
           NODE_ENV: test
