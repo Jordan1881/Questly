@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import signUpImg from '../assets/signUp-img.png'
 import FormButton from '../design-system/components/FormButton'
+import JiraAuth from '../overlays/JiraAuth'
+import { useAuthStore } from '../stores/authStore'
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -81,15 +84,19 @@ const CrownIcon = () => (
   </svg>
 )
 
-export default function SignUp({ onNavigate, onSuccess }) {
+export default function SignUp() {
+  const navigate = useNavigate()
+  const { setUserRole, setLoggedIn } = useAuthStore()
   const [form, setForm] = useState({ email: '', username: '', password: '', confirmPassword: '' })
   const [selectedRole, setSelectedRole] = useState('developer')
+  const [showJiraAuth, setShowJiraAuth] = useState(false)
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSuccess?.(selectedRole)
+    setUserRole(selectedRole)
+    setShowJiraAuth(true)
   }
 
   return (
@@ -100,7 +107,7 @@ export default function SignUp({ onNavigate, onSuccess }) {
         src={logoHorizontal}
         alt="Questly"
         className="absolute top-[60px] left-[75px] w-[180px] cursor-pointer"
-        onClick={() => onNavigate?.('hero')}
+        onClick={() => navigate('/')}
         style={{ height: 'auto' }}
       />
 
@@ -125,7 +132,7 @@ export default function SignUp({ onNavigate, onSuccess }) {
               You can{' '}
               <span
                 className="text-[#4d47c3] cursor-pointer hover:underline"
-                onClick={() => onNavigate?.('signin')}
+                onClick={() => navigate('/login')}
               >
                 Login here !
               </span>
@@ -271,7 +278,7 @@ export default function SignUp({ onNavigate, onSuccess }) {
               Already have an account?{' '}
               <span
                 className="text-[#942fcd] cursor-pointer hover:underline"
-                onClick={() => onNavigate?.('signin')}
+                onClick={() => navigate('/login')}
               >
                 Log in
               </span>
@@ -280,6 +287,15 @@ export default function SignUp({ onNavigate, onSuccess }) {
           </form>
         </div>
       </div>
+
+      {showJiraAuth && (
+        <JiraAuth
+          onConnect={() => {
+            setLoggedIn(true)
+            navigate(selectedRole === 'admin' ? '/admin' : '/dashboard')
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import Button from '../design-system/components/Button'
 
@@ -5,7 +6,8 @@ const fadeUp = (delay) => ({
   animation: `heroFadeUp 0.7s ease ${delay}s both`,
 })
 
-export default function Hero({ onNavigate }) {
+export default function Hero() {
+  const navigate = useNavigate()
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden"
@@ -81,14 +83,14 @@ export default function Hero({ onNavigate }) {
         {/* Buttons */}
         <div className="flex items-center gap-6 sm:gap-8 md:gap-[50px]" style={fadeUp(0.45)}>
           <Button
-            onClick={() => onNavigate?.('signup')}
+            onClick={() => navigate('/signup')}
             className="w-[130px] h-[50px] text-[14px] sm:w-[150px] sm:h-[58px] sm:text-[15px] md:w-[170px] md:h-[65px] md:text-[16px]"
           >
             Sign up
           </Button>
 
           <Button
-            onClick={() => onNavigate?.('signin')}
+            onClick={() => navigate('/login')}
             className="w-[130px] h-[50px] text-[14px] sm:w-[150px] sm:h-[58px] sm:text-[15px] md:w-[170px] md:h-[65px] md:text-[16px]"
           >
             Sign in

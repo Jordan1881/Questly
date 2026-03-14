@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import DifficultyBadge, { DIFFICULTY_STYLES } from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
+import { useAuthStore } from '../stores/authStore'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -288,7 +289,8 @@ function CalendarCard({ tasks }) {
 
 // ── TaskList page ────────────────────────────────────────────
 
-export default function TaskList({ onNavigate, userRole = 'developer' }) {
+export default function TaskList() {
+  const userRole = useAuthStore((s) => s.userRole)
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all')
   const [tasks, setTasks] = useState(INITIAL_TASKS)
@@ -311,16 +313,10 @@ export default function TaskList({ onNavigate, userRole = 'developer' }) {
       <Sidebar
         isOpen={showSidebar}
         onClose={() => setShowSidebar(false)}
-        activePage="tasklist"
-        onNavigate={onNavigate}
-        userRole={userRole}
       />
 
       <PageHeader
-        activePage="tasklist"
-        onNavigate={onNavigate}
         onOpenSidebar={() => setShowSidebar(true)}
-        userRole={userRole}
       />
 
       {/* ── Main content ── */}
