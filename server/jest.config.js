@@ -13,4 +13,5 @@ module.exports = {
   ],
   coverageReporters: ['text', 'json', 'html'],
   passWithNoTests: true,
+  maxWorkers: 1,
 }

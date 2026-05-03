@@ -15,6 +15,12 @@ dist-ssr
 # Backend env (never commit secrets)
 server/.env
 
+# Claude Code local config
+.claude/
+
+# Test coverage output
+coverage/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
