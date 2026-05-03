@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import signUpImg from '../assets/signUp-img.png'
 import FormButton from '../design-system/components/FormButton'
+import JiraAuth from '../overlays/JiraAuth'
+import { useAuthStore } from '../stores/authStore'
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -81,15 +84,33 @@ const CrownIcon = () => (
   </svg>
 )
 
-export default function SignUp({ onNavigate, onSuccess }) {
+export default function SignUp() {
+  const navigate = useNavigate()
+  const { register, isLoading, error, clearError } = useAuthStore()
   const [form, setForm] = useState({ email: '', username: '', password: '', confirmPassword: '' })
   const [selectedRole, setSelectedRole] = useState('developer')
+  const [showJiraAuth, setShowJiraAuth] = useState(false)
+  const [validationError, setValidationError] = useState(null)
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSuccess?.(selectedRole)
+    setValidationError(null)
+    clearError()
+
+    if (form.password !== form.confirmPassword) {
+      setValidationError('Passwords do not match')
+      return
+    }
+
+    const result = await register({
+      email: form.email,
+      username: form.username,
+      password: form.password,
+      role: selectedRole,
+    })
+    if (result.ok) setShowJiraAuth(true)
   }
 
   return (
@@ -100,7 +121,7 @@ export default function SignUp({ onNavigate, onSuccess }) {
         src={logoHorizontal}
         alt="Questly"
         className="absolute top-[60px] left-[75px] w-[180px] cursor-pointer"
-        onClick={() => onNavigate?.('hero')}
+        onClick={() => navigate('/')}
         style={{ height: 'auto' }}
       />
 
@@ -125,7 +146,7 @@ export default function SignUp({ onNavigate, onSuccess }) {
               You can{' '}
               <span
                 className="text-[#4d47c3] cursor-pointer hover:underline"
-                onClick={() => onNavigate?.('signin')}
+                onClick={() => navigate('/login')}
               >
                 Login here !
               </span>
@@ -154,6 +175,13 @@ export default function SignUp({ onNavigate, onSuccess }) {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            {/* Error banner */}
+            {(validationError || error) && (
+              <div className="rounded-[8px] bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">
+                {validationError ?? error}
+              </div>
+            )}
 
             {/* Role toggle cards */}
             <div className="flex gap-3">
@@ -231,8 +259,8 @@ export default function SignUp({ onNavigate, onSuccess }) {
             </div>
 
             {/* Submit */}
-            <FormButton type="submit" className="w-full">
-              Create Account
+            <FormButton type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Creating account…' : 'Create Account'}
             </FormButton>
 
             {/* Divider */}
@@ -271,7 +299,7 @@ export default function SignUp({ onNavigate, onSuccess }) {
               Already have an account?{' '}
               <span
                 className="text-[#942fcd] cursor-pointer hover:underline"
-                onClick={() => onNavigate?.('signin')}
+                onClick={() => navigate('/login')}
               >
                 Log in
               </span>
@@ -280,6 +308,14 @@ export default function SignUp({ onNavigate, onSuccess }) {
           </form>
         </div>
       </div>
+
+      {showJiraAuth && (
+        <JiraAuth
+          onConnect={() => {
+            navigate(selectedRole === 'admin' ? '/admin' : '/dashboard')
+          }}
+        />
+      )}
     </div>
   )
 }
