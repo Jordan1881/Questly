@@ -50,16 +50,17 @@ const inputClass = `
 
 export default function SignIn() {
   const navigate = useNavigate()
-  const { setUserRole, setLoggedIn } = useAuthStore()
+  const { login, isLoading, error, clearError } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showJiraAuth, setShowJiraAuth] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setUserRole('developer')
-    setShowJiraAuth(true)
+    clearError()
+    const result = await login({ email, password })
+    if (result.ok) setShowJiraAuth(true)
   }
 
   return (
@@ -113,6 +114,13 @@ export default function SignIn() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-8">
 
+            {/* Error banner */}
+            {error && (
+              <div className="rounded-[8px] bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">
+                {error}
+              </div>
+            )}
+
             {/* Email / Username */}
             <div className="flex flex-col gap-2">
               <label className="text-[14px] font-medium text-black">Email or Username</label>
@@ -154,8 +162,8 @@ export default function SignIn() {
             </div>
 
             {/* Submit */}
-            <FormButton type="submit" className="w-full">
-              Sign in
+            <FormButton type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Signing in…' : 'Sign in'}
             </FormButton>
 
             {/* Divider */}
@@ -204,7 +212,6 @@ export default function SignIn() {
         <JiraAuth
           onClose={() => setShowJiraAuth(false)}
           onConnect={() => {
-            setLoggedIn(true)
             setShowJiraAuth(false)
             navigate('/dashboard')
           }}
