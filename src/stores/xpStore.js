@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+// import { apiFetch } from '../lib/api'   ← uncomment when XP endpoints are live
 
 export const useXpStore = create((set) => ({
   userXP: 1250,
