@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import FormButton from '../design-system/components/FormButton'
+import JiraAuth from '../overlays/JiraAuth'
+import { useAuthStore } from '../stores/authStore'
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -45,14 +48,19 @@ const inputClass = `
   transition-colors duration-200
 `
 
-export default function SignIn({ onNavigate, onSuccess }) {
+export default function SignIn() {
+  const navigate = useNavigate()
+  const { login, isLoading, error, clearError } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showJiraAuth, setShowJiraAuth] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSuccess?.()
+    clearError()
+    const result = await login({ email, password })
+    if (result.ok) setShowJiraAuth(true)
   }
 
   return (
@@ -63,7 +71,7 @@ export default function SignIn({ onNavigate, onSuccess }) {
         src={logoHorizontal}
         alt="Questly"
         className="absolute top-[60px] left-[75px] w-[180px] cursor-pointer"
-        onClick={() => onNavigate?.('hero')}
+        onClick={() => navigate('/')}
         style={{ height: 'auto' }}
       />
 
@@ -88,7 +96,7 @@ export default function SignIn({ onNavigate, onSuccess }) {
               You can{' '}
               <span
                 className="text-[#4d47c3] cursor-pointer hover:underline"
-                onClick={() => onNavigate?.('signup')}
+                onClick={() => navigate('/signup')}
               >
                 Register here !
               </span>
@@ -105,6 +113,13 @@ export default function SignIn({ onNavigate, onSuccess }) {
           <h2 className="text-[32px] font-medium text-black leading-tight">Sign in</h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+
+            {/* Error banner */}
+            {error && (
+              <div className="rounded-[8px] bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">
+                {error}
+              </div>
+            )}
 
             {/* Email / Username */}
             <div className="flex flex-col gap-2">
@@ -147,8 +162,8 @@ export default function SignIn({ onNavigate, onSuccess }) {
             </div>
 
             {/* Submit */}
-            <FormButton type="submit" className="w-full">
-              Sign in
+            <FormButton type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Signing in…' : 'Sign in'}
             </FormButton>
 
             {/* Divider */}
@@ -192,6 +207,17 @@ export default function SignIn({ onNavigate, onSuccess }) {
           </form>
         </div>
       </div>
+
+      {showJiraAuth && (
+        <JiraAuth
+          onClose={() => setShowJiraAuth(false)}
+          onConnect={() => {
+            setShowJiraAuth(false)
+            navigate('/dashboard')
+          }}
+        />
+      )}
+
     </div>
   )
 }
