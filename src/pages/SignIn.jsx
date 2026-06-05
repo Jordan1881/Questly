@@ -4,6 +4,7 @@ import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import FormButton from '../design-system/components/FormButton'
 import JiraAuth from '../overlays/JiraAuth'
 import { useAuthStore } from '../stores/authStore'
+import { resolvePostAuthPath } from '../lib/authRedirect'
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -211,9 +212,9 @@ export default function SignIn() {
       {showJiraAuth && (
         <JiraAuth
           onClose={() => setShowJiraAuth(false)}
-          onConnect={() => {
+          onConnect={async () => {
             setShowJiraAuth(false)
-            navigate('/dashboard')
+            navigate(await resolvePostAuthPath())
           }}
         />
       )}

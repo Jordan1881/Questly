@@ -1,10 +1,20 @@
 const db = require('../config/db')
 
 const TABLE = 'users'
+const PUBLIC_FIELDS = [
+  'id',
+  'email',
+  'username',
+  'role',
+  'avatar_url',
+  'workspace_id',
+  'current_sprint_xp',
+  'lifetime_xp',
+]
 
 function strip(user) {
   if (!user) return null
-  const { password_hash, ...safe } = user
+  const { password_hash, jira_access_token, jira_account_id, ...safe } = user
   return safe
 }
 
@@ -24,4 +34,20 @@ async function create({ email, username, password_hash, role }) {
   return strip(user)
 }
 
-module.exports = { findByEmail, findById, create }
+async function listByWorkspace(workspace_id) {
+  return db(TABLE).where({ workspace_id }).select(PUBLIC_FIELDS)
+}
+
+async function assignWorkspace(user_id, workspace_id) {
+  const [user] = await db(TABLE).where({ id: user_id }).update({ workspace_id }).returning('*')
+  return strip(user)
+}
+
+module.exports = {
+  findByEmail,
+  findById,
+  create,
+  listByWorkspace,
+  assignWorkspace,
+  strip,
+}

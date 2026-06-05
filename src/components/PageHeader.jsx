@@ -4,11 +4,13 @@ import { useAuthStore } from '../stores/authStore'
 
 // Maps old page IDs to URL paths
 const PAGE_PATHS = {
-  dashboard:  '/dashboard',
-  profile:    '/profile',
-  tasklist:   '/tasks',
-  rewardshop: '/shop',
-  admin:      '/admin',
+  dashboard:       '/dashboard',
+  profile:         '/profile',
+  tasklist:        '/tasks',
+  rewardshop:      '/shop',
+  admin:           '/admin',
+  workspacecreate: '/workspace/create',
+  workspacejoin:   '/workspace/join',
 }
 
 const DEV_NAV_LINKS = [
@@ -19,9 +21,10 @@ const DEV_NAV_LINKS = [
 ]
 
 const ADMIN_NAV_LINKS = [
-  { id: 'rewardshop', label: 'Reward Shop' },
-  { id: 'profile',    label: 'Profile'     },
-  { id: 'admin',      label: 'Admin'       },
+  { id: 'workspacecreate', label: 'Workspace'    },
+  { id: 'admin',           label: 'Admin'        },
+  { id: 'rewardshop',      label: 'Reward Shop'  },
+  { id: 'profile',         label: 'Profile'      },
 ]
 
 // Shared top header used by all inner pages.
@@ -31,8 +34,12 @@ export default function PageHeader({ onOpenSidebar }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const userRole = useAuthStore((s) => s.userRole)
+  const user = useAuthStore((s) => s.user)
 
-  const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : DEV_NAV_LINKS
+  const devLinks = !user?.workspace_id
+    ? [...DEV_NAV_LINKS, { id: 'workspacejoin', label: 'Join Workspace' }]
+    : DEV_NAV_LINKS
+  const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : devLinks
   const isProfile = pathname === '/profile'
   const isActive = (id) => pathname === PAGE_PATHS[id]
 
