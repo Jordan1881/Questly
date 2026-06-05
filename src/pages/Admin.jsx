@@ -4,6 +4,8 @@ import PageHeader from '../components/PageHeader'
 import { useAuthStore } from '../stores/authStore'
 import { useXpStore } from '../stores/xpStore'
 import { useShopContext } from '../AppProviders'
+import JoinRequestsTab from '../components/JoinRequestsTab'
+import { useWorkspaceStore } from '../stores/workspaceStore'
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -599,14 +601,17 @@ export default function Admin() {
   const [activeTab, setActiveTab]         = useState('team')
   const [developers, setDevelopers]       = useState(INITIAL_DEVELOPERS)
   const [mockPending, setMockPending]     = useState(INITIAL_MOCK_PENDING)
+  const pendingJoinRequests = useWorkspaceStore((s) => s.pendingJoinRequests)
 
   const totalPending = mockPending.length + pendingRequests.size
+  const totalJoinPending = pendingJoinRequests.length
 
   const TABS = [
-    { id: 'team',    label: 'Team'        },
-    { id: 'rewards', label: 'Rewards'     },
-    { id: 'xp',      label: 'XP Settings' },
-    { id: 'users',   label: 'Users'       },
+    { id: 'team',    label: 'Team'           },
+    { id: 'joins',   label: 'Join Requests'  },
+    { id: 'rewards', label: 'Rewards'        },
+    { id: 'xp',      label: 'XP Settings'    },
+    { id: 'users',   label: 'Users'          },
   ]
 
   return (
@@ -635,6 +640,14 @@ export default function Admin() {
               }`}
             >
               {label}
+              {id === 'joins' && totalJoinPending > 0 && (
+                <span
+                  className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ color: '#6366f1', background: 'rgba(99,102,241,0.1)' }}
+                >
+                  {totalJoinPending}
+                </span>
+              )}
               {id === 'rewards' && totalPending > 0 && (
                 <span
                   className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
@@ -654,6 +667,7 @@ export default function Admin() {
         {activeTab === 'team' && (
           <TeamTab developers={developers} />
         )}
+        {activeTab === 'joins' && <JoinRequestsTab />}
         {activeTab === 'rewards' && (
           <RewardsTab
             mockPending={mockPending}

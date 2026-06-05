@@ -27,6 +27,20 @@ export const useAuthStore = create(
       setLoggedIn: (val) => set({ isLoggedIn: val }),
       clearError: () => set({ error: null }),
 
+      fetchMe: async () => {
+        const { token } = get()
+        if (!token) return null
+        try {
+          const { user } = await authFetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          set({ user, userRole: user.role })
+          return user
+        } catch {
+          return null
+        }
+      },
+
       login: async (credentials) => {
         set({ isLoading: true, error: null })
         try {
