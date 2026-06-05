@@ -201,9 +201,44 @@ describe('PATCH /api/tasks/:id/completion', () => {
 })
 
 describe('jiraClient helpers', () => {
-  test('parseDifficulty maps Jira values to easy, medium, or hard', () => {
-    expect(jiraClient.parseDifficulty('Easy')).toBe('easy')
-    expect(jiraClient.parseDifficulty('Hard')).toBe('hard')
-    expect(jiraClient.parseDifficulty(null)).toBe('medium')
+  test('parseDifficultyFromStoryPoints maps story points to easy, medium, or hard', () => {
+    expect(jiraClient.parseDifficultyFromStoryPoints(1)).toBe('easy')
+    expect(jiraClient.parseDifficultyFromStoryPoints(2)).toBe('easy')
+    expect(jiraClient.parseDifficultyFromStoryPoints(3)).toBe('medium')
+    expect(jiraClient.parseDifficultyFromStoryPoints(5)).toBe('medium')
+    expect(jiraClient.parseDifficultyFromStoryPoints(8)).toBe('hard')
+    expect(jiraClient.parseDifficultyFromStoryPoints(null)).toBe('medium')
+  })
+
+  test('mapIssues inherits parent story points for subtasks', () => {
+    const fieldId = 'customfield_10016'
+    const mapped = jiraClient.mapIssues(
+      [
+        {
+          id: '1',
+          key: 'SCRUM-1',
+          fields: {
+            summary: 'Parent',
+            status: { name: 'To Do' },
+            priority: { name: 'Medium' },
+            [fieldId]: 8,
+          },
+        },
+        {
+          id: '2',
+          key: 'SCRUM-2',
+          fields: {
+            summary: 'Subtask',
+            status: { name: 'To Do' },
+            priority: { name: 'Medium' },
+            parent: { key: 'SCRUM-1' },
+          },
+        },
+      ],
+      fieldId,
+    )
+
+    expect(mapped[0]).toMatchObject({ difficulty: 'hard', xpReward: 70, storyPoints: 8 })
+    expect(mapped[1]).toMatchObject({ difficulty: 'hard', xpReward: 70, storyPoints: 8 })
   })
 })

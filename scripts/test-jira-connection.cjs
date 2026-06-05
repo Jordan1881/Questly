@@ -31,7 +31,9 @@ const apiToken =
     ? process.env.JIRA_DEVELOPER_API_TOKEN
     : process.env.JIRA_ADMIN_API_TOKEN
 const accountId = process.env.JIRA_DEVELOPER_ACCOUNT_ID || process.env.JIRA_ACCOUNT_ID
-const difficultyField = process.env.JIRA_DIFFICULTY_FIELD_ID
+const storyPointsFieldId = process.env.JIRA_STORY_POINTS_FIELD_ID
+
+const STORY_POINT_FIELD_NAMES = ['story point estimate', 'story points', 'story point']
 
 function missing() {
   const required = ['JIRA_SITE_URL', 'JIRA_PROJECT_KEY']
@@ -61,6 +63,18 @@ async function jiraGet(path) {
   return { ok: res.ok, status: res.status, body }
 }
 
+async function resolveStoryPointsFieldId() {
+  if (storyPointsFieldId) return storyPointsFieldId
+
+  const fieldsRes = await jiraGet('/rest/api/3/field')
+  if (!fieldsRes.ok) return null
+
+  const match = fieldsRes.body.find((field) =>
+    STORY_POINT_FIELD_NAMES.some((name) => field.name?.toLowerCase().includes(name)),
+  )
+  return match?.id || null
+}
+
 async function main() {
   console.log(`\n🔍 Jira connection test (${role})\n`)
 
@@ -76,7 +90,13 @@ async function main() {
   console.log(`Project: ${projectKey}`)
   console.log(`Email:   ${email}`)
   if (role === 'developer' && accountId) console.log(`Account: ${accountId}`)
-  if (difficultyField) console.log(`Difficulty field: ${difficultyField}`)
+
+  const resolvedStoryPointsField = await resolveStoryPointsFieldId()
+  if (resolvedStoryPointsField) {
+    console.log(`Story points field: ${resolvedStoryPointsField}`)
+  } else {
+    console.log('Story points field: not found (Questly will default difficulty to Medium)')
+  }
   console.log()
 
   const myself = await jiraGet('/rest/api/3/myself')
@@ -96,10 +116,11 @@ async function main() {
   console.log(`✅ Project "${project.body.name}" (${project.body.key}) accessible`)
 
   const jql = encodeURIComponent(`project = ${projectKey} ORDER BY created DESC`)
-  // Jira's /search/jql endpoint returns only issue ids unless fields are requested.
-  const fields = encodeURIComponent('summary')
+  const fields = ['summary']
+  if (resolvedStoryPointsField) fields.push(resolvedStoryPointsField)
+  const fieldList = encodeURIComponent(fields.join(','))
   const search = await jiraGet(
-    `/rest/api/3/search/jql?jql=${jql}&maxResults=3&fields=${fields}`,
+    `/rest/api/3/search/jql?jql=${jql}&maxResults=3&fields=${fieldList}`,
   )
   if (!search.ok) {
     console.error(`❌ JQL search failed — HTTP ${search.status}`)
@@ -110,7 +131,12 @@ async function main() {
   const issues = search.body.issues || []
   console.log(`✅ JQL search returned ${issues.length} issue(s) (sample)`)
   issues.forEach((issue) => {
-    console.log(`   - ${issue.key}: ${issue.fields?.summary ?? '(no summary)'}`)
+    const points =
+      resolvedStoryPointsField != null
+        ? issue.fields?.[resolvedStoryPointsField]
+        : undefined
+    const pointsLabel = points == null ? 'no story points' : `${points} pts`
+    console.log(`   - ${issue.key}: ${issue.fields?.summary ?? '(no summary)'} (${pointsLabel})`)
   })
 
   console.log('\n✅ Jira API token is valid and project is reachable.\n')
