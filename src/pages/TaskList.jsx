@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import DifficultyBadge, { DIFFICULTY_STYLES } from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
 import { useAuthStore } from '../stores/authStore'
+import { useTaskStore } from '../stores/taskStore'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -43,34 +44,6 @@ const ChevronRightIcon = () => (
 
 // ── Data ────────────────────────────────────────────────────
 
-const INITIAL_TASKS = [
-  {
-    id: 1, jiraId: 'PROJ-123', difficulty: 'HARD', xp: 70,
-    title: 'Complete React Dashboard',
-    desc: 'Build the analytics dashboard with charts and user metrics for the admin panel.',
-    due: 'Feb 24, 2026', highPriority: false, done: false,
-  },
-  {
-    id: 2, jiraId: 'PROJ-124', difficulty: 'MEDIUM', xp: 40,
-    title: 'Review Pull Requests',
-    desc: 'Go through team PRs and provide feedback on code quality and implementation.',
-    due: 'Feb 22, 2026', highPriority: true, done: false,
-  },
-  {
-    id: 3, jiraId: 'PROJ-125', difficulty: 'EASY', xp: 20,
-    title: 'Update Documentation',
-    desc: 'Add new API endpoints documentation and update the getting started guide.',
-    due: 'Feb 28, 2026', highPriority: false, done: false,
-  },
-  {
-    id: 4, jiraId: 'PROJ-122', difficulty: 'HARD', xp: 70,
-    title: 'Fix Critical Bug in Payment Flow',
-    desc: 'Investigate and resolve the payment processing error reported by users.',
-    due: 'Feb 21, 2026', highPriority: false, done: true,
-  },
-]
-
-// Filter tab definitions — group 1 = status, group 2 = difficulty
 const FILTERS = [
   { id: 'all',          label: 'All',           group: 1 },
   { id: 'completed',    label: 'Completed',     group: 1 },
@@ -179,7 +152,9 @@ function CalendarCard({ tasks }) {
   }
 
   // Parse "Feb 24, 2026" → Date
-  const taskDates = tasks.map(t => ({ date: new Date(t.due), done: t.done }))
+  const taskDates = tasks
+    .filter((t) => t.due && t.due !== 'No due date')
+    .map((t) => ({ date: new Date(t.due), done: t.done }))
 
   const getTasksForDay = (day) =>
     taskDates.filter(t =>
@@ -291,12 +266,23 @@ function CalendarCard({ tasks }) {
 
 export default function TaskList() {
   const userRole = useAuthStore((s) => s.userRole)
+  const tasks = useTaskStore((s) => s.tasks)
+  const isLoading = useTaskStore((s) => s.isLoading)
+  const error = useTaskStore((s) => s.error)
+  const fetchTasks = useTaskStore((s) => s.fetchTasks)
+  const toggleTaskCompletion = useTaskStore((s) => s.toggleTaskCompletion)
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all')
-  const [tasks, setTasks] = useState(INITIAL_TASKS)
 
-  const toggleTask = (id) =>
-    setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t))
+  useEffect(() => {
+    if (userRole === 'developer') {
+      fetchTasks().catch(() => {})
+    }
+  }, [userRole, fetchTasks])
+
+  const toggleTask = (id) => {
+    toggleTaskCompletion(id).catch(() => {})
+  }
 
   const filtered = tasks.filter(t => {
     if (activeFilter === 'completed')    return t.done
@@ -338,7 +324,9 @@ export default function TaskList() {
                   <span className="text-[14px] font-medium text-[#059669]">Synced with Jira</span>
                 </div>
                 <div className="w-px h-4 bg-[#86efac]" />
-                <span className="text-[13px] text-[#6b7280]">Last updated 5 min ago</span>
+                <span className="text-[13px] text-[#6b7280]">
+                  {isLoading ? 'Syncing tasks…' : error ? 'Sync unavailable' : 'Synced with Jira'}
+                </span>
               </div>
             </div>
 
@@ -375,7 +363,11 @@ export default function TaskList() {
 
             {/* Task cards */}
             <div className="flex flex-col gap-4 mb-6">
-              {filtered.length > 0 ? (
+              {isLoading && tasks.length === 0 ? (
+                <div className="bg-white border border-[#e5e7eb] rounded-[12px] px-6 py-10 text-center text-[#6b7280]">
+                  Loading tasks from Jira…
+                </div>
+              ) : filtered.length > 0 ? (
                 filtered.map(task => (
                   <TaskCard key={task.id} task={task} onToggle={toggleTask} />
                 ))
