@@ -96,7 +96,11 @@ async function main() {
   console.log(`✅ Project "${project.body.name}" (${project.body.key}) accessible`)
 
   const jql = encodeURIComponent(`project = ${projectKey} ORDER BY created DESC`)
-  const search = await jiraGet(`/rest/api/3/search/jql?jql=${jql}&maxResults=3`)
+  // Jira's /search/jql endpoint returns only issue ids unless fields are requested.
+  const fields = encodeURIComponent('summary')
+  const search = await jiraGet(
+    `/rest/api/3/search/jql?jql=${jql}&maxResults=3&fields=${fields}`,
+  )
   if (!search.ok) {
     console.error(`❌ JQL search failed — HTTP ${search.status}`)
     console.error(JSON.stringify(search.body, null, 2))
