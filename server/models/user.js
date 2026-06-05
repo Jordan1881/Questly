@@ -47,18 +47,29 @@ async function findByJiraAccountId(jira_account_id, workspace_id) {
   return db(TABLE).where({ jira_account_id, workspace_id }).first()
 }
 
+async function findByIdInternal(id) {
+  return db(TABLE).where({ id }).first()
+}
+
 async function assignWorkspace(user_id, workspace_id) {
   const [user] = await db(TABLE).where({ id: user_id }).update({ workspace_id }).returning('*')
+  return strip(user)
+}
+
+async function updateJiraAccountId(user_id, jira_account_id) {
+  const [user] = await db(TABLE).where({ id: user_id }).update({ jira_account_id }).returning('*')
   return strip(user)
 }
 
 module.exports = {
   findByEmail,
   findById,
+  findByIdInternal,
   create,
   listByWorkspace,
   listDevelopersByWorkspace,
   findByJiraAccountId,
   assignWorkspace,
+  updateJiraAccountId,
   strip,
 }

@@ -1,6 +1,7 @@
 const JoinRequestModel = require('../models/joinRequest')
 const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
+const { ensureDeveloperJiraAccountId } = require('../services/jiraAssignee')
 
 function isWorkspaceAdmin(user, workspace) {
   return workspace.admin_id === user.id
@@ -86,6 +87,8 @@ async function review(req, res, next) {
 
     if (status === 'approved') {
       await UserModel.assignWorkspace(joinRequest.user_id, workspace.id)
+      const developer = await UserModel.findByIdInternal(joinRequest.user_id)
+      await ensureDeveloperJiraAccountId(developer)
     }
 
     res.json({ join_request: updated })

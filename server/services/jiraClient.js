@@ -155,10 +155,30 @@ function mapIssue(issue, storyPointsFieldId, storyPointsByKey = new Map()) {
   }
 }
 
+async function lookupAccountIdByEmail(email, overrides = {}) {
+  if (!email) return null
+
+  const credentials = getCredentials(overrides)
+  const { siteUrl, email: apiEmail, apiToken } = credentials
+  const query = encodeURIComponent(email)
+  const users = await jiraGet(`/rest/api/3/user/search?query=${query}`, {
+    siteUrl,
+    email: apiEmail,
+    apiToken,
+  })
+
+  const match = (users || []).find(
+    (user) => user.emailAddress?.toLowerCase() === email.toLowerCase(),
+  )
+
+  return match?.accountId || null
+}
+
 module.exports = {
   XP_BY_DIFFICULTY,
   STORY_POINT_FIELD_NAMES,
   fetchProjectIssues,
+  lookupAccountIdByEmail,
   mapIssue,
   mapIssues,
   parseDifficultyFromStoryPoints,

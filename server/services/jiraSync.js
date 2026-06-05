@@ -1,6 +1,6 @@
-const db = require('../config/db')
 const config = require('../config')
 const jiraClient = require('./jiraClient')
+const { ensureWorkspaceDeveloperJiraIds } = require('./jiraAssignee')
 const TaskModel = require('../models/task')
 const TaskAssignmentModel = require('../models/taskAssignment')
 const UserModel = require('../models/user')
@@ -13,7 +13,10 @@ async function syncWorkspaceTasks(workspace, overrides = {}) {
     siteUrl: workspace.jira_site_url || overrides.siteUrl,
   })
 
-  const developers = await UserModel.listDevelopersByWorkspace(workspace.id)
+  let developers = await UserModel.listDevelopersByWorkspace(workspace.id)
+  if (developers.length > 0) {
+    developers = await ensureWorkspaceDeveloperJiraIds(developers, overrides)
+  }
   const developersByJiraId = new Map(
     developers.filter((dev) => dev.jira_account_id).map((dev) => [dev.jira_account_id, dev]),
   )

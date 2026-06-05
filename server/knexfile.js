@@ -37,8 +37,17 @@ module.exports = {
 
   production: {
     ...base,
-    connection: process.env.DATABASE_URL,
+    connection:
+      process.env.NODE_ENV === 'production' && process.env.DATABASE_URL
+        ? process.env.DATABASE_URL
+        : {
+            host: process.env.DB_HOST || 'localhost',
+            port: Number(process.env.DB_PORT) || 5432,
+            database: process.env.DB_NAME || 'questly_dev',
+            user: process.env.DB_USER || 'postgres',
+            password: process.env.DB_PASSWORD || 'postgres',
+          },
     pool: { min: 2, max: 10 },
-    ssl: { rejectUnauthorized: false },
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
   },
 }

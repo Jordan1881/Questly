@@ -1,7 +1,13 @@
 require('dotenv').config()
 const request = require('supertest')
+const jiraClient = require('../services/jiraClient')
 const createApp = require('../app')
 const db = require('../config/db')
+
+jest.mock('../services/jiraClient', () => ({
+  ...jest.requireActual('../services/jiraClient'),
+  lookupAccountIdByEmail: jest.fn().mockResolvedValue(null),
+}))
 
 const app = createApp()
 
@@ -10,6 +16,11 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
+  jest.clearAllMocks()
+  jiraClient.lookupAccountIdByEmail.mockResolvedValue(null)
+  delete process.env.JIRA_DEVELOPER_EMAIL
+  delete process.env.JIRA_DEVELOPER_ACCOUNT_ID
+  delete process.env.JIRA_ACCOUNT_ID
   await db('join_requests').del()
   await db('users').del()
   await db('workspaces').del()
@@ -116,6 +127,30 @@ describe('join request flow', () => {
       .set('Authorization', `Bearer ${devToken}`)
 
     expect(accessRes.status).toBe(200)
+  })
+
+  test('approve sets jira_account_id when developer email matches env', async () => {
+    process.env.JIRA_DEVELOPER_EMAIL = 'dev@test.com'
+    process.env.JIRA_DEVELOPER_ACCOUNT_ID = 'jira-account-flow'
+
+    const { token: adminToken, workspace } = await createWorkspaceAsAdmin('Jira Co', 'jira')
+    const { token: devToken, user: devUser } = await registerAndLogin('developer', '')
+
+    const submitRes = await request(app)
+      .post(`/api/workspaces/${workspace.id}/join-requests`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+
+    const approveRes = await request(app)
+      .patch(`/api/workspaces/${workspace.id}/join-requests/${submitRes.body.join_request.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'approved' })
+
+    expect(approveRes.status).toBe(200)
+
+    const devRow = await db('users').where({ id: devUser.id }).first()
+    expect(devRow.workspace_id).toBe(workspace.id)
+    expect(devRow.jira_account_id).toBe('jira-account-flow')
   })
 
   test('developer with workspace cannot submit another join request', async () => {
