@@ -58,7 +58,29 @@ Add these in **Cursor → Cloud Agent → Secrets** for the Questly repo (names 
 | `JIRA_DEVELOPER_EMAIL` | Developer Atlassian email |
 | `JIRA_DEVELOPER_API_TOKEN` | Developer API token |
 | `JIRA_DEVELOPER_ACCOUNT_ID` or `JIRA_ACCOUNT_ID` | Jira accountId for assignee mapping |
-| `JIRA_DIFFICULTY_FIELD_ID` | e.g. `customfield_10001` |
+| `JIRA_STORY_POINTS_FIELD_ID` | Optional — see below |
+
+**Optional override: `JIRA_STORY_POINTS_FIELD_ID`**
+
+Questly auto-detects Jira's standard **Story point estimate** field by name. **Leave this secret unset** in most setups.
+
+Set `JIRA_STORY_POINTS_FIELD_ID` only if:
+
+- auto-detection fails on a different Atlassian site, or
+- your team uses a non-standard story points field name
+
+Example: `JIRA_STORY_POINTS_FIELD_ID=customfield_10016`
+
+Questly maps **difficulty and XP from Jira story points** (standard Scrum field):
+
+| Story points | Difficulty | XP |
+|---|---|---|
+| 1–2 | Easy | 20 |
+| 3–5 | Medium | 40 |
+| 8+ | Hard | 70 |
+| unset | Medium | 40 |
+
+Subtasks without story points inherit the parent issue's points. Priority is used only for the High Priority badge, not XP.
 
 After secrets are injected, verify connectivity:
 
