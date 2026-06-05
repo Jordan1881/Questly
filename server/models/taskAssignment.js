@@ -35,9 +35,9 @@ async function findForUser(task_id, user_id) {
   return db(TABLE).where({ task_id, user_id }).first()
 }
 
-async function setCompleted(task_id, user_id, completed) {
-  const patch = { completed_at: completed ? db.fn.now() : null }
-  const [assignment] = await db(TABLE).where({ task_id, user_id }).update(patch).returning('*')
+async function setCompleted(task_id, user_id, completed, trx = db) {
+  const patch = { completed_at: completed ? trx.fn.now() : null }
+  const [assignment] = await trx(TABLE).where({ task_id, user_id }).update(patch).returning('*')
   return assignment ?? null
 }
 
