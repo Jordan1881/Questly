@@ -61,7 +61,11 @@ describe('taskStore', () => {
   it('toggleTaskCompletion updates completion through the API', async () => {
     const task = createMockTask({ done: false })
     useTaskStore.setState({ tasks: [task] })
-    apiFetch.mockResolvedValue({ task: { ...task, done: true } })
+    apiFetch.mockResolvedValue({
+      task: { ...task, done: true },
+      user: { current_sprint_xp: 40, lifetime_xp: 40, coin_balance: 4 },
+      reward: { xpDelta: 40, coinsDelta: 4 },
+    })
 
     await useTaskStore.getState().toggleTaskCompletion(task.id)
 

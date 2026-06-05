@@ -45,6 +45,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   jest.clearAllMocks()
   jiraClient.fetchProjectIssues.mockResolvedValue(MOCK_ISSUES)
+  await db('xp_transactions').del()
   await db('task_assignments').del()
   await db('tasks').del()
   await db('join_requests').del()
@@ -197,6 +198,72 @@ describe('PATCH /api/tasks/:id/completion', () => {
       .where({ task_id: taskId })
       .first()
     expect(assignment.completed_at).not.toBeNull()
+  })
+
+  test('completing a task awards XP and coins', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('reward')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const task = listRes.body.tasks.find((item) => item.xp === 20) || listRes.body.tasks[0]
+
+    const res = await request(app)
+      .patch(`/api/tasks/${task.id}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: true })
+
+    expect(res.status).toBe(200)
+    expect(res.body.reward).toMatchObject({ xpDelta: 20, coinsDelta: 2 })
+    expect(res.body.user).toMatchObject({
+      current_sprint_xp: 20,
+      lifetime_xp: 20,
+      coin_balance: 2,
+    })
+
+    const devUser = await db('users').where({ id: devUserId }).first()
+    expect(devUser.current_sprint_xp).toBe(20)
+    expect(devUser.coin_balance).toBe(2)
+
+    const tx = await db('xp_transactions')
+      .where({ user_id: devUserId, task_id: task.id, reason: 'task_completed' })
+      .where('amount', '>', 0)
+      .first()
+    expect(tx.amount).toBe(20)
+  })
+
+  test('uncompleting a task revokes XP and coins', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('revoke')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const taskId = listRes.body.tasks[0].id
+
+    await request(app)
+      .patch(`/api/tasks/${taskId}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: true })
+
+    const res = await request(app)
+      .patch(`/api/tasks/${taskId}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: false })
+
+    expect(res.status).toBe(200)
+    expect(res.body.reward.xpDelta).toBeLessThan(0)
+    expect(res.body.user.current_sprint_xp).toBe(0)
+    expect(res.body.user.coin_balance).toBe(0)
+
+    const devUser = await db('users').where({ id: devUserId }).first()
+    expect(devUser.current_sprint_xp).toBe(0)
+    expect(devUser.coin_balance).toBe(0)
   })
 })
 

@@ -104,3 +104,5 @@ curl -s http://localhost:3001/api/tasks \
 ```
 
 Admin triggers `POST /api/tasks/sync/:workspaceId` to pull Jira issues into Postgres. Developers fetch assigned tasks via `GET /api/tasks`.
+
+Completing a task awards XP from `tasks.xp_reward` and coins at **100 XP = 10 coins** (e.g. 40 XP → 4 coins). Uncompleting revokes both. Balances are returned on `PATCH /api/tasks/:id/completion` and in `GET /api/auth/me`.

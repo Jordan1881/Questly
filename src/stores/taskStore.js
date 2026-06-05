@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { apiFetch } from '../lib/api'
+import { useXpStore } from './xpStore'
 
 export const useTaskStore = create((set, get) => ({
   tasks: [],
@@ -47,13 +48,14 @@ export const useTaskStore = create((set, get) => ({
     }))
 
     try {
-      const { task: updated } = await apiFetch(`/api/tasks/${id}/completion`, {
+      const { task: updated, user } = await apiFetch(`/api/tasks/${id}/completion`, {
         method: 'PATCH',
         body: JSON.stringify({ completed }),
       })
       set((s) => ({
         tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
       }))
+      if (user) useXpStore.getState().syncFromUser(user)
     } catch (err) {
       set((s) => ({
         tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: task.done } : t)),
