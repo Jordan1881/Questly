@@ -50,6 +50,7 @@ jobs:
         working-directory: server
         env:
           NODE_ENV: test
+          DATABASE_URL: ''
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: questly_dev
@@ -66,6 +67,7 @@ jobs:
         working-directory: server
         env:
           NODE_ENV: test
+          DATABASE_URL: ''
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: questly_dev
