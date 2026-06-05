@@ -1,7 +1,9 @@
+const db = require('../config/db')
 const WorkspaceModel = require('../models/workspace')
 const TaskAssignmentModel = require('../models/taskAssignment')
 const TaskModel = require('../models/task')
 const jiraSync = require('../services/jiraSync')
+const taskRewards = require('../services/taskRewards')
 
 function formatDueDate(value) {
   if (!value) return null
@@ -82,13 +84,31 @@ async function updateCompletion(req, res, next) {
       return res.status(404).json({ error: 'Task assignment not found' })
     }
 
-    const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, completed)
+    const wasCompleted = Boolean(assignment.completed_at)
+
+    const result = await db.transaction(async (trx) => {
+      const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, completed, trx)
+      const reward = await taskRewards.applyCompletionChange(trx, {
+        userId: req.user.id,
+        task,
+        wasCompleted,
+        willComplete: completed,
+      })
+      const user = await taskRewards.getUserBalances(req.user.id, trx)
+
+      return { updated, reward, user }
+    })
+
     const row = {
       ...task,
-      completed_at: updated.completed_at,
+      completed_at: result.updated.completed_at,
     }
 
-    res.json({ task: formatTask(row) })
+    res.json({
+      task: formatTask(row),
+      reward: result.reward,
+      user: result.user,
+    })
   } catch (err) {
     next(err)
   }
