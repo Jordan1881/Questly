@@ -11,6 +11,8 @@ const RESET = {
   joinRequest: null,
   members: [],
   pendingJoinRequests: [],
+  lastJiraSyncAt: null,
+  lastJiraSyncResult: null,
   isLoading: false,
   error: null,
 }
@@ -101,5 +103,16 @@ describe('workspaceStore', () => {
     useWorkspaceStore.setState({ error: 'failed' })
     useWorkspaceStore.getState().clearError()
     expect(useWorkspaceStore.getState().error).toBeNull()
+  })
+
+  it('syncJiraTasks stores sync result and timestamp', async () => {
+    apiFetch.mockResolvedValue({ synced: 4, created: 2, updated: 2, assignments: 6 })
+
+    const result = await useWorkspaceStore.getState().syncJiraTasks('ws-1')
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/tasks/sync/ws-1', { method: 'POST' })
+    expect(result.synced).toBe(4)
+    expect(useWorkspaceStore.getState().lastJiraSyncResult.created).toBe(2)
+    expect(useWorkspaceStore.getState().lastJiraSyncAt).toBeTruthy()
   })
 })
