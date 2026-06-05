@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import DifficultyBadge from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
 import { useAuthStore } from '../stores/authStore'
+import { useTaskStore } from '../stores/taskStore'
+import { useXpStore } from '../stores/xpStore'
+import { xpLevelInfo } from '../lib/xpLevel'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
@@ -48,13 +51,6 @@ const LightningBoltIcon = ({ size = 24 }) => (
   </svg>
 )
 
-const CodeIcon = ({ size = 24 }) => (
-  <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-    <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.5" />
-    <path d="M8 9l-3 3 3 3M16 9l3 3-3 3M14 6.5l-4 11" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-
 // ── Sub-components ──────────────────────────────────────────
 
 const StatBar = ({ label, value, percent, color }) => (
@@ -69,23 +65,48 @@ const StatBar = ({ label, value, percent, color }) => (
   </div>
 )
 
-// ── Data ────────────────────────────────────────────────────
-
-const INITIAL_TASKS = [
-  { id: 1, title: 'Implement Zustand store',   difficulty: 'HARD',   xp: 70, due: 'Oct 20', done: true  },
-  { id: 2, title: 'Design Add Task Modal',     difficulty: 'MEDIUM', xp: 40, due: 'Oct 28', done: true  },
-  { id: 3, title: 'Create Calculation Logic',  difficulty: 'EASY',   xp: 20, due: 'Oct 31', done: true  },
-]
-
 // ── Dashboard page ──────────────────────────────────────────
 
 export default function Dashboard() {
+  const user = useAuthStore((s) => s.user)
   const userRole = useAuthStore((s) => s.userRole)
-  const [tasks, setTasks] = useState(INITIAL_TASKS)
+  const userXP = useXpStore((s) => s.userXP)
+  const tasks = useTaskStore((s) => s.tasks)
+  const isLoading = useTaskStore((s) => s.isLoading)
+  const error = useTaskStore((s) => s.error)
+  const fetchTasks = useTaskStore((s) => s.fetchTasks)
+  const toggleTaskCompletion = useTaskStore((s) => s.toggleTaskCompletion)
   const [showSidebar, setShowSidebar] = useState(false)
 
-  const toggleTask = (id) =>
-    setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t))
+  useEffect(() => {
+    if (userRole === 'developer') {
+      fetchTasks().catch(() => {})
+    }
+  }, [userRole, fetchTasks])
+
+  const { level, xpInLevel, levelMax, percent, xpToNext, nextLevel } = xpLevelInfo(userXP)
+
+  const stats = useMemo(() => {
+    const total = tasks.length
+    const completed = tasks.filter((task) => task.done).length
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
+    const highPriorityOpen = tasks.filter((task) => task.highPriority && !task.done).length
+
+    return { total, completed, completionRate, highPriorityOpen }
+  }, [tasks])
+
+  const priorityTasks = useMemo(
+    () => tasks.filter((task) => task.highPriority).slice(0, 5),
+    [tasks],
+  )
+
+  const displayName = user?.username || 'Developer'
+  const streakDays = user?.streak_days ?? 0
+  const isConnected = Boolean(user?.workspace_id)
+
+  const toggleTask = (id) => {
+    toggleTaskCompletion(id).catch(() => {})
+  }
 
   return (
     <div className="min-h-screen bg-[#f9fafb]" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -102,7 +123,7 @@ export default function Dashboard() {
       {/* ── Main content ── */}
       <main className="px-12 py-9">
 
-        <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Welcome back, Ashton</h1>
+        <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Welcome back, {displayName}</h1>
 
         {/* Two-column layout */}
         <div className="flex gap-8 items-start">
@@ -117,19 +138,19 @@ export default function Dashboard() {
                 <span className="text-[14px] font-semibold text-[#1f2937]">XP Progress</span>
                 <div className="flex items-center gap-1.5 bg-[rgba(99,102,241,0.1)] px-3 py-[5px] rounded-full">
                   <ArrowUpIcon />
-                  <span className="text-[11px] font-medium text-[#6366f1]">Level 3</span>
+                  <span className="text-[11px] font-medium text-[#6366f1]">Level {level}</span>
                 </div>
               </div>
 
               {/* XP amount */}
               <div className="flex items-baseline gap-1 mb-0.5">
-                <span className="text-[32px] font-bold text-[#1f2937] leading-tight">650</span>
+                <span className="text-[32px] font-bold text-[#1f2937] leading-tight">{xpInLevel}</span>
                 <span className="text-[16px] font-medium text-[#6b7280]">XP</span>
               </div>
-              <p className="text-[11px] text-[#9ca3af] mb-0.5">Out of 1000 XP</p>
+              <p className="text-[11px] text-[#9ca3af] mb-0.5">Out of {levelMax} XP</p>
               <p className="text-[10px] mb-4">
-                <span className="font-semibold text-[#1f2937]">350 XP</span>
-                <span className="text-[#6b7280]"> to reach Level 4</span>
+                <span className="font-semibold text-[#1f2937]">{xpToNext} XP</span>
+                <span className="text-[#6b7280]"> to reach Level {nextLevel}</span>
               </p>
 
               {/* Tick markers */}
@@ -142,7 +163,7 @@ export default function Dashboard() {
                 ))}
                 <div className="flex items-center gap-[3px]">
                   <div className="w-px h-[6px] rounded-full bg-[#942fcd]" />
-                  <span className="text-[8.7px] font-medium text-[#942fcd]">1000</span>
+                  <span className="text-[8.7px] font-medium text-[#942fcd]">{levelMax}</span>
                 </div>
               </div>
 
@@ -150,17 +171,17 @@ export default function Dashboard() {
               <div className="h-3 rounded-full bg-[#e5e7eb] overflow-hidden relative mb-1.5">
                 <div
                   className="absolute top-0 left-0 h-full rounded-full"
-                  style={{ width: '65%', background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+                  style={{ width: `${percent}%`, background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
                 />
                 <div
                   className="absolute top-0 h-full w-[2.4px] bg-white"
-                  style={{ left: '65%', boxShadow: '0 0 6px rgba(148,47,205,0.6)' }}
+                  style={{ left: `${percent}%`, boxShadow: '0 0 6px rgba(148,47,205,0.6)' }}
                 />
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-medium text-[#6b7280]">Progress</span>
-                <span className="text-[11px] font-semibold text-[#942fcd]">65%</span>
+                <span className="text-[11px] font-semibold text-[#942fcd]">{percent}%</span>
               </div>
 
             </div>
@@ -169,10 +190,30 @@ export default function Dashboard() {
             <div className={`${CARD} p-6`}>
               <h3 className="text-[16px] font-medium text-[#374151] mb-6">User Stats</h3>
               <div className="flex flex-col gap-5">
-                <StatBar label="Tasks Completed" value="24/30"   percent={80} color="#60a5fa" />
-                <StatBar label="Current Streak"  value="12 days" percent={60} color="#c084fc" />
-                <StatBar label="Efficiency Score" value="85%"    percent={85} color="#4ade80" />
-                <StatBar label="Debugging"        value="45%"    percent={45} color="#facc15" />
+                <StatBar
+                  label="Tasks Completed"
+                  value={`${stats.completed}/${stats.total}`}
+                  percent={stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}
+                  color="#60a5fa"
+                />
+                <StatBar
+                  label="Current Streak"
+                  value={`${streakDays} day${streakDays === 1 ? '' : 's'}`}
+                  percent={Math.min(100, streakDays * 10)}
+                  color="#c084fc"
+                />
+                <StatBar
+                  label="Completion Rate"
+                  value={`${stats.completionRate}%`}
+                  percent={stats.completionRate}
+                  color="#4ade80"
+                />
+                <StatBar
+                  label="Open High Priority"
+                  value={String(stats.highPriorityOpen)}
+                  percent={stats.total > 0 ? Math.round((stats.highPriorityOpen / stats.total) * 100) : 0}
+                  color="#facc15"
+                />
               </div>
             </div>
 
@@ -201,22 +242,24 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-[18px] font-semibold text-[#1f2937]">Questly Progress</h2>
-                  <p className="text-[13px] text-[#6b7280] mt-1">Weekly completion rate</p>
+                  <p className="text-[13px] text-[#6b7280] mt-1">Task completion rate</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span className="text-[20px] font-semibold text-[#1f2937]">Connected</span>
+                  <span className="text-[20px] font-semibold text-[#1f2937]">
+                    {isConnected ? 'Connected' : 'Not connected'}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[14px] font-medium text-[#4b5563]">Overall Progress</span>
-                  <span className="text-[16px] font-semibold text-[#1f2937]">45%</span>
+                  <span className="text-[16px] font-semibold text-[#1f2937]">{stats.completionRate}%</span>
                 </div>
                 <div className="h-3 rounded-full bg-[#e5e7eb] overflow-hidden">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: '45%', background: 'linear-gradient(to bottom, #6366f1, #a855f7)' }}
+                    style={{ width: `${stats.completionRate}%`, background: 'linear-gradient(to bottom, #6366f1, #a855f7)' }}
                   />
                 </div>
               </div>
@@ -237,25 +280,25 @@ export default function Dashboard() {
                   <span className="text-[16px] font-medium text-[#374151]">Tasking Streak</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[40px] font-bold text-[#1f2937] leading-tight">12</span>
+                  <span className="text-[40px] font-bold text-[#1f2937] leading-tight">{streakDays}</span>
                   <span className="text-[16px] text-[#6b7280]">days</span>
                 </div>
               </div>
 
-              {/* GitHub Commits */}
+              {/* Assigned tasks */}
               <div className={`${CARD} p-6`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div
                     className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
-                    style={{ background: 'linear-gradient(to bottom, #06b6d4, #0891b2)' }}
+                    style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
                   >
-                    <CodeIcon size={24} />
+                    <span className="text-white text-[18px] font-bold">{stats.total}</span>
                   </div>
-                  <span className="text-[16px] font-medium text-[#374151]">GitHub Commits</span>
+                  <span className="text-[16px] font-medium text-[#374151]">Active Quests</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[40px] font-bold text-[#1f2937] leading-tight">87</span>
-                  <span className="text-[16px] text-[#6b7280]">this month</span>
+                  <span className="text-[40px] font-bold text-[#1f2937] leading-tight">{stats.completed}</span>
+                  <span className="text-[16px] text-[#6b7280]">completed</span>
                 </div>
               </div>
 
@@ -265,8 +308,26 @@ export default function Dashboard() {
             <div className={`${CARD} p-6`}>
               <h2 className="text-[18px] font-medium text-[#374151] mb-6">High Priority Tasks</h2>
 
+              {isLoading && (
+                <p className="text-[14px] text-[#6b7280] mb-4">Loading tasks…</p>
+              )}
+
+              {error && (
+                <p className="text-[14px] text-red-600 mb-4">{error}</p>
+              )}
+
+              {!isLoading && priorityTasks.length === 0 && (
+                <div className="rounded-[8px] bg-[#f9fafb] border border-[#e5e7eb] px-5 py-8 text-center">
+                  <p className="text-[14px] text-[#6b7280]">
+                    {stats.total === 0
+                      ? 'No tasks yet. Ask your admin to sync Jira tasks.'
+                      : 'No high-priority tasks right now.'}
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-col gap-4">
-                {tasks.map(task => (
+                {priorityTasks.map(task => (
                   <div key={task.id} className="border border-[#e5e7eb] rounded-[8px] px-5 py-5">
                     <div className="flex items-start justify-between">
 

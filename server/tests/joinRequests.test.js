@@ -118,6 +118,30 @@ describe('join request flow', () => {
     expect(accessRes.status).toBe(200)
   })
 
+  test('approve sets jira_account_id when developer email matches env', async () => {
+    process.env.JIRA_DEVELOPER_EMAIL = 'devflow@test.com'
+    process.env.JIRA_DEVELOPER_ACCOUNT_ID = 'jira-account-flow'
+
+    const { token: adminToken, workspace } = await createWorkspaceAsAdmin('Jira Co', 'jira')
+    const { token: devToken, user: devUser } = await registerAndLogin('developer', 'flow')
+
+    const submitRes = await request(app)
+      .post(`/api/workspaces/${workspace.id}/join-requests`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+
+    const approveRes = await request(app)
+      .patch(`/api/workspaces/${workspace.id}/join-requests/${submitRes.body.join_request.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'approved' })
+
+    expect(approveRes.status).toBe(200)
+
+    const devRow = await db('users').where({ id: devUser.id }).first()
+    expect(devRow.workspace_id).toBe(workspace.id)
+    expect(devRow.jira_account_id).toBe('jira-account-flow')
+  })
+
   test('developer with workspace cannot submit another join request', async () => {
     const { workspace } = await createWorkspaceAsAdmin('Taken', 'taken')
     const { token: devToken, user: devUser } = await registerAndLogin('developer', 'taken')
