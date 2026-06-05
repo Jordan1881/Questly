@@ -1,0 +1,25 @@
+name: Test Jira Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-jira:
+    name: Smoke test Jira API token
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test admin Jira credentials
+        env:
+          JIRA_SITE_URL: ${{ secrets.JIRA_SITE_URL }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_ADMIN_EMAIL: ${{ secrets.JIRA_ADMIN_EMAIL }}
+          JIRA_ADMIN_API_TOKEN: ${{ secrets.JIRA_ADMIN_API_TOKEN }}
+          JIRA_DIFFICULTY_FIELD_ID: ${{ secrets.JIRA_DIFFICULTY_FIELD_ID }}
+          JIRA_ACCOUNT_ID: ${{ secrets.JIRA_ACCOUNT_ID }}
+        run: node scripts/test-jira-connection.cjs
