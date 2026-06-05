@@ -64,11 +64,13 @@ const LogoutIcon = () => (
 // ── Nav config ──────────────────────────────────────────────
 
 const PAGE_PATHS = {
-  dashboard:  '/dashboard',
-  tasklist:   '/tasks',
-  rewardshop: '/shop',
-  profile:    '/profile',
-  admin:      '/admin',
+  dashboard:       '/dashboard',
+  tasklist:        '/tasks',
+  rewardshop:      '/shop',
+  profile:         '/profile',
+  admin:           '/admin',
+  workspacecreate: '/workspace/create',
+  workspacejoin:   '/workspace/join',
 }
 
 const DEV_NAV_LINKS = [
@@ -80,9 +82,16 @@ const DEV_NAV_LINKS = [
 ]
 
 const ADMIN_NAV_LINKS = [
-  { id: 'rewardshop', label: 'Reward Shop',  Icon: RewardShopIcon },
-  { id: 'profile',    label: 'Profile',      Icon: ProfileIcon    },
-  { id: 'admin',      label: 'Admin',         Icon: SettingsIcon   },
+  { id: 'workspacecreate', label: 'Workspace',    Icon: DashboardIcon },
+  { id: 'admin',           label: 'Admin',         Icon: SettingsIcon  },
+  { id: 'rewardshop',      label: 'Reward Shop',   Icon: RewardShopIcon },
+  { id: 'profile',         label: 'Profile',       Icon: ProfileIcon   },
+]
+
+const DEV_NAV_LINKS_WITH_JOIN = [
+  ...DEV_NAV_LINKS.slice(0, 4),
+  { id: 'workspacejoin', label: 'Join Workspace', Icon: TasksIcon },
+  ...DEV_NAV_LINKS.slice(4),
 ]
 
 // ── Sidebar ─────────────────────────────────────────────────
@@ -91,8 +100,11 @@ export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const userRole = useAuthStore((s) => s.userRole)
-  const setLoggedIn = useAuthStore((s) => s.setLoggedIn)
-  const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : DEV_NAV_LINKS
+  const logout = useAuthStore((s) => s.logout)
+  const user = useAuthStore((s) => s.user)
+  const NAV_LINKS = userRole === 'admin'
+    ? ADMIN_NAV_LINKS
+    : (!user?.workspace_id ? DEV_NAV_LINKS_WITH_JOIN : DEV_NAV_LINKS)
 
   const handleNav = (id) => {
     if (PAGE_PATHS[id]) navigate(PAGE_PATHS[id])
@@ -186,8 +198,8 @@ export default function Sidebar({ isOpen, onClose }) {
           {/* Logout button */}
           <div className="mt-auto pt-3 border-t border-[#f3f4f6]">
             <button
-              onClick={() => {
-                setLoggedIn(false)
+              onClick={async () => {
+                await logout()
                 onClose?.()
                 navigate('/')
               }}

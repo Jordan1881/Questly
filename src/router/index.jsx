@@ -7,6 +7,8 @@ import TaskList from '../pages/TaskList'
 import RewardShop from '../pages/RewardShop'
 import Profile from '../pages/Profile'
 import Admin from '../pages/Admin'
+import WorkspaceCreate from '../pages/WorkspaceCreate'
+import WorkspaceJoin from '../pages/WorkspaceJoin'
 import ProtectedRoute from '../components/ProtectedRoute'
 
 export const router = createBrowserRouter([
@@ -50,6 +52,22 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="admin">
         <Admin />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/workspace/create',
+    element: (
+      <ProtectedRoute requiredRole="admin">
+        <WorkspaceCreate />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/workspace/join',
+    element: (
+      <ProtectedRoute requiredRole="developer">
+        <WorkspaceJoin />
       </ProtectedRoute>
     ),
   },

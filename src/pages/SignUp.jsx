@@ -5,6 +5,7 @@ import signUpImg from '../assets/signUp-img.png'
 import FormButton from '../design-system/components/FormButton'
 import JiraAuth from '../overlays/JiraAuth'
 import { useAuthStore } from '../stores/authStore'
+import { resolvePostAuthPath } from '../lib/authRedirect'
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -311,8 +312,8 @@ export default function SignUp() {
 
       {showJiraAuth && (
         <JiraAuth
-          onConnect={() => {
-            navigate(selectedRole === 'admin' ? '/admin' : '/dashboard')
+          onConnect={async () => {
+            navigate(await resolvePostAuthPath())
           }}
         />
       )}
