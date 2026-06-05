@@ -58,7 +58,18 @@ Add these in **Cursor → Cloud Agent → Secrets** for the Questly repo (names 
 | `JIRA_DEVELOPER_EMAIL` | Developer Atlassian email |
 | `JIRA_DEVELOPER_API_TOKEN` | Developer API token |
 | `JIRA_DEVELOPER_ACCOUNT_ID` or `JIRA_ACCOUNT_ID` | Jira accountId for assignee mapping |
-| `JIRA_STORY_POINTS_FIELD_ID` | Optional override when auto-detection fails (e.g. `customfield_10016`) |
+| `JIRA_STORY_POINTS_FIELD_ID` | Optional — see below |
+
+**Optional override: `JIRA_STORY_POINTS_FIELD_ID`**
+
+Questly auto-detects Jira's standard **Story point estimate** field by name. **Leave this secret unset** in most setups.
+
+Set `JIRA_STORY_POINTS_FIELD_ID` only if:
+
+- auto-detection fails on a different Atlassian site, or
+- your team uses a non-standard story points field name
+
+Example: `JIRA_STORY_POINTS_FIELD_ID=customfield_10016`
 
 Questly maps **difficulty and XP from Jira story points** (standard Scrum field):
 
