@@ -6,6 +6,8 @@ export const useWorkspaceStore = create((set) => ({
   joinRequest: null,
   members: [],
   pendingJoinRequests: [],
+  lastJiraSyncAt: null,
+  lastJiraSyncResult: null,
   isLoading: false,
   error: null,
 
@@ -107,5 +109,21 @@ export const useWorkspaceStore = create((set) => ({
     const { members } = await apiFetch(`/api/workspaces/${workspaceId}/members`)
     set({ members })
     return members
+  },
+
+  syncJiraTasks: async (workspaceId) => {
+    set({ isLoading: true, error: null })
+    try {
+      const result = await apiFetch(`/api/tasks/sync/${workspaceId}`, { method: 'POST' })
+      set({
+        lastJiraSyncAt: new Date().toISOString(),
+        lastJiraSyncResult: result,
+        isLoading: false,
+      })
+      return result
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
   },
 }))
