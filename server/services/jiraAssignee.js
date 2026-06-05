@@ -1,21 +1,27 @@
-const config = require('../config')
 const jiraClient = require('./jiraClient')
 const UserModel = require('../models/user')
+
+function configuredDeveloperCredentials() {
+  return {
+    developerEmail: process.env.JIRA_DEVELOPER_EMAIL || null,
+    developerAccountId:
+      process.env.JIRA_DEVELOPER_ACCOUNT_ID || process.env.JIRA_ACCOUNT_ID || null,
+  }
+}
 
 async function resolveJiraAccountIdForUser(user, overrides = {}) {
   if (!user?.email || user.jira_account_id) {
     return user?.jira_account_id || null
   }
 
-  const devEmail = config.jira.developerEmail
-  const configuredId = config.jira.developerAccountId
+  const { developerEmail, developerAccountId } = configuredDeveloperCredentials()
 
   if (
-    devEmail &&
-    configuredId &&
-    user.email.toLowerCase() === devEmail.toLowerCase()
+    developerEmail &&
+    developerAccountId &&
+    user.email.toLowerCase() === developerEmail.toLowerCase()
   ) {
-    return configuredId
+    return developerAccountId
   }
 
   return jiraClient.lookupAccountIdByEmail(user.email, overrides)
