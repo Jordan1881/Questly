@@ -11,4 +11,10 @@ async function findById(id) {
   return db(TABLE).where({ id }).first()
 }
 
-module.exports = { create, findById }
+function sanitize(workspace) {
+  if (!workspace) return null
+  const { jira_access_token, ...safe } = workspace
+  return safe
+}
+
+module.exports = { create, findById, sanitize }
