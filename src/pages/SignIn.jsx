@@ -64,6 +64,11 @@ export default function SignIn() {
     if (result.ok) setShowJiraAuth(true)
   }
 
+  const finishAuth = async () => {
+    setShowJiraAuth(false)
+    navigate(await resolvePostAuthPath())
+  }
+
   return (
     <div className="min-h-screen bg-[#fbfbfb] flex items-center justify-center relative" style={{ fontFamily: 'Inter, sans-serif' }}>
 
@@ -211,11 +216,8 @@ export default function SignIn() {
 
       {showJiraAuth && (
         <JiraAuth
-          onClose={() => setShowJiraAuth(false)}
-          onConnect={async () => {
-            setShowJiraAuth(false)
-            navigate(await resolvePostAuthPath())
-          }}
+          onClose={finishAuth}
+          onConnect={finishAuth}
         />
       )}
 
