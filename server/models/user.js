@@ -10,6 +10,7 @@ const PUBLIC_FIELDS = [
   'workspace_id',
   'current_sprint_xp',
   'lifetime_xp',
+  'coin_balance',
 ]
 
 function strip(user) {

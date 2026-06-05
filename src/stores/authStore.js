@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useXpStore } from './xpStore'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
@@ -35,6 +36,7 @@ export const useAuthStore = create(
             headers: { Authorization: `Bearer ${token}` },
           })
           set({ user, userRole: user.role })
+          useXpStore.getState().syncFromUser(user)
           return user
         } catch {
           return null
@@ -49,6 +51,7 @@ export const useAuthStore = create(
             body: JSON.stringify(credentials),
           })
           set({ user, token, userRole: user.role, isLoggedIn: true, isLoading: false, error: null })
+          useXpStore.getState().syncFromUser(user)
           return { ok: true }
         } catch (err) {
           set({ isLoading: false, error: err.message })
@@ -64,6 +67,7 @@ export const useAuthStore = create(
             body: JSON.stringify(formData),
           })
           set({ user, token, userRole: user.role, isLoggedIn: true, isLoading: false, error: null })
+          useXpStore.getState().syncFromUser(user)
           return { ok: true }
         } catch (err) {
           set({ isLoading: false, error: err.message })
@@ -80,6 +84,7 @@ export const useAuthStore = create(
           }).catch(() => {})
         }
         set({ user: null, token: null, userRole: 'developer', isLoggedIn: false, isLoading: false, error: null })
+        useXpStore.getState().syncFromUser(null)
       },
     }),
     {

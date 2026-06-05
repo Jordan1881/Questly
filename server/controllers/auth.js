@@ -57,9 +57,30 @@ async function login(req, res, next) {
 }
 
 async function me(req, res) {
-  const { id, email, username, role, workspace_id, avatar_url, current_sprint_xp, lifetime_xp } =
-    req.user
-  res.json({ user: { id, email, username, role, workspace_id, avatar_url, current_sprint_xp, lifetime_xp } })
+  const {
+    id,
+    email,
+    username,
+    role,
+    workspace_id,
+    avatar_url,
+    current_sprint_xp,
+    lifetime_xp,
+    coin_balance,
+  } = req.user
+  res.json({
+    user: {
+      id,
+      email,
+      username,
+      role,
+      workspace_id,
+      avatar_url,
+      current_sprint_xp,
+      lifetime_xp,
+      coin_balance,
+    },
+  })
 }
 
 function logout(_req, res) {
