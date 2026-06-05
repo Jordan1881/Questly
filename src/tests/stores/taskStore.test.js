@@ -1,12 +1,27 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { useTaskStore } from '../../stores/taskStore'
 import { createMockTask } from '../factories/index'
+import { apiFetch } from '../../lib/api'
 
-const defaultState = { tasks: [] }
+vi.mock('../../lib/api', () => ({
+  apiFetch: vi.fn(),
+}))
+
+const RESET = {
+  tasks: [],
+  isLoading: false,
+  error: null,
+  lastSyncedAt: null,
+}
 
 describe('taskStore', () => {
   beforeEach(() => {
-    useTaskStore.setState(defaultState)
+    useTaskStore.setState(RESET)
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('initialises with an empty task list', () => {
@@ -19,5 +34,41 @@ describe('taskStore', () => {
     expect(useTaskStore.getState().tasks).toHaveLength(2)
     useTaskStore.getState().updateTask(tasks[0].id, { title: 'Updated' })
     expect(useTaskStore.getState().tasks[0].title).toBe('Updated')
+  })
+
+  it('fetchTasks loads tasks from the API', async () => {
+    apiFetch.mockResolvedValue({
+      tasks: [createMockTask({ title: 'Synced task', jiraId: 'SCRUM-1' })],
+    })
+
+    const tasks = await useTaskStore.getState().fetchTasks()
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/tasks')
+    expect(tasks).toHaveLength(1)
+    expect(useTaskStore.getState().tasks[0].title).toBe('Synced task')
+  })
+
+  it('syncWorkspaceTasks records lastSyncedAt on success', async () => {
+    apiFetch.mockResolvedValue({ synced: 2, created: 2, updated: 0, assignments: 2 })
+
+    const result = await useTaskStore.getState().syncWorkspaceTasks('ws-1')
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/tasks/sync/ws-1', { method: 'POST' })
+    expect(result.synced).toBe(2)
+    expect(useTaskStore.getState().lastSyncedAt).toBeTruthy()
+  })
+
+  it('toggleTaskCompletion updates completion through the API', async () => {
+    const task = createMockTask({ done: false })
+    useTaskStore.setState({ tasks: [task] })
+    apiFetch.mockResolvedValue({ task: { ...task, done: true } })
+
+    await useTaskStore.getState().toggleTaskCompletion(task.id)
+
+    expect(apiFetch).toHaveBeenCalledWith(`/api/tasks/${task.id}/completion`, {
+      method: 'PATCH',
+      body: JSON.stringify({ completed: true }),
+    })
+    expect(useTaskStore.getState().tasks[0].done).toBe(true)
   })
 })

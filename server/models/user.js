@@ -38,6 +38,14 @@ async function listByWorkspace(workspace_id) {
   return db(TABLE).where({ workspace_id }).select(PUBLIC_FIELDS)
 }
 
+async function listDevelopersByWorkspace(workspace_id) {
+  return db(TABLE).where({ workspace_id, role: 'developer' })
+}
+
+async function findByJiraAccountId(jira_account_id, workspace_id) {
+  return db(TABLE).where({ jira_account_id, workspace_id }).first()
+}
+
 async function assignWorkspace(user_id, workspace_id) {
   const [user] = await db(TABLE).where({ id: user_id }).update({ workspace_id }).returning('*')
   return strip(user)
@@ -48,6 +56,8 @@ module.exports = {
   findById,
   create,
   listByWorkspace,
+  listDevelopersByWorkspace,
+  findByJiraAccountId,
   assignWorkspace,
   strip,
 }
