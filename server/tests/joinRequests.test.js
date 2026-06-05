@@ -130,11 +130,11 @@ describe('join request flow', () => {
   })
 
   test('approve sets jira_account_id when developer email matches env', async () => {
-    process.env.JIRA_DEVELOPER_EMAIL = 'devflow@test.com'
+    process.env.JIRA_DEVELOPER_EMAIL = 'dev@test.com'
     process.env.JIRA_DEVELOPER_ACCOUNT_ID = 'jira-account-flow'
 
     const { token: adminToken, workspace } = await createWorkspaceAsAdmin('Jira Co', 'jira')
-    const { token: devToken, user: devUser } = await registerAndLogin('developer', 'flow')
+    const { token: devToken, user: devUser } = await registerAndLogin('developer', '')
 
     const submitRes = await request(app)
       .post(`/api/workspaces/${workspace.id}/join-requests`)
