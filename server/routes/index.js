@@ -2,6 +2,7 @@ const { Router } = require('express')
 const authRouter = require('./auth')
 const workspacesRouter = require('./workspaces')
 const joinRequestsRouter = require('./joinRequests')
+const tasksRouter = require('./tasks')
 
 const router = Router()
 
@@ -12,5 +13,6 @@ router.get('/health', (_req, res) => {
 router.use('/auth', authRouter)
 router.use('/workspaces', workspacesRouter)
 router.use('/join-requests', joinRequestsRouter)
+router.use('/tasks', tasksRouter)
 
 module.exports = router

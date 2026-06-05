@@ -67,4 +67,18 @@ node scripts/test-jira-connection.cjs
 node scripts/test-jira-connection.cjs --role developer
 ```
 
-`server/config/index.js` exposes the same values under `config.jira` for Sprint 4 implementation.
+### Jira task sync (M4)
+
+After a developer belongs to a workspace and an admin has synced tasks:
+
+```bash
+# Admin sync (requires workspace id + JWT)
+curl -s -X POST http://localhost:3001/api/tasks/sync/<workspace-id> \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Developer task list
+curl -s http://localhost:3001/api/tasks \
+  -H "Authorization: Bearer $DEV_TOKEN"
+```
+
+Admin triggers `POST /api/tasks/sync/:workspaceId` to pull Jira issues into Postgres. Developers fetch assigned tasks via `GET /api/tasks`.
