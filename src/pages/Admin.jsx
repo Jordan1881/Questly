@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/authStore'
 import { useXpStore } from '../stores/xpStore'
 import { useShopContext } from '../AppProviders'
 import JoinRequestsTab from '../components/JoinRequestsTab'
+import JiraSyncTab from '../components/JiraSyncTab'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 
 // ── Constants ──────────────────────────────────────────────
@@ -608,6 +609,7 @@ export default function Admin() {
 
   const TABS = [
     { id: 'team',    label: 'Team'           },
+    { id: 'jira',    label: 'Jira'           },
     { id: 'joins',   label: 'Join Requests'  },
     { id: 'rewards', label: 'Rewards'        },
     { id: 'xp',      label: 'XP Settings'    },
@@ -667,6 +669,7 @@ export default function Admin() {
         {activeTab === 'team' && (
           <TeamTab developers={developers} />
         )}
+        {activeTab === 'jira' && <JiraSyncTab />}
         {activeTab === 'joins' && <JoinRequestsTab />}
         {activeTab === 'rewards' && (
           <RewardsTab
