@@ -1,7 +1,13 @@
 require('dotenv').config()
 const request = require('supertest')
+const jiraClient = require('../services/jiraClient')
 const createApp = require('../app')
 const db = require('../config/db')
+
+jest.mock('../services/jiraClient', () => ({
+  ...jest.requireActual('../services/jiraClient'),
+  lookupAccountIdByEmail: jest.fn().mockResolvedValue(null),
+}))
 
 const app = createApp()
 
@@ -10,6 +16,11 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
+  jest.clearAllMocks()
+  jiraClient.lookupAccountIdByEmail.mockResolvedValue(null)
+  delete process.env.JIRA_DEVELOPER_EMAIL
+  delete process.env.JIRA_DEVELOPER_ACCOUNT_ID
+  delete process.env.JIRA_ACCOUNT_ID
   await db('join_requests').del()
   await db('users').del()
   await db('workspaces').del()
