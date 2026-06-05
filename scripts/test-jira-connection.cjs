@@ -30,7 +30,7 @@ const apiToken =
   role === 'developer'
     ? process.env.JIRA_DEVELOPER_API_TOKEN
     : process.env.JIRA_ADMIN_API_TOKEN
-const accountId = process.env.JIRA_DEVELOPER_ACCOUNT_ID
+const accountId = process.env.JIRA_DEVELOPER_ACCOUNT_ID || process.env.JIRA_ACCOUNT_ID
 const difficultyField = process.env.JIRA_DIFFICULTY_FIELD_ID
 
 function missing() {

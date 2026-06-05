@@ -45,7 +45,9 @@ Then open `http://localhost:5173`, sign up or sign in, and load `/dashboard`.
 
 ### Jira Cloud Agent secrets (Option A)
 
-Add these in **Cursor → Cloud Agent → Secrets** for the Questly repo (names must match exactly):
+Add these in **Cursor → Cloud Agent → Secrets** for the Questly repo (names must match exactly).
+
+> **GitHub Actions secrets are not visible to Cloud Agents.** Even if `JIRA_ADMIN_API_TOKEN` exists in GitHub repo secrets, you must also add it (and the other `JIRA_*` vars) to **Cursor Cloud Agent secrets** for this VM to use them.
 
 | Secret name | Example |
 |-------------|---------|
@@ -55,7 +57,7 @@ Add these in **Cursor → Cloud Agent → Secrets** for the Questly repo (names 
 | `JIRA_ADMIN_API_TOKEN` | Admin API token from id.atlassian.com |
 | `JIRA_DEVELOPER_EMAIL` | Developer Atlassian email |
 | `JIRA_DEVELOPER_API_TOKEN` | Developer API token |
-| `JIRA_DEVELOPER_ACCOUNT_ID` | Jira accountId for assignee mapping |
+| `JIRA_DEVELOPER_ACCOUNT_ID` or `JIRA_ACCOUNT_ID` | Jira accountId for assignee mapping |
 | `JIRA_DIFFICULTY_FIELD_ID` | e.g. `customfield_10001` |
 
 After secrets are injected, verify connectivity:

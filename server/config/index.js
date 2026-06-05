@@ -32,7 +32,8 @@ module.exports = {
     adminApiToken: process.env.JIRA_ADMIN_API_TOKEN || null,
     developerEmail: process.env.JIRA_DEVELOPER_EMAIL || null,
     developerApiToken: process.env.JIRA_DEVELOPER_API_TOKEN || null,
-    developerAccountId: process.env.JIRA_DEVELOPER_ACCOUNT_ID || null,
+    developerAccountId:
+      process.env.JIRA_DEVELOPER_ACCOUNT_ID || process.env.JIRA_ACCOUNT_ID || null,
     difficultyFieldId: process.env.JIRA_DIFFICULTY_FIELD_ID || null,
   },
 }
