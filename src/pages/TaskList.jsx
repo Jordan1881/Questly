@@ -387,7 +387,7 @@ export default function TaskList() {
                 <h4 className="text-[16px] font-semibold text-[#1f2937] mb-2">Tasks are synced from Jira</h4>
                 <p className="text-[14px] text-[#6b7280] leading-[1.6]">
                   Questly automatically syncs your Jira tasks. Complete tasks here to earn XP and level up.
-                  Task difficulty is defined by your manager in Jira. Earn 20XP (Easy), 40XP (Medium), or 70XP (Hard) per task.
+                  Difficulty is based on Jira story points. Earn 20XP (1–2 pts), 40XP (3–5 pts), or 70XP (8+ pts) per task.
                 </p>
               </div>
             </div>

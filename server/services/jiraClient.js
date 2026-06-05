@@ -2,20 +2,26 @@ const config = require('../config')
 
 const XP_BY_DIFFICULTY = { easy: 20, medium: 40, hard: 70 }
 const HIGH_PRIORITY_NAMES = new Set(['highest', 'high'])
+const STORY_POINT_FIELD_NAMES = ['story point estimate', 'story points', 'story point']
 
-function parseDifficulty(raw) {
-  if (raw == null || raw === '') return 'medium'
+function parseDifficultyFromStoryPoints(storyPoints) {
+  if (storyPoints == null || storyPoints === '') return 'medium'
 
-  let value = raw
-  if (typeof raw === 'object') {
-    value = raw.value ?? raw.name ?? raw.displayName ?? ''
-  }
+  const points = Number(storyPoints)
+  if (Number.isNaN(points) || points <= 0) return 'medium'
+  if (points <= 2) return 'easy'
+  if (points <= 5) return 'medium'
+  return 'hard'
+}
 
-  const normalized = String(value).toLowerCase()
-  if (normalized.includes('easy')) return 'easy'
-  if (normalized.includes('hard')) return 'hard'
-  if (normalized.includes('medium')) return 'medium'
-  return 'medium'
+function extractStoryPoints(fields, storyPointsFieldId) {
+  if (!fields || !storyPointsFieldId) return null
+
+  const raw = fields[storyPointsFieldId]
+  if (raw == null || raw === '') return null
+
+  const points = Number(raw)
+  return Number.isNaN(points) ? null : points
 }
 
 function mapJiraStatus(statusName) {
@@ -68,22 +74,38 @@ function getCredentials(overrides = {}) {
   const email = overrides.email || config.jira.adminEmail
   const apiToken = overrides.apiToken || config.jira.adminApiToken
   const projectKey = overrides.projectKey || config.jira.projectKey
-  const difficultyFieldId = overrides.difficultyFieldId || config.jira.difficultyFieldId
+  const storyPointsFieldId =
+    overrides.storyPointsFieldId || config.jira.storyPointsFieldId || null
 
   if (!siteUrl || !email || !apiToken || !projectKey) {
-    const err = new Error('Jira is not configured — set JIRA_SITE_URL, JIRA_PROJECT_KEY, JIRA_ADMIN_EMAIL, and JIRA_ADMIN_API_TOKEN')
+    const err = new Error(
+      'Jira is not configured — set JIRA_SITE_URL, JIRA_PROJECT_KEY, JIRA_ADMIN_EMAIL, and JIRA_ADMIN_API_TOKEN',
+    )
     err.status = 503
     throw err
   }
 
-  return { siteUrl, email, apiToken, projectKey, difficultyFieldId }
+  return { siteUrl, email, apiToken, projectKey, storyPointsFieldId }
+}
+
+async function resolveStoryPointsFieldId(credentials) {
+  if (credentials.storyPointsFieldId) return credentials.storyPointsFieldId
+
+  const fields = await jiraGet('/rest/api/3/field', credentials)
+  const match = fields.find((field) =>
+    STORY_POINT_FIELD_NAMES.some((name) => field.name?.toLowerCase().includes(name)),
+  )
+
+  return match?.id || null
 }
 
 async function fetchProjectIssues(overrides = {}) {
-  const { siteUrl, email, apiToken, projectKey, difficultyFieldId } = getCredentials(overrides)
+  const credentials = getCredentials(overrides)
+  const { siteUrl, email, apiToken, projectKey } = credentials
+  const storyPointsFieldId = await resolveStoryPointsFieldId(credentials)
 
-  const fields = ['summary', 'description', 'status', 'assignee', 'duedate', 'priority']
-  if (difficultyFieldId) fields.push(difficultyFieldId)
+  const fields = ['summary', 'description', 'status', 'assignee', 'duedate', 'priority', 'parent']
+  if (storyPointsFieldId) fields.push(storyPointsFieldId)
 
   const jql = encodeURIComponent(`project = ${projectKey} ORDER BY updated DESC`)
   const fieldList = encodeURIComponent(fields.join(','))
@@ -92,12 +114,31 @@ async function fetchProjectIssues(overrides = {}) {
     { siteUrl, email, apiToken },
   )
 
-  return (body.issues || []).map((issue) => mapIssue(issue, difficultyFieldId))
+  return mapIssues(body.issues || [], storyPointsFieldId)
 }
 
-function mapIssue(issue, difficultyFieldId) {
+function mapIssues(issues, storyPointsFieldId) {
+  const storyPointsByKey = new Map()
+
+  for (const issue of issues) {
+    const points = extractStoryPoints(issue.fields, storyPointsFieldId)
+    if (points != null) {
+      storyPointsByKey.set(issue.key, points)
+    }
+  }
+
+  return issues.map((issue) => mapIssue(issue, storyPointsFieldId, storyPointsByKey))
+}
+
+function mapIssue(issue, storyPointsFieldId, storyPointsByKey = new Map()) {
   const fields = issue.fields || {}
-  const difficulty = parseDifficulty(difficultyFieldId ? fields[difficultyFieldId] : null)
+  let storyPoints = extractStoryPoints(fields, storyPointsFieldId)
+
+  if (storyPoints == null && fields.parent?.key) {
+    storyPoints = storyPointsByKey.get(fields.parent.key) ?? null
+  }
+
+  const difficulty = parseDifficultyFromStoryPoints(storyPoints)
 
   return {
     jiraIssueId: issue.id,
@@ -105,6 +146,7 @@ function mapIssue(issue, difficultyFieldId) {
     title: fields.summary || issue.key,
     description: typeof fields.description === 'string' ? fields.description : null,
     difficulty,
+    storyPoints,
     xpReward: XP_BY_DIFFICULTY[difficulty],
     dueDate: fields.duedate || null,
     highPriority: isHighPriority(fields.priority?.name),
@@ -115,9 +157,13 @@ function mapIssue(issue, difficultyFieldId) {
 
 module.exports = {
   XP_BY_DIFFICULTY,
+  STORY_POINT_FIELD_NAMES,
   fetchProjectIssues,
   mapIssue,
-  parseDifficulty,
+  mapIssues,
+  parseDifficultyFromStoryPoints,
+  extractStoryPoints,
+  resolveStoryPointsFieldId,
   mapJiraStatus,
   isHighPriority,
 }
