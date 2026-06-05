@@ -1,4 +1,5 @@
 const WorkspaceModel = require('../models/workspace')
+const UserModel = require('../models/user')
 
 function canAccessWorkspace(user, workspace) {
   return workspace.admin_id === user.id || user.workspace_id === workspace.id
@@ -76,4 +77,54 @@ async function update(req, res, next) {
   }
 }
 
-module.exports = { create, getById, update }
+async function getByCode(req, res, next) {
+  try {
+    const workspace = await WorkspaceModel.findByCode(req.params.code.toUpperCase())
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' })
+    }
+
+    res.json({
+      workspace: {
+        id: workspace.id,
+        name: workspace.name,
+        code: workspace.code,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function getMine(req, res, next) {
+  try {
+    const workspace = await WorkspaceModel.findByAdminId(req.user.id)
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' })
+    }
+
+    res.json({ workspace: WorkspaceModel.sanitize(workspace) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function listMembers(req, res, next) {
+  try {
+    const workspace = await WorkspaceModel.findById(req.params.id)
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' })
+    }
+
+    if (!isWorkspaceAdmin(req.user, workspace)) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const members = await UserModel.listByWorkspace(workspace.id)
+    res.json({ members })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { create, getById, update, getByCode, getMine, listMembers }

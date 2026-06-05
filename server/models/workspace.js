@@ -37,6 +37,10 @@ async function findByCode(code) {
   return db(TABLE).where({ code }).first()
 }
 
+async function findByAdminId(admin_id) {
+  return db(TABLE).where({ admin_id }).first()
+}
+
 async function update(id, fields) {
   const patch = {}
   for (const key of PATCHABLE_FIELDS) {
@@ -63,6 +67,7 @@ module.exports = {
   create,
   findById,
   findByCode,
+  findByAdminId,
   update,
   sanitize,
   PATCHABLE_FIELDS,
