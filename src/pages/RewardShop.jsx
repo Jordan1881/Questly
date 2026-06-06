@@ -7,6 +7,8 @@ import { StarIcon } from '../components/icons.jsx'
 import { useAuthStore } from '../stores/authStore'
 import { useXpStore } from '../stores/xpStore'
 import { useRewardStore } from '../stores/rewardStore'
+import { useToastStore } from '../stores/toastStore'
+import { SkeletonRewardGrid } from '../components/Skeleton'
 
 const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
 
@@ -15,14 +17,13 @@ export default function RewardShop() {
   const userXp = useXpStore((s) => s.userXP)
   const rewards = useRewardStore((s) => s.rewards)
   const isLoading = useRewardStore((s) => s.isLoading)
+  const isPurchasing = useRewardStore((s) => s.isPurchasing)
   const error = useRewardStore((s) => s.error)
   const fetchRewards = useRewardStore((s) => s.fetchRewards)
   const purchaseReward = useRewardStore((s) => s.purchaseReward)
 
   const [showSidebar, setShowSidebar] = useState(false)
   const [selectedReward, setSelectedReward] = useState(null)
-  const [purchasing, setPurchasing] = useState(false)
-  const [toast, setToast] = useState(null)
 
   const workspaceId = user?.workspace_id
 
@@ -34,36 +35,28 @@ export default function RewardShop() {
 
   const handleConfirmPurchase = async () => {
     if (!selectedReward) return
-    setPurchasing(true)
     try {
       const result = await purchaseReward(selectedReward.id)
       setSelectedReward(null)
-      setToast(`Purchased! Your coupon code: ${result.purchase.couponCode}`)
-      setTimeout(() => setToast(null), 4000)
-    } catch (err) {
-      setToast(err.message)
-      setTimeout(() => setToast(null), 3500)
-    } finally {
-      setPurchasing(false)
+      useToastStore.getState().showSuccess(
+        `Purchased! Your coupon code: ${result.purchase.couponCode}`,
+      )
+    } catch {
+      // Global toast shows API error
     }
+  }
+
+  const handleRetry = () => {
+    if (workspaceId) fetchRewards(workspaceId).catch(() => {})
   }
 
   return (
     <div className="min-h-screen bg-[#f9fafb]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      {toast && (
-        <div
-          className="fixed top-6 left-1/2 z-50 px-5 py-3 rounded-[10px] text-[14px] font-medium text-white bg-[#1f2937]"
-          style={{ transform: 'translateX(-50%)' }}
-        >
-          {toast}
-        </div>
-      )}
-
       {selectedReward && (
         <PurchaseConfirm
           reward={selectedReward}
           currentXp={userXp}
-          isLoading={purchasing}
+          isLoading={isPurchasing}
           onConfirm={handleConfirmPurchase}
           onCancel={() => setSelectedReward(null)}
         />
@@ -92,12 +85,23 @@ export default function RewardShop() {
             </div>
           </div>
 
-          {error && <p className="text-[14px] text-[#ef4444]">{error}</p>}
+          {error && (
+            <div className="flex items-center justify-between rounded-[8px] border border-[#fecaca] bg-[#fef2f2] px-4 py-3">
+              <p className="text-[14px] text-[#b91c1c]">{error}</p>
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="text-[13px] font-medium text-[#942fcd] hover:underline cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           {!workspaceId && (
             <p className="text-[14px] text-[#6b7280]">Join a workspace to browse rewards.</p>
           )}
 
-          {isLoading && <p className="text-[14px] text-[#6b7280]">Loading rewards…</p>}
+          {isLoading && <SkeletonRewardGrid count={4} />}
 
           {!isLoading && workspaceId && rewards.length === 0 && (
             <div className={`${CARD} p-10 text-center`}>
@@ -108,7 +112,7 @@ export default function RewardShop() {
             </div>
           )}
 
-          {rewards.length > 0 && (
+          {!isLoading && rewards.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {rewards.map((reward) => (
                 <RewardCard
