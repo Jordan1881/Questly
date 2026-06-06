@@ -813,6 +813,125 @@ export const ENRICHMENTS = {
     ],
     testPlan: ['Submission checklist review'],
   },
+  T151: {
+    featureAC: [
+      'Developer with no workspace never sees raw `Jira request failed with HTTP 401` from missing site config',
+      'Profile explains workspace invite is required before Jira link is needed for tasks',
+      'Developer may open Profile before join (no crash / no misleading Connected state)',
+      'API test: connect without workspace returns clear 400 message',
+      'Existing workspace member connect flow unchanged',
+    ],
+    hints: [
+      '`server/controllers/auth.js` — `connectJira` error messages',
+      '`src/components/JiraIntegrationCard.jsx`',
+      '`src/pages/Dashboard.jsx`, `src/pages/TaskList.jsx`',
+    ],
+    testPlan: [
+      'Unit: `JiraIntegrationCard` states',
+      '`cd server && npm test -- jiraConnect.test.js`',
+      '`npm run test:coverage` for new component tests',
+    ],
+    api: {
+      method: 'POST',
+      path: '/api/auth/me/jira/connect',
+      auth: 'Developer JWT',
+      responses: '200 | 400 (no workspace / bad token) | 403',
+    },
+  },
+  T152: {
+    featureAC: [
+      'Approved developer sees jira site hostname in UI within one page load',
+      '`GET /api/auth/me` includes expected_jira_site_url for workspace members',
+      'Join approval API response includes sanitized workspace with jira_site_url',
+      'Missing admin Jira connect shows friendly message, not HTTP 401',
+    ],
+    hints: [
+      '`server/controllers/joinRequest.js`, `server/controllers/auth.js`',
+      '`src/stores/authStore.js`, `src/pages/Dashboard.jsx`',
+    ],
+    testPlan: ['`cd server && npm test -- joinRequests.test.js`', 'Manual: approve developer → banner shows site host'],
+    api: {
+      method: 'GET',
+      path: '/api/auth/me',
+      auth: 'JWT',
+      responses: '200 includes expected_jira_site_url | 401',
+    },
+  },
+  T153: {
+    featureAC: [
+      'Grep `src/` — no developer UI string says "workspace Jira"',
+      'Admin `JiraSyncTab` unchanged (still says workspace for sync)',
+      'Token connect placeholder references team site host when known',
+    ],
+    hints: ['`src/components/JiraIntegrationCard.jsx`', '`src/overlays/JiraAuth.jsx`'],
+    testPlan: ['`npx eslint src/components/JiraIntegrationCard.jsx`', 'Visual review on Profile + Dashboard'],
+  },
+  T154: {
+    featureAC: [
+      'Valid token on wrong Atlassian site → 400 with site_not_accessible style message',
+      'Jira 401 → user-friendly message (email + invite)',
+      'Integration test: nock `/myself` 401 → readable error body',
+      'Join approval succeeds when Jira lookup fails',
+    ],
+    hints: ['`server/controllers/auth.js`', '`server/services/jiraClient.js`'],
+    testPlan: ['`cd server && npm test -- jiraConnect.test.js`', 'Add case in `server/tests/jiraNock.test.js`'],
+    api: {
+      method: 'POST',
+      path: '/api/auth/me/jira/connect',
+      auth: 'Developer JWT',
+      responses: '200 | 400 (readable errors) | 502',
+    },
+  },
+  T155: {
+    featureAC: [
+      'CI E2E passes with workspace Jira seeded via admin API (no platform JIRA_*)',
+      'Assert banner text contains workspace site hostname',
+      'No regression on existing journey specs',
+    ],
+    hints: ['Update `e2e/journey-1.spec.js`', 'Reuse `POST /api/e2e/seed/*` patterns'],
+    testPlan: ['`npx playwright test e2e/journey-1.spec.js`', 'Full `npx playwright test` in CI'],
+  },
+  T156: {
+    featureAC: [
+      'Admin can connect workspace via OAuth OR API token',
+      'Sync works with OAuth-derived access token',
+      'Callback URL documented in DEPLOY.md',
+      'No plaintext refresh token in API responses',
+    ],
+    hints: [
+      'Mirror `server/controllers/jiraOAuth.js` for workspace scope',
+      '`src/components/JiraSyncTab.jsx`',
+    ],
+    testPlan: ['`cd server && npm test -- jiraOAuth.test.js`', 'Manual HITL: admin OAuth on Railway'],
+  },
+  T157: {
+    featureAC: [
+      'Workspace code lookup returns jira_site_url host (no secrets)',
+      'Developer connect rejects wrong-site tokens before save',
+      'Join page shows team site before admin approval',
+    ],
+    hints: ['`src/pages/WorkspaceJoin.jsx`', '`server/controllers/workspace.js`'],
+    testPlan: ['`cd server && npm test -- workspaces.test.js`'],
+  },
+  T158: {
+    featureAC: [
+      'DEPLOY.md section: Atlassian OAuth distribution + test users',
+      'OAuth works for non-owner developer after distribution OR test-user add',
+      'Token fallback always available',
+    ],
+    hints: ['`src/components/JiraIntegrationCard.jsx`', '`DEPLOY.md`'],
+    testPlan: ['Manual: non-owner developer OAuth after test-user add'],
+  },
+  T159: {
+    featureAC: [
+      'DB columns hold ciphertext after connect/sync',
+      'API never returns tokens',
+      'Sync + connect work after encrypt round-trip',
+      '`.env.example` documents JIRA_TOKEN_ENCRYPTION_KEY',
+    ],
+    hints: ['New `server/lib/tokenEncryption.js`', 'Railway: set JIRA_TOKEN_ENCRYPTION_KEY'],
+    testPlan: ['Unit tests for encrypt/decrypt round-trip', '`cd server && npm test`'],
+  },
 }
 
 /** Fallback generator when no explicit entry exists */
@@ -882,4 +1001,5 @@ export const MILESTONE_DESCRIPTIONS = {
   M6: 'Reward Shop, coupons, and Profile / My Rewards (S08–S09)',
   M7: 'Live API wiring and component tests (S10–S11)',
   M8: 'E2E journeys, security, performance, and submission (S12–S13)',
+  M9: 'Multi-tenant Jira — workspace isolation, developer UX, OAuth polish (S14–S16)',
 }
