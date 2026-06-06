@@ -1,4 +1,5 @@
 const db = require('../config/db')
+const { reconcileTaskAssignments } = require('../services/taskAssignmentReconcile')
 
 function assertE2eEnabled(_req, res, next) {
   if (process.env.E2E_SEED_ENABLED !== 'true') {
@@ -30,7 +31,9 @@ async function seedTask(req, res, next) {
       })
       .returning('*')
 
-    await db('task_assignments').insert({ task_id: task.id, user_id: developerId })
+    if (req.body.assign !== false) {
+      await db('task_assignments').insert({ task_id: task.id, user_id: developerId })
+    }
 
     res.status(201).json({ task })
   } catch (err) {
@@ -78,8 +81,24 @@ async function seedReward(req, res, next) {
   }
 }
 
+async function reconcileAssignments(req, res, next) {
+  try {
+    const { taskId, developerIds } = req.body
+
+    if (!taskId || !Array.isArray(developerIds)) {
+      return res.status(400).json({ error: 'taskId and developerIds array are required' })
+    }
+
+    const result = await reconcileTaskAssignments(taskId, developerIds)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   assertE2eEnabled,
   seedTask,
   seedReward,
+  reconcileAssignments,
 }
