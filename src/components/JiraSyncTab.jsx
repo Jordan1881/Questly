@@ -57,6 +57,8 @@ export default function JiraSyncTab() {
     connectJira,
     disconnectJira,
     syncJiraTasks,
+    fetchWorkspaceJiraOAuthStatus,
+    startWorkspaceJiraOAuth,
     lastJiraSyncAt,
     lastJiraSyncResult,
     isLoading,
@@ -64,13 +66,19 @@ export default function JiraSyncTab() {
     clearError,
   } = useWorkspaceStore()
   const [toast, setToast] = useState(null)
+  const [oauthAvailable, setOauthAvailable] = useState(false)
+  const [showManual, setShowManual] = useState(false)
   const [siteUrl, setSiteUrl] = useState('')
   const [projectKey, setProjectKey] = useState('')
   const [accessToken, setAccessToken] = useState('')
 
   useEffect(() => {
     fetchMine().catch(() => {})
-  }, [fetchMine])
+    fetchWorkspaceJiraOAuthStatus().then((status) => {
+      setOauthAvailable(Boolean(status.available))
+      if (!status.available) setShowManual(true)
+    })
+  }, [fetchMine, fetchWorkspaceJiraOAuthStatus])
 
   useEffect(() => {
     if (!workspace) return
@@ -78,6 +86,21 @@ export default function JiraSyncTab() {
     setProjectKey(workspace.jira_project_key || '')
     setAccessToken('')
   }, [workspace])
+
+  const handleOAuthConnect = async () => {
+    if (!workspace?.id) return
+    clearError()
+    setToast(null)
+    try {
+      await startWorkspaceJiraOAuth(workspace.id, {
+        jira_site_url: siteUrl.trim(),
+        jira_project_key: projectKey.trim(),
+        return_to: '/admin',
+      })
+    } catch {
+      setToast({ type: 'error', message: 'Failed to start Jira OAuth. Check site URL and project key.' })
+    }
+  }
 
   const handleConnect = async (e) => {
     e.preventDefault()
@@ -203,7 +226,7 @@ export default function JiraSyncTab() {
           </div>
         )}
 
-        <form onSubmit={handleConnect} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <FieldLabel>Jira site URL</FieldLabel>
             <TextInput
@@ -220,41 +243,86 @@ export default function JiraSyncTab() {
               placeholder="QUEST"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel>API token</FieldLabel>
-            <TextInput
-              type="password"
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-              placeholder={isConnected ? 'Enter a new token to update' : 'Your Atlassian API token'}
-            />
-            <p className="text-[11px] text-[#9ca3af]">
-              Use the email on your Questly admin account with this token. Tokens are stored securely
-              and never shown again.
-            </p>
-          </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <button
-              type="submit"
-              disabled={isLoading || !siteUrl.trim() || !projectKey.trim() || !accessToken.trim()}
-              className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
-            >
-              {isLoading ? 'Connecting…' : isConnected ? 'Update connection' : 'Connect'}
-            </button>
-            {isConnected && (
+          {oauthAvailable && !showManual && (
+            <div className="flex items-center gap-3 flex-wrap">
               <button
                 type="button"
-                onClick={handleDisconnect}
-                disabled={isLoading}
-                className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-[#ef4444] bg-[#fee2e2] border border-[#fecaca] cursor-pointer disabled:opacity-60"
+                onClick={handleOAuthConnect}
+                disabled={isLoading || !siteUrl.trim() || !projectKey.trim()}
+                className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
               >
-                Disconnect
+                {isLoading ? 'Redirecting…' : isConnected ? 'Reconnect with Atlassian' : 'Connect with Atlassian'}
               </button>
-            )}
-          </div>
-        </form>
+              <button
+                type="button"
+                onClick={() => setShowManual(true)}
+                className="text-[13px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+              >
+                Advanced: use API token
+              </button>
+              {isConnected && (
+                <button
+                  type="button"
+                  onClick={handleDisconnect}
+                  disabled={isLoading}
+                  className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-[#ef4444] bg-[#fee2e2] border border-[#fecaca] cursor-pointer disabled:opacity-60"
+                >
+                  Disconnect
+                </button>
+              )}
+            </div>
+          )}
+
+          {showManual && (
+            <form onSubmit={handleConnect} className="flex flex-col gap-4">
+              {oauthAvailable && (
+                <button
+                  type="button"
+                  onClick={() => setShowManual(false)}
+                  className="self-start text-[13px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+                >
+                  Back to Atlassian OAuth
+                </button>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <FieldLabel>API token</FieldLabel>
+                <TextInput
+                  type="password"
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  placeholder={isConnected ? 'Enter a new token to update' : 'Your Atlassian API token'}
+                />
+                <p className="text-[11px] text-[#9ca3af]">
+                  Use the email on your Questly admin account with this token. Tokens are stored securely
+                  and never shown again.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  type="submit"
+                  disabled={isLoading || !siteUrl.trim() || !projectKey.trim() || !accessToken.trim()}
+                  className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+                >
+                  {isLoading ? 'Connecting…' : isConnected ? 'Update connection' : 'Connect with token'}
+                </button>
+                {isConnected && (
+                  <button
+                    type="button"
+                    onClick={handleDisconnect}
+                    disabled={isLoading}
+                    className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-[#ef4444] bg-[#fee2e2] border border-[#fecaca] cursor-pointer disabled:opacity-60"
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+        </div>
       </div>
 
       <div className={`${CARD} p-6 flex flex-col gap-6`}>

@@ -1,5 +1,6 @@
 const jiraClient = require('./jiraClient')
 const { ensureWorkspaceDeveloperJiraIds } = require('./jiraAssignee')
+const { ensureFreshWorkspaceToken } = require('../lib/workspaceJiraAuth')
 const TaskModel = require('../models/task')
 const UserModel = require('../models/user')
 const { reconcileTaskAssignments } = require('./taskAssignmentReconcile')
@@ -18,7 +19,10 @@ async function buildWorkspaceJiraOverrides(workspace, overrides = {}) {
   if (workspace.jira_project_key) {
     merged.projectKey = workspace.jira_project_key
   }
-  if (workspace.jira_access_token) {
+  if (workspace.jira_auth_type === 'oauth' && workspace.jira_access_token && workspace.jira_cloud_id) {
+    merged.bearerToken = workspace.jira_access_token
+    merged.cloudId = workspace.jira_cloud_id
+  } else if (workspace.jira_access_token) {
     merged.apiToken = workspace.jira_access_token
     const admin = await UserModel.findByIdInternal(workspace.admin_id)
     if (admin?.email) {
@@ -32,7 +36,8 @@ async function buildWorkspaceJiraOverrides(workspace, overrides = {}) {
 async function syncWorkspaceTasks(workspace, overrides = {}) {
   assertWorkspaceJiraReady(workspace)
 
-  const jiraOverrides = await buildWorkspaceJiraOverrides(workspace, overrides)
+  const freshWorkspace = await ensureFreshWorkspaceToken(workspace)
+  const jiraOverrides = await buildWorkspaceJiraOverrides(freshWorkspace, overrides)
   const fallback = platformJiraConfig()
   const projectKey =
     workspace.jira_project_key || (isJiraFallbackEnabled() ? fallback?.projectKey : null)

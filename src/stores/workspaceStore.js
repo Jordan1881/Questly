@@ -142,6 +142,27 @@ export const useWorkspaceStore = create((set) => ({
     }
   },
 
+  fetchWorkspaceJiraOAuthStatus: async () => {
+    try {
+      return await apiFetch('/api/workspaces/jira/oauth/status')
+    } catch {
+      return { available: false }
+    }
+  },
+
+  startWorkspaceJiraOAuth: async (workspaceId, { jira_site_url, jira_project_key, return_to = '/admin' }) => {
+    const params = new URLSearchParams({
+      jira_site_url,
+      jira_project_key,
+      return_to,
+    })
+    const { authorize_url } = await apiFetch(
+      `/api/workspaces/${workspaceId}/jira/oauth/start?${params.toString()}`,
+    )
+    window.location.assign(authorize_url)
+    return { ok: true }
+  },
+
   disconnectJira: async (workspaceId) => {
     set({ isLoading: true, error: null })
     try {
