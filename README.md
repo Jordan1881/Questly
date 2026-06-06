@@ -13,6 +13,8 @@ The platform supports two roles — **Developer** and **Admin / Manager** — ea
 
 This project was built as a final-year Information Systems capstone project.
 
+**Submission package (M8):** see [docs/SUBMISSION.md](docs/SUBMISSION.md) for API docs, ER diagram, write-up, and demo script.
+
 ---
 
 ## Role System

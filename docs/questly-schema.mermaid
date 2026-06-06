@@ -1,0 +1,117 @@
+erDiagram
+  workspaces ||--o{ users : "members"
+  workspaces ||--o{ tasks : contains
+  workspaces ||--o{ sprints : contains
+  workspaces ||--o{ rewards : contains
+  workspaces ||--o{ join_requests : receives
+  workspaces }o--|| users : "admin_id"
+
+  users ||--o{ task_assignments : assigned
+  tasks ||--o{ task_assignments : has
+  tasks ||--o{ xp_transactions : "task_completed"
+
+  users ||--o{ xp_transactions : earns
+  sprints ||--o{ xp_transactions : "sprint_reset"
+
+  rewards ||--o{ reward_coupons : has
+  rewards ||--o{ purchases : purchased
+  users ||--o{ purchases : makes
+  reward_coupons ||--o| purchases : redeems
+  purchases ||--o{ xp_transactions : "reward_purchased"
+
+  workspaces {
+    uuid id PK
+    string name
+    uuid admin_id FK
+    string jira_site_url
+    string jira_project_key
+    text jira_access_token
+    string code
+  }
+
+  users {
+    uuid id PK
+    string email UK
+    string username
+    string role
+    uuid workspace_id FK
+    int current_sprint_xp
+    int lifetime_xp
+    int coin_balance
+    int streak_days
+    text jira_access_token
+    string jira_account_id
+  }
+
+  tasks {
+    uuid id PK
+    uuid workspace_id FK
+    string jira_issue_id UK
+    string jira_issue_key
+    string title
+    string difficulty
+    int xp_reward
+    boolean high_priority
+    string status
+  }
+
+  task_assignments {
+    uuid id PK
+    uuid task_id FK
+    uuid user_id FK
+    timestamp completed_at
+  }
+
+  sprints {
+    uuid id PK
+    uuid workspace_id FK
+    string name
+    date start_date
+    date end_date
+    string status
+    timestamp closed_at
+  }
+
+  rewards {
+    uuid id PK
+    uuid workspace_id FK
+    string title
+    int xp_cost
+    boolean is_available
+    uuid created_by FK
+  }
+
+  reward_coupons {
+    uuid id PK
+    uuid reward_id FK
+    string coupon_code
+    timestamp expires_at
+    boolean is_redeemed
+  }
+
+  purchases {
+    uuid id PK
+    uuid user_id FK
+    uuid reward_id FK
+    uuid coupon_id FK
+    int xp_spent
+    timestamp deleted_at
+  }
+
+  xp_transactions {
+    uuid id PK
+    uuid user_id FK
+    uuid sprint_id FK
+    int amount
+    string reason
+    uuid task_id FK
+    uuid purchase_id FK
+  }
+
+  join_requests {
+    uuid id PK
+    uuid workspace_id FK
+    uuid user_id FK
+    string status
+    uuid reviewed_by FK
+  }
