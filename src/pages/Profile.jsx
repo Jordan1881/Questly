@@ -7,7 +7,7 @@ import {
   CoffeeIcon, PackageIcon, ShoeIcon, FoodIcon,
   HeadphonesIcon, FilmIcon, BookIcon, ControllerIcon,
 } from '../components/icons'
-import jiraLogo from '../assets/jira-original-wordmark.svg'
+import JiraIntegrationCard from '../components/JiraIntegrationCard'
 import { useAuthStore } from '../stores/authStore'
 import { useXpStore } from '../stores/xpStore'
 import { useShopContext } from '../AppProviders'
@@ -464,19 +464,7 @@ export default function Profile() {
               </div>
               <div className={`w-[288px] shrink-0 ${CARD} p-6`}>
                 <h2 className="text-[16px] font-semibold text-[#1f2937] mb-5">Account Details</h2>
-                <div className="p-4 bg-[#f8faff] rounded-[10px] border border-[#dbeafe] mb-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <img src={jiraLogo} alt="Jira" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                      <span className="text-[13px] font-medium text-[#1f2937]">Jira Integration</span>
-                    </div>
-                    <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: '#d1fae5', color: '#059669' }}>
-                      <CheckIcon />
-                      Connected
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#9ca3af]">Last synced 2 hours ago</p>
-                </div>
+                <JiraIntegrationCard showConnectForm />
                 <div className="flex flex-col divide-y divide-[#f3f4f6]">
                   {[
                     { label: 'Total Tasks Completed', value: '47 tasks' },
@@ -523,19 +511,7 @@ export default function Profile() {
               </div>
               <div className={`w-[288px] shrink-0 ${CARD} p-6`}>
                 <h2 className="text-[16px] font-semibold text-[#1f2937] mb-5">Account Details</h2>
-                <div className="p-4 bg-[#f8faff] rounded-[10px] border border-[#dbeafe] mb-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <img src={jiraLogo} alt="Jira" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                      <span className="text-[13px] font-medium text-[#1f2937]">Jira Integration</span>
-                    </div>
-                    <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-[6px]" style={{ background: '#d1fae5', color: '#059669' }}>
-                      <CheckIcon />
-                      Connected
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#9ca3af]">Last synced 2 hours ago</p>
-                </div>
+                <JiraIntegrationCard showConnectForm={false} />
                 <div className="flex flex-col divide-y divide-[#f3f4f6]">
                   {[
                     { label: 'Role',        value: 'Admin / Manager' },

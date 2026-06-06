@@ -155,6 +155,28 @@ function mapIssue(issue, storyPointsFieldId, storyPointsByKey = new Map()) {
   }
 }
 
+async function validateCredentials({ siteUrl, email, apiToken, projectKey }) {
+  const credentials = {
+    siteUrl: (siteUrl || '').replace(/\/$/, ''),
+    email,
+    apiToken,
+  }
+
+  if (!credentials.siteUrl || !credentials.email || !credentials.apiToken) {
+    const err = new Error('siteUrl, email, and apiToken are required to validate Jira credentials')
+    err.status = 400
+    throw err
+  }
+
+  const myself = await jiraGet('/rest/api/3/myself', credentials)
+
+  if (projectKey) {
+    await jiraGet(`/rest/api/3/project/${encodeURIComponent(projectKey)}`, credentials)
+  }
+
+  return { accountId: myself.accountId || null }
+}
+
 async function lookupAccountIdByEmail(email, overrides = {}) {
   if (!email) return null
 
@@ -178,6 +200,7 @@ module.exports = {
   XP_BY_DIFFICULTY,
   STORY_POINT_FIELD_NAMES,
   fetchProjectIssues,
+  validateCredentials,
   lookupAccountIdByEmail,
   mapIssue,
   mapIssues,

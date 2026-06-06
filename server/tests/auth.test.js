@@ -111,7 +111,7 @@ describe('GET /api/auth/me', () => {
       username: 'dev',
       role: 'developer',
     })
-    expect(['workspace_id', 'avatar_url', 'current_sprint_xp', 'lifetime_xp'].every(
+    expect(['workspace_id', 'avatar_url', 'current_sprint_xp', 'lifetime_xp', 'jira_connected'].every(
       (k) => k in res.body.user
     )).toBe(true)
     expect(res.body.user.password_hash).toBeUndefined()

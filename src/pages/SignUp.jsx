@@ -111,7 +111,10 @@ export default function SignUp() {
       password: form.password,
       role: selectedRole,
     })
-    if (result.ok) setShowJiraAuth(true)
+    if (result.ok) {
+      if (selectedRole === 'developer') setShowJiraAuth(true)
+      else navigate(await resolvePostAuthPath())
+    }
   }
 
   const finishAuth = async () => {
@@ -319,6 +322,7 @@ export default function SignUp() {
         <JiraAuth
           onClose={finishAuth}
           onConnect={finishAuth}
+          onSkip={finishAuth}
         />
       )}
     </div>
