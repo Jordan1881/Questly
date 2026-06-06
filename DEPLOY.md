@@ -71,18 +71,46 @@ Open **Questly → Variables** and set:
 | `ATLASSIAN_OAUTH_CALLBACK_URL` | `https://YOUR-RAILWAY-URL.up.railway.app/api/auth/jira/oauth/callback` |
 | `ATLASSIAN_WORKSPACE_OAUTH_CALLBACK_URL` | `https://YOUR-RAILWAY-URL.up.railway.app/api/workspaces/jira/oauth/callback` |
 | `API_PUBLIC_URL` | `https://YOUR-RAILWAY-URL.up.railway.app` (optional fallback for callback derivation) |
+| `ATLASSIAN_REPORTING_REFRESH_TOKEN` | App owner's OAuth refresh token — see **Personal Data Reporting** below |
 
 Register **both** callback URLs in the Atlassian app **Authorization → Callback URL** list.
 
-### Atlassian app distribution (T158 — HITL)
+### Atlassian Distribution page (privacy, terms, sharing)
 
-While the app is in **Development** mode, only the app owner and explicitly added **Test users** can complete OAuth.
+Use these public URLs in **Distribution → Vendor & security details**:
+
+| Field | Production value |
+|-------|------------------|
+| **Privacy policy** | `https://questly-gilt.vercel.app/privacy` |
+| **Terms of service** | `https://questly-gilt.vercel.app/terms` |
+| **Customer support** | Your team support email (e.g. admin Gmail) |
+| **Stores personal data?** | **Yes** (Jira account IDs + tokens) |
+| **Personal Data Reporting API** | Implemented — check the confirmation box after deploy |
+
+Then set **Distribution status** to **Sharing** and save. Non-owner users (e.g. Yarden) can OAuth after accepting the unverified-app warning.
+
+### Personal Data Reporting API
+
+Questly reports stored Atlassian `accountId` values to `POST https://api.atlassian.com/app/report-accounts/` daily and erases data when Atlassian returns `closed` or `updated`.
+
+**One-time setup — app owner refresh token:**
+
+1. As the **Atlassian app owner**, open this URL (replace `CLIENT_ID` and ensure callback matches your dev or prod API):
+
+```
+https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=CLIENT_ID&scope=read%3Ame%20offline_access&redirect_uri=https%3A%2F%2Fquestly-production-f5ba.up.railway.app%2Fapi%2Fauth%2Fjira%2Foauth%2Fcallback&response_type=code&prompt=consent
+```
+
+2. After redirect, exchange the `code` for tokens (or complete OAuth via Questly as owner and read `jira_refresh_token` from DB once).
+3. Set Railway `ATLASSIAN_REPORTING_REFRESH_TOKEN` to the **refresh_token** value.
+4. Redeploy API — the daily job starts automatically in production when this var is set.
+
+### Atlassian app distribution (T158 — HITL)
 
 1. Open your app in [Atlassian Developer Console](https://developer.atlassian.com/console/myapps/)
 2. **Authorization** → add both callback URLs above
-3. For early testers (non-owner developers): **Distribution** → add each developer's Atlassian email under **Test users**, **or** submit the app for distribution review
-4. After a developer is added as a test user, they can use **Connect with Jira** on Profile without an API token
-5. **API token** connect remains available under **Advanced** when OAuth is configured, or as the only option when `ATLASSIAN_*` vars are unset
+3. **Distribution** → fill vendor details, enable **Sharing** (see table above)
+4. **API token** connect remains available under **Advanced** when OAuth is configured
 
 You can delete local-only vars (`DB_HOST`, `DB_PORT`, etc.) — production uses `DATABASE_URL`.
 
