@@ -3,7 +3,7 @@ const db = require('../config/db')
 const TABLE = 'tasks'
 
 async function upsertByJiraIssue({ workspace_id, jira_issue_id, ...fields }) {
-  const existing = await db(TABLE).where({ jira_issue_id }).first()
+  const existing = await db(TABLE).where({ workspace_id, jira_issue_id }).first()
 
   if (existing) {
     const [task] = await db(TABLE).where({ id: existing.id }).update(fields).returning('*')
