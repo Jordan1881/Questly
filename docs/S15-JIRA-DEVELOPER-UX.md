@@ -246,19 +246,23 @@ flowchart TD
 
 ---
 
-## Suggested GitHub issue mapping
+## GitHub issues
 
-| Task | Suggested title | Priority | Sprint |
-|------|-----------------|----------|--------|
-| T151 | Pre-workspace empty states + friendly Jira gating | P1 | S15 |
-| T152 | Pass `jira_site_url` to developer on join approval | P1 | S15 |
-| T153 | Developer UI copy — hide workspace Jira concept | P2 | S15 |
-| T154 | Better connect errors + team site validation | P1 | S15 |
-| T155 | E2E developer onboarding with team site banner | P1 | S15 |
-| T156 | Admin OAuth for workspace Jira sync | P1 | S16 |
-| T157 | Join lookup shows team Jira site + access check | P2 | S16 |
-| T158 | Single developer connect path + Atlassian distribution docs | P2 | S16 |
-| T159 | Encrypt Jira tokens at rest | P1 | S16 |
+| Task | Issue | Title | Sprint |
+|------|-------|-------|--------|
+| T151 | [#192](https://github.com/Jordan1881/Questly/issues/192) | Pre-workspace empty states + friendly Jira gating | S15 |
+| T152 | [#193](https://github.com/Jordan1881/Questly/issues/193) | Pass team jira_site_url on join approval | S15 |
+| T153 | [#194](https://github.com/Jordan1881/Questly/issues/194) | Developer UI copy — hide workspace Jira concept | S15 |
+| T154 | [#195](https://github.com/Jordan1881/Questly/issues/195) | Team site validation + readable connect errors | S15 |
+| T155 | [#196](https://github.com/Jordan1881/Questly/issues/196) | E2E developer onboarding with team site banner | S15 |
+| T156 | [#197](https://github.com/Jordan1881/Questly/issues/197) | Admin OAuth for workspace Jira sync (HITL) | S16 |
+| T157 | [#198](https://github.com/Jordan1881/Questly/issues/198) | Join lookup shows team Jira site + access check | S16 |
+| T158 | [#199](https://github.com/Jordan1881/Questly/issues/199) | Single developer connect path + distribution docs (HITL) | S16 |
+| T159 | [#200](https://github.com/Jordan1881/Questly/issues/200) | Encrypt Jira tokens at rest | S16 |
+
+Epic: [#179](https://github.com/Jordan1881/Questly/issues/179)
+
+**Superseded (closed):** #183–#188 — prior multi-tenant P1/P2 plan replaced by this sprint.
 
 ---
 
