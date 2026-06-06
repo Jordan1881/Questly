@@ -9,10 +9,14 @@ import Profile from '../pages/Profile'
 import Admin from '../pages/Admin'
 import WorkspaceCreate from '../pages/WorkspaceCreate'
 import WorkspaceJoin from '../pages/WorkspaceJoin'
+import PrivacyPolicy from '../pages/PrivacyPolicy'
+import TermsOfService from '../pages/TermsOfService'
 import ProtectedRoute from '../components/ProtectedRoute'
 
 export const router = createBrowserRouter([
   { path: '/', element: <Hero /> },
+  { path: '/privacy', element: <PrivacyPolicy /> },
+  { path: '/terms', element: <TermsOfService /> },
   { path: '/login', element: <SignIn /> },
   { path: '/signup', element: <SignUp /> },
   {

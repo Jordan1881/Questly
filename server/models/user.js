@@ -63,7 +63,13 @@ async function assignWorkspace(user_id, workspace_id) {
 }
 
 async function updateJiraAccountId(user_id, jira_account_id) {
-  const [user] = await db(TABLE).where({ id: user_id }).update({ jira_account_id }).returning('*')
+  const [user] = await db(TABLE)
+    .where({ id: user_id })
+    .update({
+      jira_account_id,
+      jira_personal_data_updated_at: db.fn.now(),
+    })
+    .returning('*')
   return strip(user)
 }
 
@@ -74,6 +80,7 @@ async function connectJira(
   const patch = {
     jira_access_token: encryptToken(jira_access_token),
     jira_account_id,
+    jira_personal_data_updated_at: db.fn.now(),
   }
   if (jira_refresh_token !== undefined) {
     patch.jira_refresh_token = encryptToken(jira_refresh_token)
@@ -86,9 +93,36 @@ async function connectJira(
 async function disconnectJira(user_id) {
   const [user] = await db(TABLE)
     .where({ id: user_id })
-    .update({ jira_access_token: null, jira_refresh_token: null, jira_account_id: null })
+    .update({
+      jira_access_token: null,
+      jira_refresh_token: null,
+      jira_account_id: null,
+      jira_personal_data_updated_at: null,
+    })
     .returning('*')
   return strip(user)
+}
+
+async function listUsersWithJiraPersonalData() {
+  const rows = await db(TABLE)
+    .whereNotNull('jira_account_id')
+    .whereNot('jira_account_id', '')
+    .select('id', 'jira_account_id', 'jira_personal_data_updated_at', 'jira_access_token', 'jira_refresh_token')
+
+  return rows.map(decryptUserTokens)
+}
+
+async function findByJiraAccountIdGlobal(jira_account_id) {
+  const row = await db(TABLE).where({ jira_account_id }).first()
+  return decryptUserTokens(row)
+}
+
+async function touchJiraPersonalDataUpdatedAt(user_id) {
+  await db(TABLE).where({ id: user_id }).update({ jira_personal_data_updated_at: db.fn.now() })
+}
+
+async function eraseJiraPersonalData(user_id) {
+  return disconnectJira(user_id)
 }
 
 function isJiraConnected(user) {
@@ -144,6 +178,10 @@ module.exports = {
   listByWorkspace,
   listDevelopersByWorkspace,
   findByJiraAccountId,
+  findByJiraAccountIdGlobal,
+  listUsersWithJiraPersonalData,
+  touchJiraPersonalDataUpdatedAt,
+  eraseJiraPersonalData,
   assignWorkspace,
   updateJiraAccountId,
   connectJira,
