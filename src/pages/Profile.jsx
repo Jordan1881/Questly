@@ -491,6 +491,7 @@ export default function Profile() {
                 </div>
               </div>
             </div>
+            </>
           )}
 
           {/* ── Admin-only: Team Summary + Account Details ── */}
@@ -535,7 +536,6 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-            </>
           )}
 
           {/* ── My Rewards Card (developer only) ── */}
