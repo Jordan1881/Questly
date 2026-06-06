@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useProfileStore } from '../../stores/profileStore'
+import { useToastStore } from '../../stores/toastStore'
 
 vi.mock('../../lib/api', () => ({
   apiFetch: vi.fn(),
@@ -10,6 +11,7 @@ import { apiFetch } from '../../lib/api'
 describe('profileStore', () => {
   beforeEach(() => {
     useProfileStore.setState({ profile: null, purchases: [], isLoading: false, error: null })
+    useToastStore.setState({ message: null, type: 'success' })
     vi.clearAllMocks()
   })
 
@@ -32,6 +34,7 @@ describe('profileStore', () => {
     await useProfileStore.getState().deletePurchase('p1')
 
     expect(useProfileStore.getState().purchases).toEqual([{ id: 'p2' }])
+    expect(useToastStore.getState().message).toBe('Removed from My Rewards')
   })
 
   it('updateProfile stores returned profile', async () => {
