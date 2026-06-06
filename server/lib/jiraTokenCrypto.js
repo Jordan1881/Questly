@@ -65,6 +65,7 @@ function decryptWorkspaceTokens(workspace) {
   return {
     ...workspace,
     jira_access_token: decryptToken(workspace.jira_access_token),
+    jira_refresh_token: decryptToken(workspace.jira_refresh_token),
   }
 }
 

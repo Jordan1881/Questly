@@ -265,8 +265,13 @@ describe('join request flow', () => {
     expect(res.body.join_request.status).toBe('pending')
   })
 
-  test('GET /api/workspaces/by-code/:code resolves workspace', async () => {
+  test('GET /api/workspaces/by-code/:code resolves workspace with public team Jira host', async () => {
     const { workspace } = await createWorkspaceAsAdmin('Code Co', 'code')
+    await db('workspaces').where({ id: workspace.id }).update({
+      jira_site_url: 'https://team.atlassian.net',
+      jira_project_key: 'QUEST',
+      jira_access_token: 'admin-token',
+    })
     const { token: devToken } = await registerAndLogin('developer', 'code')
 
     const res = await request(app)
@@ -278,6 +283,33 @@ describe('join request flow', () => {
       id: workspace.id,
       name: 'Code Co',
       code: workspace.code,
+      team_jira_site_host: 'team.atlassian.net',
+      team_jira_connected: true,
     })
+    expect(res.body.workspace.jira_access_token).toBeUndefined()
+    expect(res.body.workspace.jira_site_url).toBeUndefined()
+  })
+
+  test('GET /api/join-requests/me includes team Jira host for pending request', async () => {
+    const { token: adminToken, workspace } = await createWorkspaceAsAdmin('Pending Host', 'pendinghost')
+    await db('workspaces').where({ id: workspace.id }).update({
+      jira_site_url: 'https://team.atlassian.net',
+      jira_project_key: 'QUEST',
+      jira_access_token: 'admin-token',
+    })
+
+    const { token: devToken } = await registerAndLogin('developer', 'pendinghost')
+    await request(app)
+      .post(`/api/workspaces/${workspace.id}/join-requests`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+
+    const res = await request(app)
+      .get('/api/join-requests/me')
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.join_request.team_jira_site_host).toBe('team.atlassian.net')
+    expect(res.body.join_request.team_jira_connected).toBe(true)
   })
 })

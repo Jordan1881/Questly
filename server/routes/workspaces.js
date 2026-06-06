@@ -9,6 +9,7 @@ const {
   connectJira,
   disconnectJira,
 } = require('../controllers/workspace')
+const workspaceJiraOAuth = require('../controllers/workspaceJiraOAuth')
 const {
   submit,
   listPending,
@@ -28,6 +29,8 @@ const router = Router()
 
 router.post('/', verifyToken, requireRole('admin'), create)
 router.get('/mine', verifyToken, requireRole('admin'), getMine)
+router.get('/jira/oauth/status', verifyToken, requireRole('admin'), workspaceJiraOAuth.oauthStatus)
+router.get('/jira/oauth/callback', workspaceJiraOAuth.oauthCallback)
 router.get('/by-code/:code', verifyToken, getByCode)
 router.get('/:id/members', verifyToken, requireRole('admin'), listMembers)
 router.get('/:id/tasks', verifyToken, requireRole('admin'), listByWorkspace)
@@ -39,6 +42,7 @@ router.get('/:id/rewards', verifyToken, listRewards)
 router.get('/:id/join-requests', verifyToken, requireRole('admin'), listPending)
 router.post('/:id/join-requests', verifyToken, requireRole('developer'), submit)
 router.patch('/:id/join-requests/:requestId', verifyToken, requireRole('admin'), review)
+router.get('/:id/jira/oauth/start', verifyToken, requireRole('admin'), workspaceJiraOAuth.oauthStart)
 router.post('/:id/jira/connect', verifyToken, requireRole('admin'), connectJira)
 router.delete('/:id/jira/disconnect', verifyToken, requireRole('admin'), disconnectJira)
 router.get('/:id', verifyToken, getById)
