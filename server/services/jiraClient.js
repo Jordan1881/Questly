@@ -1,3 +1,5 @@
+const https = require('https')
+const { URL } = require('url')
 const config = require('../config')
 
 const XP_BY_DIFFICULTY = { easy: 20, medium: 40, hard: 70 }
@@ -57,34 +59,55 @@ function buildAuthHeader(email, apiToken) {
   return `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`
 }
 
-async function jiraGet(path, { siteUrl, email, apiToken }) {
-  const res = await fetch(`${siteUrl}${path}`, {
-    headers: {
-      Authorization: buildAuthHeader(email, apiToken),
-      Accept: 'application/json',
-    },
+function jiraGet(path, { siteUrl, email, apiToken }) {
+  const url = new URL(`${siteUrl}${path}`)
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        protocol: url.protocol,
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: `${url.pathname}${url.search}`,
+        method: 'GET',
+        headers: {
+          Authorization: buildAuthHeader(email, apiToken),
+          Accept: 'application/json',
+        },
+      },
+      (res) => {
+        let text = ''
+        res.on('data', (chunk) => {
+          text += chunk
+        })
+        res.on('end', () => {
+          let body
+          try {
+            body = text ? JSON.parse(text) : null
+          } catch {
+            body = text
+          }
+
+          if (res.statusCode < 200 || res.statusCode >= 300) {
+            const message =
+              typeof body === 'object' && body?.errorMessages?.length
+                ? body.errorMessages.join('; ')
+                : `Jira request failed with HTTP ${res.statusCode}`
+            const err = new Error(message)
+            err.status = res.statusCode
+            err.body = body
+            reject(err)
+            return
+          }
+
+          resolve(body)
+        })
+      },
+    )
+
+    req.on('error', reject)
+    req.end()
   })
-
-  const text = await res.text()
-  let body
-  try {
-    body = text ? JSON.parse(text) : null
-  } catch {
-    body = text
-  }
-
-  if (!res.ok) {
-    const message =
-      typeof body === 'object' && body?.errorMessages?.length
-        ? body.errorMessages.join('; ')
-        : `Jira request failed with HTTP ${res.status}`
-    const err = new Error(message)
-    err.status = res.status
-    err.body = body
-    throw err
-  }
-
-  return body
 }
 
 function getCredentials(overrides = {}) {
