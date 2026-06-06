@@ -15,6 +15,11 @@ const {
   review,
 } = require('../controllers/joinRequest')
 const { listByWorkspace } = require('../controllers/tasks')
+const {
+  createForWorkspace,
+  listForWorkspace,
+  getActiveForWorkspace,
+} = require('../controllers/sprints')
 const verifyToken = require('../middleware/verifyToken')
 const requireRole = require('../middleware/requireRole')
 
@@ -25,6 +30,9 @@ router.get('/mine', verifyToken, requireRole('admin'), getMine)
 router.get('/by-code/:code', verifyToken, getByCode)
 router.get('/:id/members', verifyToken, requireRole('admin'), listMembers)
 router.get('/:id/tasks', verifyToken, requireRole('admin'), listByWorkspace)
+router.post('/:id/sprints', verifyToken, requireRole('admin'), createForWorkspace)
+router.get('/:id/sprints/active', verifyToken, getActiveForWorkspace)
+router.get('/:id/sprints', verifyToken, listForWorkspace)
 router.get('/:id/join-requests', verifyToken, requireRole('admin'), listPending)
 router.post('/:id/join-requests', verifyToken, requireRole('developer'), submit)
 router.patch('/:id/join-requests/:requestId', verifyToken, requireRole('admin'), review)

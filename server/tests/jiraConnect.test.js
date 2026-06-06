@@ -19,6 +19,7 @@ beforeEach(async () => {
   jest.clearAllMocks()
   jiraClient.validateCredentials.mockResolvedValue({ accountId: 'jira-acct-1' })
   await db('join_requests').del()
+  await db('sprints').del()
   await db('users').del()
   await db('workspaces').del()
 })

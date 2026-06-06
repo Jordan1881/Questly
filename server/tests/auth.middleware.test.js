@@ -17,6 +17,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
+  await db('sprints').del()
   await db('users').del()
   await db('workspaces').del()
 })
