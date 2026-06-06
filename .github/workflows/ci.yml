@@ -204,10 +204,16 @@ jobs:
         run: npm ci
 
       - name: Deploy to Vercel
-        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "VERCEL_TOKEN not configured — skipping deploy"
+            exit 0
+          fi
+          npx vercel --prod --token "$VERCEL_TOKEN"
 
   deploy-backend:
     name: Deploy Backend (Railway)
@@ -219,6 +225,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy to Railway
-        run: npx @railway/cli up --service questly-server
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN not configured — skipping deploy"
+            exit 0
+          fi
+          npx @railway/cli up --service questly-server
