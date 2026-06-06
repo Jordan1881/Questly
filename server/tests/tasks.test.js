@@ -121,6 +121,87 @@ describe('POST /api/tasks/sync/:workspaceId', () => {
     expect(jiraClient.fetchProjectIssues).not.toHaveBeenCalled()
   })
 
+  test('re-sync removes uncompleted assignments when Jira assignee changes', async () => {
+    const { adminToken, workspace, devUserId } = await createWorkspaceWithDeveloper('reassign')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const { token: dev2Token, user: dev2User } = await registerAndLogin('developer', 'reassign2')
+    await db('users')
+      .where({ id: dev2User.id })
+      .update({ workspace_id: workspace.id, jira_account_id: 'dev2-jira-id' })
+
+    jiraClient.fetchProjectIssues.mockResolvedValue([
+      MOCK_ISSUES[0],
+      { ...MOCK_ISSUES[1], assigneeAccountId: 'dev2-jira-id' },
+    ])
+
+    const res = await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.assignmentsRemoved).toBeGreaterThanOrEqual(1)
+
+    const dev1Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: devUserId, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev1Assignment).toBeUndefined()
+
+    const dev2Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: dev2User.id, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev2Assignment).toBeDefined()
+    expect(dev2Token).toBeDefined()
+  })
+
+  test('re-sync keeps completed assignments when Jira assignee changes', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('keepdone')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const scrum2 = listRes.body.tasks.find((task) => task.jiraId === 'SCRUM-2')
+
+    await request(app)
+      .patch(`/api/tasks/${scrum2.id}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: true })
+
+    const { user: dev2User } = await registerAndLogin('developer', 'keepdone2')
+    await db('users')
+      .where({ id: dev2User.id })
+      .update({ workspace_id: workspace.id, jira_account_id: 'dev2-jira-id' })
+
+    jiraClient.fetchProjectIssues.mockResolvedValue([
+      MOCK_ISSUES[0],
+      { ...MOCK_ISSUES[1], assigneeAccountId: 'dev2-jira-id' },
+    ])
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const dev1Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: devUserId, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev1Assignment.completed_at).not.toBeNull()
+
+    const dev2Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: dev2User.id, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev2Assignment).toBeDefined()
+  })
+
   test('re-sync updates existing tasks instead of duplicating them', async () => {
     const { adminToken, workspace } = await createWorkspaceWithDeveloper('upsert')
 
@@ -143,6 +224,60 @@ describe('POST /api/tasks/sync/:workspaceId', () => {
     const tasks = await db('tasks').where({ workspace_id: workspace.id })
     expect(tasks).toHaveLength(2)
     expect(tasks.find((task) => task.jira_issue_key === 'SCRUM-1').title).toBe('Updated Task 1')
+  })
+})
+
+describe('GET /api/workspaces/:id/tasks', () => {
+  test('admin lists workspace tasks with filters', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('wstasks')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const allRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/tasks`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(allRes.status).toBe(200)
+    expect(allRes.body.tasks).toHaveLength(2)
+
+    const filteredRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/tasks?difficulty=hard&assignee=${devUserId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(filteredRes.status).toBe(200)
+    expect(filteredRes.body.tasks).toHaveLength(1)
+    expect(filteredRes.body.tasks[0].jiraId).toBe('SCRUM-2')
+
+    const devRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/tasks`)
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(devRes.status).toBe(403)
+  })
+})
+
+describe('GET /api/tasks/:id', () => {
+  test('developer gets task with assignment completion status', async () => {
+    const { adminToken, devToken, workspace } = await createWorkspaceWithDeveloper('taskid')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const taskId = listRes.body.tasks[0].id
+
+    const res = await request(app)
+      .get(`/api/tasks/${taskId}`)
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.task.id).toBe(taskId)
+    expect(res.body.task.completedAt).toBeNull()
+    expect(res.body.task.done).toBe(false)
   })
 })
 
@@ -275,6 +410,14 @@ describe('jiraClient helpers', () => {
     expect(jiraClient.parseDifficultyFromStoryPoints(5)).toBe('medium')
     expect(jiraClient.parseDifficultyFromStoryPoints(8)).toBe('hard')
     expect(jiraClient.parseDifficultyFromStoryPoints(null)).toBe('medium')
+  })
+
+  test('mapJiraIssueToDifficulty maps story points and labels; throws on unknown', () => {
+    expect(jiraClient.mapJiraIssueToDifficulty(2)).toBe('easy')
+    expect(jiraClient.mapJiraIssueToDifficulty('Hard')).toBe('hard')
+    expect(jiraClient.mapJiraIssueToDifficulty(null)).toBe('medium')
+    expect(() => jiraClient.mapJiraIssueToDifficulty('impossible')).toThrow(TypeError)
+    expect(() => jiraClient.mapJiraIssueToDifficulty(-1)).toThrow(TypeError)
   })
 
   test('mapIssues inherits parent story points for subtasks', () => {
