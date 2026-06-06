@@ -96,7 +96,7 @@ async function listMine(req, res, next) {
       return res.status(404).json({ error: 'You are not in a workspace yet' })
     }
 
-    const rows = await TaskAssignmentModel.listForUser(req.user.id)
+    const rows = await TaskAssignmentModel.listForUser(req.user.id, req.user.workspace_id)
     res.json({ tasks: rows.map(formatTask) })
   } catch (err) {
     next(err)
@@ -137,7 +137,9 @@ async function updateCompletion(req, res, next) {
     }
 
     if (task.workspace_id !== req.user.workspace_id) {
-      return res.status(403).json({ error: 'Forbidden' })
+      return res.status(403).json({
+        error: 'This task belongs to another workspace. Ask your admin to sync tasks again.',
+      })
     }
 
     const assignment = await TaskAssignmentModel.findForUser(task.id, req.user.id)
