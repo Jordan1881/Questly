@@ -4,9 +4,9 @@
  * Preserves: Type, Sprint/Milestone table, What to build, Blocked by.
  *
  * Usage:
- *   node scripts/enhance-github-issues.mjs --dry-run
- *   node scripts/enhance-github-issues.mjs --apply
- *   node scripts/enhance-github-issues.mjs --apply --setup-labels-milestones
+ *   node scripts/dev/enhance-github-issues.mjs --dry-run
+ *   node scripts/dev/enhance-github-issues.mjs --apply
+ *   node scripts/dev/enhance-github-issues.mjs --apply --setup-labels-milestones
  */
 
 import { execSync } from 'node:child_process'
