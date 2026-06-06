@@ -1,9 +1,13 @@
-const config = require('../config')
 const jiraClient = require('./jiraClient')
 const { ensureWorkspaceDeveloperJiraIds } = require('./jiraAssignee')
 const TaskModel = require('../models/task')
 const UserModel = require('../models/user')
 const { reconcileTaskAssignments } = require('./taskAssignmentReconcile')
+const {
+  assertWorkspaceJiraReady,
+  isJiraFallbackEnabled,
+  platformJiraConfig,
+} = require('../lib/jiraConfig')
 
 async function buildWorkspaceJiraOverrides(workspace, overrides = {}) {
   const merged = { ...overrides }
@@ -26,12 +30,18 @@ async function buildWorkspaceJiraOverrides(workspace, overrides = {}) {
 }
 
 async function syncWorkspaceTasks(workspace, overrides = {}) {
+  assertWorkspaceJiraReady(workspace)
+
   const jiraOverrides = await buildWorkspaceJiraOverrides(workspace, overrides)
-  const projectKey = workspace.jira_project_key || config.jira.projectKey
+  const fallback = platformJiraConfig()
+  const projectKey =
+    workspace.jira_project_key || (isJiraFallbackEnabled() ? fallback?.projectKey : null)
+  const siteUrl = workspace.jira_site_url || (isJiraFallbackEnabled() ? fallback?.siteUrl : null)
+
   const issues = await jiraClient.fetchProjectIssues({
     ...jiraOverrides,
     projectKey,
-    siteUrl: workspace.jira_site_url || jiraOverrides.siteUrl,
+    siteUrl,
   })
 
   let developers = await UserModel.listDevelopersByWorkspace(workspace.id)
@@ -92,4 +102,5 @@ function resolveAssignees(assigneeAccountId, developers, developersByJiraId) {
 
 module.exports = {
   syncWorkspaceTasks,
+  buildWorkspaceJiraOverrides,
 }
