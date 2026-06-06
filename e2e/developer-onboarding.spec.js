@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { register, createWorkspace } from './helpers/api.mjs'
+import { register, createWorkspace, seedWorkspaceJira } from './helpers/api.mjs'
 
 const PASSWORD = 'Password123!'
 
@@ -69,6 +69,11 @@ test('developer can submit a workspace join request via UI code lookup', async (
     role: 'admin',
   })
   const workspace = await createWorkspace(adminToken, `Onboard WS ${ts}`)
+  await seedWorkspaceJira({
+    workspaceId: workspace.id,
+    jira_site_url: 'https://questly-e2e.atlassian.net',
+    jira_project_key: 'QUEST',
+  })
 
   await register({
     email: devEmail,
@@ -83,6 +88,7 @@ test('developer can submit a workspace join request via UI code lookup', async (
   await page.getByPlaceholder('WORKSPACE CODE').fill(workspace.code)
   await page.getByRole('button', { name: /find workspace/i }).click()
   await expect(page.getByText(workspace.name)).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText('questly-e2e.atlassian.net')).toBeVisible({ timeout: 10000 })
   await page.getByRole('button', { name: /submit request/i }).click()
 
   await expect(page.getByText('Join Request Pending')).toBeVisible({ timeout: 10000 })

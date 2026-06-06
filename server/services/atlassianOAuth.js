@@ -6,8 +6,8 @@ const AUTH_BASE = 'https://auth.atlassian.com'
 const API_BASE = 'https://api.atlassian.com'
 const DEFAULT_SCOPES = 'read:jira-work read:jira-user read:me offline_access'
 
-function isConfigured() {
-  const { clientId, clientSecret, callbackUrl } = config.atlassian
+function isConfigured(callbackUrl = config.atlassian.callbackUrl) {
+  const { clientId, clientSecret } = config.atlassian
   return Boolean(clientId && clientSecret && callbackUrl)
 }
 
@@ -67,8 +67,8 @@ function httpRequest(targetUrl, { method = 'GET', headers = {}, body = null } = 
   })
 }
 
-function buildAuthorizeUrl({ state, scopes = DEFAULT_SCOPES }) {
-  const { clientId, callbackUrl } = config.atlassian
+function buildAuthorizeUrl({ state, scopes = DEFAULT_SCOPES, callbackUrl = config.atlassian.callbackUrl }) {
+  const { clientId } = config.atlassian
   const params = new URLSearchParams({
     audience: 'api.atlassian.com',
     client_id: clientId,
@@ -82,8 +82,8 @@ function buildAuthorizeUrl({ state, scopes = DEFAULT_SCOPES }) {
   return `${AUTH_BASE}/authorize?${params.toString()}`
 }
 
-async function exchangeAuthorizationCode(code) {
-  const { clientId, clientSecret, callbackUrl } = config.atlassian
+async function exchangeAuthorizationCode(code, callbackUrl = config.atlassian.callbackUrl) {
+  const { clientId, clientSecret } = config.atlassian
 
   return httpRequest(`${AUTH_BASE}/oauth/token`, {
     method: 'POST',
@@ -134,8 +134,12 @@ function normalizeSiteUrl(siteUrl) {
 }
 
 function siteUrlInResources(siteUrl, resources) {
+  return Boolean(findResourceForSiteUrl(siteUrl, resources))
+}
+
+function findResourceForSiteUrl(siteUrl, resources) {
   const normalized = normalizeSiteUrl(siteUrl)
-  return (resources || []).some((resource) => normalizeSiteUrl(resource.url) === normalized)
+  return (resources || []).find((resource) => normalizeSiteUrl(resource.url) === normalized) || null
 }
 
 module.exports = {
@@ -147,5 +151,6 @@ module.exports = {
   fetchAccessibleResources,
   fetchAuthenticatedUser,
   siteUrlInResources,
+  findResourceForSiteUrl,
   httpRequest,
 }

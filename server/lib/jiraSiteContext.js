@@ -28,7 +28,22 @@ async function developerJiraContext(user) {
   }
 }
 
+function publicWorkspaceLookup(workspace) {
+  if (!workspace) return null
+
+  const siteUrl = workspace.jira_site_url || null
+
+  return {
+    id: workspace.id,
+    name: workspace.name,
+    code: workspace.code,
+    team_jira_site_host: jiraSiteHostname(siteUrl),
+    team_jira_connected: WorkspaceModel.isJiraConnected(workspace),
+  }
+}
+
 module.exports = {
   jiraSiteHostname,
   developerJiraContext,
+  publicWorkspaceLookup,
 }

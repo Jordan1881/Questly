@@ -164,7 +164,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
               onClick={() => setShowManual(true)}
               className="self-start text-[11px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
             >
-              Use API token instead
+              Advanced: use API token
             </button>
           )}
 

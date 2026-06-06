@@ -60,6 +60,29 @@ Open **Questly → Variables** and set:
 | `JIRA_DEVELOPER_ACCOUNT_ID` | Jira `accountId` for assignee mapping |
 | `JIRA_ACCOUNT_ID` | Alias for developer account ID (optional) |
 | `JIRA_STORY_POINTS_FIELD_ID` | Optional — leave unset unless auto-detect fails |
+| `JIRA_TOKEN_ENCRYPTION_KEY` | 32+ char random string — encrypts Jira tokens at rest (T159) |
+
+**Atlassian OAuth 3LO** (developer + workspace admin connect — T156/T158):
+
+| Variable | Value |
+|----------|--------|
+| `ATLASSIAN_CLIENT_ID` | From [Atlassian Developer Console](https://developer.atlassian.com/console/myapps/) |
+| `ATLASSIAN_CLIENT_SECRET` | Same app |
+| `ATLASSIAN_OAUTH_CALLBACK_URL` | `https://YOUR-RAILWAY-URL.up.railway.app/api/auth/jira/oauth/callback` |
+| `ATLASSIAN_WORKSPACE_OAUTH_CALLBACK_URL` | `https://YOUR-RAILWAY-URL.up.railway.app/api/workspaces/jira/oauth/callback` |
+| `API_PUBLIC_URL` | `https://YOUR-RAILWAY-URL.up.railway.app` (optional fallback for callback derivation) |
+
+Register **both** callback URLs in the Atlassian app **Authorization → Callback URL** list.
+
+### Atlassian app distribution (T158 — HITL)
+
+While the app is in **Development** mode, only the app owner and explicitly added **Test users** can complete OAuth.
+
+1. Open your app in [Atlassian Developer Console](https://developer.atlassian.com/console/myapps/)
+2. **Authorization** → add both callback URLs above
+3. For early testers (non-owner developers): **Distribution** → add each developer's Atlassian email under **Test users**, **or** submit the app for distribution review
+4. After a developer is added as a test user, they can use **Connect with Jira** on Profile without an API token
+5. **API token** connect remains available under **Advanced** when OAuth is configured, or as the only option when `ATLASSIAN_*` vars are unset
 
 You can delete local-only vars (`DB_HOST`, `DB_PORT`, etc.) — production uses `DATABASE_URL`.
 

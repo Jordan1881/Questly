@@ -72,8 +72,47 @@ async function connectJira(id, { jira_site_url, jira_project_key, jira_access_to
       jira_site_url: normalizeSiteUrl(jira_site_url),
       jira_project_key: (jira_project_key || '').trim(),
       jira_access_token: encryptToken(jira_access_token),
+      jira_refresh_token: null,
+      jira_cloud_id: null,
+      jira_auth_type: 'api_token',
     })
     .returning('*')
+  return decryptWorkspaceTokens(workspace) ?? undefined
+}
+
+async function connectJiraOAuth(
+  id,
+  {
+    jira_site_url,
+    jira_project_key,
+    jira_access_token,
+    jira_refresh_token = null,
+    jira_cloud_id,
+  },
+) {
+  const [workspace] = await db(TABLE)
+    .where({ id })
+    .update({
+      jira_site_url: normalizeSiteUrl(jira_site_url),
+      jira_project_key: (jira_project_key || '').trim(),
+      jira_access_token: encryptToken(jira_access_token),
+      jira_refresh_token: encryptToken(jira_refresh_token),
+      jira_cloud_id: jira_cloud_id || null,
+      jira_auth_type: 'oauth',
+    })
+    .returning('*')
+  return decryptWorkspaceTokens(workspace) ?? undefined
+}
+
+async function updateOAuthTokens(id, { jira_access_token, jira_refresh_token = undefined }) {
+  const patch = {
+    jira_access_token: encryptToken(jira_access_token),
+  }
+  if (jira_refresh_token !== undefined) {
+    patch.jira_refresh_token = encryptToken(jira_refresh_token)
+  }
+
+  const [workspace] = await db(TABLE).where({ id }).update(patch).returning('*')
   return decryptWorkspaceTokens(workspace) ?? undefined
 }
 
@@ -84,6 +123,9 @@ async function disconnectJira(id) {
       jira_site_url: null,
       jira_project_key: null,
       jira_access_token: null,
+      jira_refresh_token: null,
+      jira_cloud_id: null,
+      jira_auth_type: 'api_token',
     })
     .returning('*')
   return workspace ?? undefined
@@ -97,7 +139,7 @@ function isJiraConnected(workspace) {
 
 function sanitize(workspace) {
   if (!workspace) return null
-  const { jira_access_token, ...safe } = workspace
+  const { jira_access_token, jira_refresh_token, jira_cloud_id, ...safe } = workspace
   safe.jira_connected = isJiraConnected(workspace)
   return safe
 }
@@ -109,6 +151,8 @@ module.exports = {
   findByAdminId,
   update,
   connectJira,
+  connectJiraOAuth,
+  updateOAuthTokens,
   disconnectJira,
   isJiraConnected,
   sanitize,

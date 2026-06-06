@@ -1,6 +1,7 @@
 const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
 const jiraClient = require('../services/jiraClient')
+const { publicWorkspaceLookup } = require('../lib/jiraSiteContext')
 
 function canAccessWorkspace(user, workspace) {
   return workspace.admin_id === user.id || user.workspace_id === workspace.id
@@ -85,13 +86,7 @@ async function getByCode(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    res.json({
-      workspace: {
-        id: workspace.id,
-        name: workspace.name,
-        code: workspace.code,
-      },
-    })
+    res.json({ workspace: publicWorkspaceLookup(workspace) })
   } catch (err) {
     next(err)
   }

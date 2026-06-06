@@ -3,6 +3,7 @@ const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
 const { ensureDeveloperJiraAccountId } = require('../services/jiraAssignee')
 const { buildWorkspaceJiraOverrides } = require('../services/jiraSync')
+const { jiraSiteHostname } = require('../lib/jiraSiteContext')
 
 function isWorkspaceAdmin(user, workspace) {
   return workspace.admin_id === user.id
@@ -107,7 +108,19 @@ async function review(req, res, next) {
 async function getMine(req, res, next) {
   try {
     const join_request = await JoinRequestModel.findPendingByUser(req.user.id)
-    res.json({ join_request: join_request ?? null })
+    if (!join_request) {
+      return res.json({ join_request: null })
+    }
+
+    const workspace = await WorkspaceModel.findById(join_request.workspace_id)
+
+    res.json({
+      join_request: {
+        ...join_request,
+        team_jira_site_host: jiraSiteHostname(workspace?.jira_site_url),
+        team_jira_connected: WorkspaceModel.isJiraConnected(workspace),
+      },
+    })
   } catch (err) {
     next(err)
   }

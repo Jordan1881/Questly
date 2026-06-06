@@ -59,8 +59,31 @@ function buildAuthHeader(email, apiToken) {
   return `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`
 }
 
-function jiraGet(path, { siteUrl, email, apiToken }) {
+function resolveJiraRequest(path, credentials) {
+  if (credentials.bearerToken && credentials.cloudId) {
+    const url = new URL(`https://api.atlassian.com/ex/jira/${credentials.cloudId}${path}`)
+    return {
+      url,
+      headers: {
+        Authorization: `Bearer ${credentials.bearerToken}`,
+        Accept: 'application/json',
+      },
+    }
+  }
+
+  const siteUrl = (credentials.siteUrl || '').replace(/\/$/, '')
   const url = new URL(`${siteUrl}${path}`)
+  return {
+    url,
+    headers: {
+      Authorization: buildAuthHeader(credentials.email, credentials.apiToken),
+      Accept: 'application/json',
+    },
+  }
+}
+
+function jiraGet(path, credentials) {
+  const { url, headers } = resolveJiraRequest(path, credentials)
 
   return new Promise((resolve, reject) => {
     const req = https.request(
@@ -70,10 +93,7 @@ function jiraGet(path, { siteUrl, email, apiToken }) {
         port: url.port || 443,
         path: `${url.pathname}${url.search}`,
         method: 'GET',
-        headers: {
-          Authorization: buildAuthHeader(email, apiToken),
-          Accept: 'application/json',
-        },
+        headers,
       },
       (res) => {
         let text = ''
@@ -117,8 +137,14 @@ function getCredentials(overrides = {}) {
   const email = overrides.email || platform.adminEmail
   const apiToken = overrides.apiToken || platform.adminApiToken
   const projectKey = overrides.projectKey || platform.projectKey
+  const bearerToken = overrides.bearerToken || null
+  const cloudId = overrides.cloudId || null
   const storyPointsFieldId =
     overrides.storyPointsFieldId || platform.storyPointsFieldId || null
+
+  if (bearerToken && cloudId && siteUrl && projectKey) {
+    return { siteUrl, projectKey, bearerToken, cloudId, storyPointsFieldId }
+  }
 
   if (!siteUrl || !email || !apiToken || !projectKey) {
     const err = new Error(
@@ -146,7 +172,7 @@ async function resolveStoryPointsFieldId(credentials) {
 
 async function fetchProjectIssues(overrides = {}) {
   const credentials = getCredentials(overrides)
-  const { siteUrl, email, apiToken, projectKey } = credentials
+  const { projectKey } = credentials
   const storyPointsFieldId = await resolveStoryPointsFieldId(credentials)
 
   const fields = ['summary', 'description', 'status', 'assignee', 'duedate', 'priority', 'parent']
@@ -156,7 +182,7 @@ async function fetchProjectIssues(overrides = {}) {
   const fieldList = encodeURIComponent(fields.join(','))
   const body = await jiraGet(
     `/rest/api/3/search/jql?jql=${jql}&maxResults=100&fields=${fieldList}`,
-    { siteUrl, email, apiToken },
+    credentials,
   )
 
   return mapIssues(body.issues || [], storyPointsFieldId)

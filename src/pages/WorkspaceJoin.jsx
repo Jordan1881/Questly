@@ -57,8 +57,16 @@ export default function WorkspaceJoin() {
             Your request to join the workspace is waiting for admin approval. You will get access once approved.
           </p>
           <p className="text-[13px] text-[#9ca3af]">
-            After approval, connect your Jira account on Profile to receive assigned tasks from your
-            team&apos;s Jira site.
+            After approval, connect your Jira account on Profile to receive assigned tasks
+            {joinRequest?.team_jira_site_host ? (
+              <>
+                {' '}
+                from <strong>{joinRequest.team_jira_site_host}</strong>
+              </>
+            ) : (
+              " from your team's Jira site"
+            )}
+            .
           </p>
           <FormButton type="button" className="w-full mt-4" onClick={async () => {
             const refreshed = await fetchMe()
@@ -112,6 +120,15 @@ export default function WorkspaceJoin() {
               <p className="text-[13px] text-[#6b7280]">You are requesting to join</p>
               <p className="text-[20px] font-semibold text-[#1f2937]">{targetWorkspace.name}</p>
               <p className="text-[13px] text-[#942fcd] font-medium mt-1">Code: {targetWorkspace.code}</p>
+              {targetWorkspace.team_jira_site_host ? (
+                <p className="text-[13px] text-[#6b7280] mt-2">
+                  Team Jira site: <strong>{targetWorkspace.team_jira_site_host}</strong>
+                </p>
+              ) : (
+                <p className="text-[13px] text-[#9ca3af] mt-2">
+                  Team Jira is not connected yet — your admin will set it up before you can sync tasks.
+                </p>
+              )}
             </div>
             <div className="flex gap-3">
               <FormButton type="button" className="flex-1" onClick={() => setTargetWorkspace(null)}>Back</FormButton>

@@ -7,6 +7,7 @@ import JiraSyncTab from '../components/JiraSyncTab'
 import SprintManagementTab from '../components/SprintManagementTab'
 import RewardManagementTab from '../components/RewardManagementTab'
 import { useWorkspaceStore } from '../stores/workspaceStore'
+import { useWorkspaceJiraOAuthCallback } from '../hooks/useWorkspaceJiraOAuthCallback'
 import { mapMemberToDeveloper } from '../lib/adminMembers'
 import { SkeletonList } from '../components/Skeleton'
 
@@ -391,6 +392,7 @@ function UsersTab({ developers, isLoading }) {
 // ── Admin page ────────────────────────────────────────────
 
 export default function Admin() {
+  useWorkspaceJiraOAuthCallback()
   const userRole = useAuthStore((s) => s.userRole)
   const members = useWorkspaceStore((s) => s.members)
   const fetchMine = useWorkspaceStore((s) => s.fetchMine)
