@@ -88,6 +88,47 @@ function isJiraConnected(user) {
   return Boolean(user?.jira_access_token)
 }
 
+function formatPublicProfile(user) {
+  const safe = strip(user)
+  if (!safe) return null
+
+  return {
+    id: safe.id,
+    email: safe.email,
+    username: safe.username,
+    role: safe.role,
+    avatarUrl: safe.avatar_url,
+    workspaceId: safe.workspace_id,
+    currentSprintXp: safe.current_sprint_xp ?? 0,
+    lifetimeXp: safe.lifetime_xp ?? 0,
+    coinBalance: safe.coin_balance ?? 0,
+    streakDays: safe.streak_days ?? 0,
+    jiraConnected: isJiraConnected(user),
+  }
+}
+
+async function findByUsername(username, excludeUserId = null) {
+  let query = db(TABLE).where({ username })
+  if (excludeUserId) query = query.whereNot({ id: excludeUserId })
+  return query.first()
+}
+
+async function updateProfile(user_id, { username, avatarUrl, avatar_url }) {
+  const patch = {}
+  const nextUsername = username
+  const nextAvatar = avatarUrl ?? avatar_url
+
+  if (nextUsername !== undefined) patch.username = nextUsername
+  if (nextAvatar !== undefined) patch.avatar_url = nextAvatar
+
+  if (!Object.keys(patch).length) {
+    return findByIdInternal(user_id)
+  }
+
+  const [user] = await db(TABLE).where({ id: user_id }).update(patch).returning('*')
+  return user
+}
+
 module.exports = {
   findByEmail,
   findById,
@@ -101,5 +142,8 @@ module.exports = {
   connectJira,
   disconnectJira,
   isJiraConnected,
+  formatPublicProfile,
+  findByUsername,
+  updateProfile,
   strip,
 }

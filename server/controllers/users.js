@@ -1,7 +1,9 @@
+const UserModel = require('../models/user')
+const PurchaseModel = require('../models/purchase')
+const { formatTask } = require('./tasks')
 const db = require('../config/db')
 const SprintModel = require('../models/sprint')
 const TaskAssignmentModel = require('../models/taskAssignment')
-const { formatTask } = require('./tasks')
 
 const LEVEL_SIZE = 1000
 
@@ -69,8 +71,81 @@ async function dashboard(req, res, next) {
   }
 }
 
+async function getMe(req, res, next) {
+  try {
+    const internal = await UserModel.findByIdInternal(req.user.id)
+    if (!internal) return res.status(404).json({ error: 'User not found' })
+
+    const profile = UserModel.formatPublicProfile(internal)
+    profile.level = computeLevel(profile.lifetimeXp)
+
+    const purchases = await PurchaseModel.listForUser(req.user.id)
+
+    res.json({ profile, purchases })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function patchMe(req, res, next) {
+  try {
+    const { username, avatarUrl } = req.body
+
+    if (username !== undefined) {
+      const trimmed = String(username).trim()
+      if (trimmed.length < 2 || trimmed.length > 50) {
+        return res.status(400).json({ error: 'username must be 2–50 characters' })
+      }
+
+      const taken = await UserModel.findByUsername(trimmed, req.user.id)
+      if (taken) {
+        return res.status(400).json({ error: 'username is already taken' })
+      }
+    }
+
+    const updated = await UserModel.updateProfile(req.user.id, { username, avatarUrl })
+    const profile = UserModel.formatPublicProfile(updated)
+    profile.level = computeLevel(profile.lifetimeXp)
+
+    res.json({ profile })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function listPurchases(req, res, next) {
+  try {
+    const purchases = await PurchaseModel.listForUser(req.user.id)
+    res.json({ purchases })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function deletePurchase(req, res, next) {
+  try {
+    const deleted = await PurchaseModel.softDelete(req.params.id, req.user.id)
+    if (!deleted) {
+      return res.status(404).json({ error: 'Purchase not found' })
+    }
+
+    res.json({
+      purchase: {
+        id: deleted.id,
+        deletedAt: deleted.deleted_at,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   xpHistory,
   dashboard,
+  getMe,
+  patchMe,
+  listPurchases,
+  deletePurchase,
   computeLevel,
 }
