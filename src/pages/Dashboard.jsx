@@ -5,20 +5,16 @@ import DifficultyBadge from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
 import { useAuthStore } from '../stores/authStore'
 import { useTaskStore } from '../stores/taskStore'
-import { useXpStore } from '../stores/xpStore'
-import { xpLevelInfo } from '../lib/xpLevel'
+import { useSprintStore } from '../stores/sprintStore'
+import XPProgressBar from '../components/XPProgressBar'
+import SprintStatusWidget from '../components/SprintStatusWidget'
+import { useXP } from '../hooks/useXP'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
 const BTN_GHOST = 'flex-1 h-12 rounded-[8px] border border-[#e5e7eb] bg-white flex items-center justify-center gap-2 text-[14px] text-[#374151] cursor-pointer hover:bg-[#f9fafb] transition-colors duration-200'
 
 // ── Icons (local — not shared with other pages) ─────────────
-
-const ArrowUpIcon = () => (
-  <svg viewBox="0 0 10 10" fill="none" className="w-[9px] h-[9px]">
-    <path d="M5 8.5V1.5M2.5 4L5 1.5 7.5 4" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
 
 const CheckCircleIcon = () => (
   <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
@@ -70,12 +66,14 @@ const StatBar = ({ label, value, percent, color }) => (
 export default function Dashboard() {
   const user = useAuthStore((s) => s.user)
   const userRole = useAuthStore((s) => s.userRole)
-  const userXP = useXpStore((s) => s.userXP)
+  const { sprintXP } = useXP()
   const tasks = useTaskStore((s) => s.tasks)
   const isLoading = useTaskStore((s) => s.isLoading)
   const error = useTaskStore((s) => s.error)
   const fetchTasks = useTaskStore((s) => s.fetchTasks)
   const toggleTaskCompletion = useTaskStore((s) => s.toggleTaskCompletion)
+  const activeSprint = useSprintStore((s) => s.activeSprint)
+  const fetchActiveSprint = useSprintStore((s) => s.fetchActiveSprint)
   const [showSidebar, setShowSidebar] = useState(false)
 
   useEffect(() => {
@@ -84,7 +82,11 @@ export default function Dashboard() {
     }
   }, [userRole, fetchTasks])
 
-  const { level, xpInLevel, levelMax, percent, xpToNext, nextLevel } = xpLevelInfo(userXP)
+  useEffect(() => {
+    if (user?.workspace_id) {
+      fetchActiveSprint(user.workspace_id).catch(() => {})
+    }
+  }, [user?.workspace_id, fetchActiveSprint])
 
   const stats = useMemo(() => {
     const total = tasks.length
@@ -133,57 +135,13 @@ export default function Dashboard() {
 
             {/* XP Progress Card */}
             <div className={`${CARD} p-5`}>
+              <XPProgressBar xp={sprintXP} />
+            </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[14px] font-semibold text-[#1f2937]">XP Progress</span>
-                <div className="flex items-center gap-1.5 bg-[rgba(99,102,241,0.1)] px-3 py-[5px] rounded-full">
-                  <ArrowUpIcon />
-                  <span className="text-[11px] font-medium text-[#6366f1]">Level {level}</span>
-                </div>
-              </div>
-
-              {/* XP amount */}
-              <div className="flex items-baseline gap-1 mb-0.5">
-                <span className="text-[32px] font-bold text-[#1f2937] leading-tight">{xpInLevel}</span>
-                <span className="text-[16px] font-medium text-[#6b7280]">XP</span>
-              </div>
-              <p className="text-[11px] text-[#9ca3af] mb-0.5">Out of {levelMax} XP</p>
-              <p className="text-[10px] mb-4">
-                <span className="font-semibold text-[#1f2937]">{xpToNext} XP</span>
-                <span className="text-[#6b7280]"> to reach Level {nextLevel}</span>
-              </p>
-
-              {/* Tick markers */}
-              <div className="flex items-center justify-between mb-1.5">
-                {[0, 250, 500, 750].map(n => (
-                  <div key={n} className="flex items-center gap-[3px]">
-                    <div className="w-px h-[6px] rounded-full bg-[#d1d5db]" />
-                    <span className="text-[8.7px] text-[#9ca3af]">{n}</span>
-                  </div>
-                ))}
-                <div className="flex items-center gap-[3px]">
-                  <div className="w-px h-[6px] rounded-full bg-[#942fcd]" />
-                  <span className="text-[8.7px] font-medium text-[#942fcd]">{levelMax}</span>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="h-3 rounded-full bg-[#e5e7eb] overflow-hidden relative mb-1.5">
-                <div
-                  className="absolute top-0 left-0 h-full rounded-full"
-                  style={{ width: `${percent}%`, background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
-                />
-                <div
-                  className="absolute top-0 h-full w-[2.4px] bg-white"
-                  style={{ left: `${percent}%`, boxShadow: '0 0 6px rgba(148,47,205,0.6)' }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-medium text-[#6b7280]">Progress</span>
-                <span className="text-[11px] font-semibold text-[#942fcd]">{percent}%</span>
-              </div>
-
+            {/* Active Sprint Card */}
+            <div className={`${CARD} p-5`}>
+              <p className="text-[14px] font-semibold text-[#1f2937] mb-4">Active Sprint</p>
+              <SprintStatusWidget sprint={activeSprint} />
             </div>
 
             {/* User Stats Card */}
