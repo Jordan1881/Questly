@@ -61,8 +61,10 @@ async function syncWorkspaceTasks(workspace, overrides = {}) {
   let updated = 0
   let assignments = 0
   let assignmentsRemoved = 0
+  const syncedJiraIssueIds = []
 
   for (const issue of issues) {
+    syncedJiraIssueIds.push(issue.jiraIssueId)
     const result = await TaskModel.upsertByJiraIssue({
       workspace_id: workspace.id,
       jira_issue_id: issue.jiraIssueId,
@@ -86,12 +88,15 @@ async function syncWorkspaceTasks(workspace, overrides = {}) {
     assignmentsRemoved += removed
   }
 
+  const pruned = await TaskModel.pruneStaleJiraTasks(workspace.id, syncedJiraIssueIds)
+
   return {
     synced: issues.length,
     created,
     updated,
     assignments,
     assignmentsRemoved,
+    pruned,
   }
 }
 

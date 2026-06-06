@@ -206,6 +206,27 @@ describe('POST /api/tasks/sync/:workspaceId', () => {
     expect(dev2Assignment).toBeDefined()
   })
 
+  test('re-sync prunes tasks removed from Jira', async () => {
+    const { adminToken, workspace } = await createWorkspaceWithDeveloper('prune')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    jiraClient.fetchProjectIssues.mockResolvedValue([MOCK_ISSUES[0]])
+
+    const res = await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ synced: 1, pruned: 1 })
+
+    const tasks = await db('tasks').where({ workspace_id: workspace.id })
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0].jira_issue_key).toBe('SCRUM-1')
+  })
+
   test('re-sync updates existing tasks instead of duplicating them', async () => {
     const { adminToken, workspace } = await createWorkspaceWithDeveloper('upsert')
 

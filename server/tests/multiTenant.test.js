@@ -61,6 +61,55 @@ describe('scoped Jira task upsert', () => {
   })
 })
 
+describe('pruneStaleJiraTasks', () => {
+  test('removes workspace Jira tasks not present in the latest sync set', async () => {
+    const ws = await WorkspaceModel.create({ name: 'Prune Test' })
+
+    await TaskModel.upsertByJiraIssue({
+      workspace_id: ws.id,
+      jira_issue_id: '10001',
+      jira_issue_key: 'SCRUM-1',
+      title: 'Active task',
+      difficulty: 'easy',
+      xp_reward: 20,
+      status: 'to_do',
+    })
+    await TaskModel.upsertByJiraIssue({
+      workspace_id: ws.id,
+      jira_issue_id: '10099',
+      jira_issue_key: 'SCRUM-99',
+      title: 'Stale task',
+      difficulty: 'medium',
+      xp_reward: 40,
+      status: 'to_do',
+    })
+
+    const pruned = await TaskModel.pruneStaleJiraTasks(ws.id, ['10001'])
+    expect(pruned).toBe(1)
+
+    const remaining = await db('tasks').where({ workspace_id: ws.id })
+    expect(remaining).toHaveLength(1)
+    expect(remaining[0].jira_issue_key).toBe('SCRUM-1')
+  })
+
+  test('returns 0 when active issue list is empty', async () => {
+    const ws = await WorkspaceModel.create({ name: 'No Active' })
+    await TaskModel.upsertByJiraIssue({
+      workspace_id: ws.id,
+      jira_issue_id: '10001',
+      jira_issue_key: 'SCRUM-1',
+      title: 'Task',
+      difficulty: 'easy',
+      xp_reward: 20,
+      status: 'to_do',
+    })
+
+    const pruned = await TaskModel.pruneStaleJiraTasks(ws.id, [])
+    expect(pruned).toBe(0)
+    expect(await db('tasks').where({ workspace_id: ws.id })).toHaveLength(1)
+  })
+})
+
 describe('workspace Jira requirement', () => {
   test('assertWorkspaceJiraReady throws 503 in production without workspace Jira', () => {
     const savedEnv = process.env.NODE_ENV
