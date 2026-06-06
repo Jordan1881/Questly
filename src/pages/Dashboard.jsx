@@ -6,11 +6,12 @@ import DifficultyBadge from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
 import { useAuthStore } from '../stores/authStore'
 import { useTaskStore } from '../stores/taskStore'
-import { useSprintStore } from '../stores/sprintStore'
+import { useDashboardStore } from '../stores/dashboardStore'
 import XPProgressBar from '../components/XPProgressBar'
 import SprintStatusWidget from '../components/SprintStatusWidget'
 import { useXP } from '../hooks/useXP'
 import XPHistory from '../components/XPHistory'
+import { SkeletonCard, SkeletonList } from '../components/Skeleton'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
@@ -68,14 +69,14 @@ const StatBar = ({ label, value, percent, color }) => (
 export default function Dashboard() {
   const user = useAuthStore((s) => s.user)
   const userRole = useAuthStore((s) => s.userRole)
-  const { sprintXP } = useXP()
+  const { lifetimeXP } = useXP()
   const tasks = useTaskStore((s) => s.tasks)
-  const isLoading = useTaskStore((s) => s.isLoading)
-  const error = useTaskStore((s) => s.error)
+  const tasksLoading = useTaskStore((s) => s.isLoading)
   const fetchTasks = useTaskStore((s) => s.fetchTasks)
   const toggleTaskCompletion = useTaskStore((s) => s.toggleTaskCompletion)
-  const activeSprint = useSprintStore((s) => s.activeSprint)
-  const fetchActiveSprint = useSprintStore((s) => s.fetchActiveSprint)
+  const dashboardData = useDashboardStore((s) => s.data)
+  const dashboardLoading = useDashboardStore((s) => s.isLoading)
+  const fetchDashboard = useDashboardStore((s) => s.fetchDashboard)
   const [showSidebar, setShowSidebar] = useState(false)
   const [xpHistory, setXpHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -94,18 +95,19 @@ export default function Dashboard() {
     }
   }, [])
 
-  useEffect(() => {
-    if (userRole === 'developer') {
-      fetchTasks().catch(() => {})
-      loadXpHistory().catch(() => {})
-    }
-  }, [userRole, fetchTasks, loadXpHistory])
+  const refreshDashboard = useCallback(async () => {
+    await Promise.all([
+      fetchDashboard(),
+      fetchTasks(),
+      loadXpHistory(),
+    ])
+  }, [fetchDashboard, fetchTasks, loadXpHistory])
 
   useEffect(() => {
-    if (user?.workspace_id) {
-      fetchActiveSprint(user.workspace_id).catch(() => {})
+    if (userRole === 'developer') {
+      refreshDashboard().catch(() => {})
     }
-  }, [user?.workspace_id, fetchActiveSprint])
+  }, [userRole, refreshDashboard])
 
   const stats = useMemo(() => {
     const total = tasks.length
@@ -116,21 +118,20 @@ export default function Dashboard() {
     return { total, completed, completionRate, highPriorityOpen }
   }, [tasks])
 
-  const priorityTasks = useMemo(
-    () => tasks.filter((task) => task.highPriority).slice(0, 5),
-    [tasks],
-  )
+  const priorityTasks = dashboardData?.highPriorityTasks ?? []
+  const activeSprint = dashboardData?.activeSprint ?? null
+  const streakDays = dashboardData?.streak ?? user?.streak_days ?? 0
 
   const displayName = user?.username || 'Developer'
-  const streakDays = user?.streak_days ?? 0
   const isConnected = Boolean(user?.workspace_id)
+  const isInitialLoading = dashboardLoading && !dashboardData
 
   const toggleTask = async (id) => {
     try {
       await toggleTaskCompletion(id)
-      await loadXpHistory()
+      await refreshDashboard()
     } catch {
-      // taskStore handles rollback
+      // taskStore handles rollback; global toast shows API error
     }
   }
 
@@ -158,15 +159,23 @@ export default function Dashboard() {
           <div className="w-[314px] flex flex-col gap-6 shrink-0">
 
             {/* XP Progress Card */}
-            <div className={`${CARD} p-5`}>
-              <XPProgressBar xp={sprintXP} />
-            </div>
+            {isInitialLoading ? (
+              <SkeletonCard />
+            ) : (
+              <div className={`${CARD} p-5`}>
+                <XPProgressBar xp={lifetimeXP} />
+              </div>
+            )}
 
             {/* Active Sprint Card */}
-            <div className={`${CARD} p-5`}>
-              <p className="text-[14px] font-semibold text-[#1f2937] mb-4">Active Sprint</p>
-              <SprintStatusWidget sprint={activeSprint} />
-            </div>
+            {isInitialLoading ? (
+              <SkeletonCard />
+            ) : (
+              <div className={`${CARD} p-5`}>
+                <p className="text-[14px] font-semibold text-[#1f2937] mb-4">Active Sprint</p>
+                <SprintStatusWidget sprint={activeSprint} />
+              </div>
+            )}
 
             {/* User Stats Card */}
             <div className={`${CARD} p-6`}>
@@ -290,18 +299,12 @@ export default function Dashboard() {
             <div className={`${CARD} p-6`}>
               <h2 className="text-[18px] font-medium text-[#374151] mb-6">High Priority Tasks</h2>
 
-              {isLoading && (
-                <p className="text-[14px] text-[#6b7280] mb-4">Loading tasks…</p>
-              )}
+              {isInitialLoading && <SkeletonList count={3} />}
 
-              {error && (
-                <p className="text-[14px] text-red-600 mb-4">{error}</p>
-              )}
-
-              {!isLoading && priorityTasks.length === 0 && (
+              {!isInitialLoading && priorityTasks.length === 0 && (
                 <div className="rounded-[8px] bg-[#f9fafb] border border-[#e5e7eb] px-5 py-8 text-center">
                   <p className="text-[14px] text-[#6b7280]">
-                    {stats.total === 0
+                    {stats.total === 0 && !tasksLoading
                       ? 'No tasks yet. Ask your admin to sync Jira tasks.'
                       : 'No high-priority tasks right now.'}
                   </p>

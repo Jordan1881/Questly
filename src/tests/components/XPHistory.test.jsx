@@ -3,6 +3,11 @@ import { render, screen } from '@testing-library/react'
 import XPHistory from '../../components/XPHistory'
 
 describe('XPHistory', () => {
+  it('renders loading skeleton while fetching', () => {
+    const { container } = render(<XPHistory transactions={[]} isLoading />)
+    expect(container.querySelector('[aria-label="Loading"]')).toBeInTheDocument()
+  })
+
   it('renders empty state when no transactions', () => {
     render(<XPHistory transactions={[]} />)
     expect(screen.getByText(/No XP transactions yet/)).toBeInTheDocument()

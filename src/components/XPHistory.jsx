@@ -1,3 +1,5 @@
+import { SkeletonList } from './Skeleton'
+
 const REASON_LABELS = {
   task_completed: 'Task completed',
   reward_purchased: 'Reward purchased',
@@ -17,7 +19,7 @@ function formatDate(value) {
 
 export default function XPHistory({ transactions = [], isLoading = false, error = null }) {
   if (isLoading) {
-    return <p className="text-[14px] text-[#6b7280]">Loading XP history…</p>
+    return <SkeletonList count={3} />
   }
 
   if (error) {
