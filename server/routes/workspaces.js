@@ -20,6 +20,7 @@ const {
   listForWorkspace,
   getActiveForWorkspace,
 } = require('../controllers/sprints')
+const { createForWorkspace: createReward, listForWorkspace: listRewards } = require('../controllers/rewards')
 const verifyToken = require('../middleware/verifyToken')
 const requireRole = require('../middleware/requireRole')
 
@@ -33,6 +34,8 @@ router.get('/:id/tasks', verifyToken, requireRole('admin'), listByWorkspace)
 router.post('/:id/sprints', verifyToken, requireRole('admin'), createForWorkspace)
 router.get('/:id/sprints/active', verifyToken, getActiveForWorkspace)
 router.get('/:id/sprints', verifyToken, listForWorkspace)
+router.post('/:id/rewards', verifyToken, requireRole('admin'), createReward)
+router.get('/:id/rewards', verifyToken, listRewards)
 router.get('/:id/join-requests', verifyToken, requireRole('admin'), listPending)
 router.post('/:id/join-requests', verifyToken, requireRole('developer'), submit)
 router.patch('/:id/join-requests/:requestId', verifyToken, requireRole('admin'), review)

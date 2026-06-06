@@ -40,6 +40,14 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/rewards',
+    element: (
+      <ProtectedRoute>
+        <RewardShop />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/profile',
     element: (
       <ProtectedRoute>
