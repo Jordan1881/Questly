@@ -1,4 +1,5 @@
 const db = require('../config/db')
+const { encryptToken, decryptUserTokens } = require('../lib/jiraTokenCrypto')
 
 const TABLE = 'users'
 const PUBLIC_FIELDS = [
@@ -22,7 +23,8 @@ function strip(user) {
 }
 
 async function findByEmail(email) {
-  return db(TABLE).where({ email }).first()
+  const row = await db(TABLE).where({ email }).first()
+  return decryptUserTokens(row)
 }
 
 async function findById(id) {
@@ -42,7 +44,8 @@ async function listByWorkspace(workspace_id) {
 }
 
 async function listDevelopersByWorkspace(workspace_id) {
-  return db(TABLE).where({ workspace_id, role: 'developer' })
+  const rows = await db(TABLE).where({ workspace_id, role: 'developer' })
+  return rows.map(decryptUserTokens)
 }
 
 async function findByJiraAccountId(jira_account_id, workspace_id) {
@@ -50,7 +53,8 @@ async function findByJiraAccountId(jira_account_id, workspace_id) {
 }
 
 async function findByIdInternal(id) {
-  return db(TABLE).where({ id }).first()
+  const row = await db(TABLE).where({ id }).first()
+  return decryptUserTokens(row)
 }
 
 async function assignWorkspace(user_id, workspace_id) {
@@ -67,13 +71,16 @@ async function connectJira(
   user_id,
   { jira_access_token, jira_account_id, jira_refresh_token = undefined },
 ) {
-  const patch = { jira_access_token, jira_account_id }
+  const patch = {
+    jira_access_token: encryptToken(jira_access_token),
+    jira_account_id,
+  }
   if (jira_refresh_token !== undefined) {
-    patch.jira_refresh_token = jira_refresh_token
+    patch.jira_refresh_token = encryptToken(jira_refresh_token)
   }
 
   const [user] = await db(TABLE).where({ id: user_id }).update(patch).returning('*')
-  return strip(user)
+  return strip(decryptUserTokens(user))
 }
 
 async function disconnectJira(user_id) {
