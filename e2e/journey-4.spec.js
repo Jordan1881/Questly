@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test'
-import {
-  register,
-  createWorkspace,
-  submitJoinRequest,
-  listPendingJoinRequests,
-  approveJoinRequest,
-  seedTask,
-  signInViaUi,
-} from './helpers/api.mjs'
+import { setupApprovedDeveloper, seedTask, signInViaUi } from './helpers/api.mjs'
 
 const ts = Date.now()
 const PASSWORD = 'Password123!'
@@ -16,24 +8,14 @@ const DEV_EMAIL = `j4_dev_${ts}@e2e.test`
 const SPRINT_NAME = `E2E Sprint ${ts}`
 
 test('Journey 4 — admin creates sprint, closes sprint, developer sprint XP resets', async ({ page }) => {
-  const { token: adminToken } = await register({
-    email: ADMIN_EMAIL,
-    username: `j4admin_${ts}`,
+  const { devUser, workspace } = await setupApprovedDeveloper({
+    adminEmail: ADMIN_EMAIL,
+    devEmail: DEV_EMAIL,
+    adminUsername: `j4admin_${ts}`,
+    devUsername: `j4dev_${ts}`,
+    workspaceName: `Journey4 WS ${ts}`,
     password: PASSWORD,
-    role: 'admin',
   })
-  const workspace = await createWorkspace(adminToken, `Journey4 WS ${ts}`)
-
-  const { token: devToken, user: devUser } = await register({
-    email: DEV_EMAIL,
-    username: `j4dev_${ts}`,
-    password: PASSWORD,
-    role: 'developer',
-  })
-
-  const joinRequest = await submitJoinRequest(devToken, workspace.id)
-  const pending = await listPendingJoinRequests(adminToken, workspace.id)
-  await approveJoinRequest(adminToken, workspace.id, pending[0]?.id || joinRequest.id)
 
   await seedTask({
     workspaceId: workspace.id,

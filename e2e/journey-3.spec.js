@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test'
-import {
-  register,
-  createWorkspace,
-  submitJoinRequest,
-  listPendingJoinRequests,
-  approveJoinRequest,
-  seedTask,
-  seedReward,
-} from './helpers/api.mjs'
+import { setupApprovedDeveloper, seedTask, seedReward } from './helpers/api.mjs'
 
 const ts = Date.now()
 const PASSWORD = 'Password123!'
@@ -22,24 +14,14 @@ function expiringSoonDate() {
 }
 
 test('Journey 3 — purchase reward, expiry warning, delete coupon', async ({ page }) => {
-  const { token: adminToken, user: adminUser } = await register({
-    email: ADMIN_EMAIL,
-    username: `j3admin_${ts}`,
+  const { adminUser, devUser, workspace } = await setupApprovedDeveloper({
+    adminEmail: ADMIN_EMAIL,
+    devEmail: DEV_EMAIL,
+    adminUsername: `j3admin_${ts}`,
+    devUsername: `j3dev_${ts}`,
+    workspaceName: `Journey3 WS ${ts}`,
     password: PASSWORD,
-    role: 'admin',
   })
-  const workspace = await createWorkspace(adminToken, `Journey3 WS ${ts}`)
-
-  const { token: devToken, user: devUser } = await register({
-    email: DEV_EMAIL,
-    username: `j3dev_${ts}`,
-    password: PASSWORD,
-    role: 'developer',
-  })
-
-  const joinRequest = await submitJoinRequest(devToken, workspace.id)
-  const pending = await listPendingJoinRequests(adminToken, workspace.id)
-  await approveJoinRequest(adminToken, workspace.id, pending[0]?.id || joinRequest.id)
 
   await seedTask({
     workspaceId: workspace.id,
