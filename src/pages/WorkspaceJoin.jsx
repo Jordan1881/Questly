@@ -56,6 +56,10 @@ export default function WorkspaceJoin() {
           <p className="text-[15px] text-[#6b7280]">
             Your request to join the workspace is waiting for admin approval. You will get access once approved.
           </p>
+          <p className="text-[13px] text-[#9ca3af]">
+            After approval, connect your Jira account on Profile to receive assigned tasks from your
+            team&apos;s Jira site.
+          </p>
           <FormButton type="button" className="w-full mt-4" onClick={async () => {
             const refreshed = await fetchMe()
             if (refreshed?.workspace_id) navigate('/dashboard')

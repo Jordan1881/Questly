@@ -21,7 +21,7 @@ The browser talks to Vercel for static assets; API calls go to Railway via `VITE
 
 - Admin connects workspace Jira (site, project, API token) or uses platform env in dev.
 - `POST /api/tasks/sync/:workspaceId` pulls issues, upserts tasks, reconciles `task_assignments` by Jira assignee.
-- Developers connect personal Jira (OAuth or manual token) for `jira_account_id` mapping.
+- Developers connect personal Jira (OAuth or manual token) for `jira_account_id` mapping after joining a team; UI shows the team Jira site hostname from admin workspace config.
 - Story points → difficulty → XP: 1–2 Easy/20, 3–5 Medium/40, 8+ Hard/70.
 
 ## Testing strategy

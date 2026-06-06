@@ -81,6 +81,42 @@ async function seedReward(req, res, next) {
   }
 }
 
+async function seedWorkspaceJira(req, res, next) {
+  try {
+    const { workspaceId, jira_site_url, jira_project_key } = req.body
+
+    if (!workspaceId || !jira_site_url || !jira_project_key) {
+      return res.status(400).json({
+        error: 'workspaceId, jira_site_url, and jira_project_key are required',
+      })
+    }
+
+    const [workspace] = await db('workspaces')
+      .where({ id: workspaceId })
+      .update({
+        jira_site_url: jira_site_url.replace(/\/$/, ''),
+        jira_project_key,
+        jira_access_token: 'e2e-workspace-jira-token',
+      })
+      .returning('*')
+
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' })
+    }
+
+    res.json({
+      workspace: {
+        id: workspace.id,
+        jira_site_url: workspace.jira_site_url,
+        jira_project_key: workspace.jira_project_key,
+        jira_connected: true,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 async function reconcileAssignments(req, res, next) {
   try {
     const { taskId, developerIds } = req.body
@@ -100,5 +136,6 @@ module.exports = {
   assertE2eEnabled,
   seedTask,
   seedReward,
+  seedWorkspaceJira,
   reconcileAssignments,
 }

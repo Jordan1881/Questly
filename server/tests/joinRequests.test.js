@@ -119,6 +119,11 @@ describe('join request flow', () => {
 
     expect(approveRes.status).toBe(200)
     expect(approveRes.body.join_request.status).toBe('approved')
+    expect(approveRes.body.workspace).toMatchObject({
+      id: workspace.id,
+      jira_site_url: null,
+      jira_connected: false,
+    })
 
     const membersRes = await request(app)
       .get(`/api/workspaces/${workspace.id}/members`)
@@ -131,6 +136,41 @@ describe('join request flow', () => {
       .set('Authorization', `Bearer ${devToken}`)
 
     expect(accessRes.status).toBe(200)
+  })
+
+  test('approve returns workspace jira_site_url when admin connected team Jira', async () => {
+    const { token: adminToken, workspace } = await createWorkspaceAsAdmin('JiraSite', 'jirasite')
+    await db('workspaces').where({ id: workspace.id }).update({
+      jira_site_url: 'https://team.atlassian.net',
+      jira_project_key: 'QUEST',
+      jira_access_token: 'admin-token',
+    })
+
+    const { token: devToken } = await registerAndLogin('developer', 'jirasite')
+    const submitRes = await request(app)
+      .post(`/api/workspaces/${workspace.id}/join-requests`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+
+    const approveRes = await request(app)
+      .patch(`/api/workspaces/${workspace.id}/join-requests/${submitRes.body.join_request.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'approved' })
+
+    expect(approveRes.status).toBe(200)
+    expect(approveRes.body.workspace).toMatchObject({
+      id: workspace.id,
+      jira_site_url: 'https://team.atlassian.net',
+      jira_connected: true,
+    })
+
+    const meRes = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(meRes.body.user.workspace_id).toBe(workspace.id)
+    expect(meRes.body.user.expected_jira_site_url).toBe('https://team.atlassian.net')
+    expect(meRes.body.user.team_jira_site_host).toBe('team.atlassian.net')
   })
 
   test('approve sets jira_account_id when developer email matches env', async () => {
