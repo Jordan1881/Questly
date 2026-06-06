@@ -51,7 +51,7 @@ const inputClass = `
 
 export default function SignIn() {
   const navigate = useNavigate()
-  const { login, isLoading, error, clearError } = useAuthStore()
+  const { login, isLoading, error, clearError, sessionExpired, clearSessionExpired } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,6 +60,7 @@ export default function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     clearError()
+    clearSessionExpired()
     const result = await login({ email, password })
     if (result.ok) {
       const role = useAuthStore.getState().userRole
@@ -124,6 +125,12 @@ export default function SignIn() {
           <h2 className="text-[32px] font-medium text-black leading-tight">Sign in</h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+
+            {sessionExpired && (
+              <div className="rounded-[8px] bg-amber-50 border border-amber-200 px-4 py-3 text-[13px] text-amber-800">
+                Your session expired. Please sign in again.
+              </div>
+            )}
 
             {/* Error banner */}
             {error && (

@@ -64,7 +64,7 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (res.status === 401) {
-    logout()
+    logout({ sessionExpired: true })
     const sessionError = new ApiError('Session expired — please sign in again', 401)
     notifyApiError(sessionError)
     throw sessionError

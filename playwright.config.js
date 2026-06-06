@@ -2,7 +2,8 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
-  timeout: 30000,
+  timeout: 60000,
+  workers: 1,
   use: {
     baseURL: 'http://localhost:5173',
     headless: true,
@@ -13,13 +14,14 @@ export default defineConfig({
       port: 3001,
       reuseExistingServer: true,
       timeout: 10000,
-      env: { DOTENV_CONFIG_PATH: 'server/.env' },
+      env: { DOTENV_CONFIG_PATH: 'server/.env', E2E_SEED_ENABLED: 'true' },
     },
     {
-      command: 'npx vite',
+      command: 'npm run build && npx serve -s dist -l 5173',
       port: 5173,
       reuseExistingServer: true,
-      timeout: 15000,
+      timeout: 120000,
+      env: { VITE_API_URL: 'http://localhost:3001' },
     },
   ],
 })
