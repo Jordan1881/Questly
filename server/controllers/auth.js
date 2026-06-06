@@ -51,7 +51,7 @@ async function login(req, res, next) {
       return res.status(401).json({ error: INVALID_CREDENTIALS })
     }
 
-    const { password_hash, ...user } = row
+    const user = UserModel.strip(row)
     const token = signToken(user)
 
     res.status(200).json({ user, token })

@@ -1,5 +1,6 @@
 const crypto = require('crypto')
 const db = require('../config/db')
+const { encryptToken, decryptWorkspaceTokens } = require('../lib/jiraTokenCrypto')
 
 const TABLE = 'workspaces'
 const CODE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -30,15 +31,18 @@ async function create({ name, admin_id }) {
 }
 
 async function findById(id) {
-  return db(TABLE).where({ id }).first()
+  const row = await db(TABLE).where({ id }).first()
+  return decryptWorkspaceTokens(row)
 }
 
 async function findByCode(code) {
-  return db(TABLE).where({ code }).first()
+  const row = await db(TABLE).where({ code }).first()
+  return decryptWorkspaceTokens(row)
 }
 
 async function findByAdminId(admin_id) {
-  return db(TABLE).where({ admin_id }).first()
+  const row = await db(TABLE).where({ admin_id }).first()
+  return decryptWorkspaceTokens(row)
 }
 
 async function update(id, fields) {
@@ -67,10 +71,10 @@ async function connectJira(id, { jira_site_url, jira_project_key, jira_access_to
     .update({
       jira_site_url: normalizeSiteUrl(jira_site_url),
       jira_project_key: (jira_project_key || '').trim(),
-      jira_access_token,
+      jira_access_token: encryptToken(jira_access_token),
     })
     .returning('*')
-  return workspace ?? undefined
+  return decryptWorkspaceTokens(workspace) ?? undefined
 }
 
 async function disconnectJira(id) {

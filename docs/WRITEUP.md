@@ -19,10 +19,19 @@ The browser talks to Vercel for static assets; API calls go to Railway via `VITE
 
 ## Jira integration
 
-- Admin connects workspace Jira (site, project, API token) or uses platform env in dev.
-- `POST /api/tasks/sync/:workspaceId` pulls issues, upserts tasks, reconciles `task_assignments` by Jira assignee.
-- Developers connect personal Jira (OAuth or manual token) for `jira_account_id` mapping after joining a team; UI shows the team Jira site hostname from admin workspace config.
+**Two-layer model (S15):**
+
+| Layer | Who | Where | Purpose |
+|-------|-----|-------|---------|
+| Workspace | Admin | Admin → Jira | Sync issues into quests (`POST /api/tasks/sync/:workspaceId`) |
+| Developer | Developer | Profile | Personal connect for assignee mapping (`jira_account_id`) |
+
+- Production uses **per-workspace** credentials in Postgres — no global `JIRA_*` on Railway.
+- Platform env (`ATLASSIAN_CLIENT_ID/SECRET`) is for OAuth only.
+- After join approval, developers see the team site hostname (`expected_jira_site_url`) in Dashboard/Profile.
+- Developers complete tasks **in Questly** to earn XP; Jira Done status is display-only until synced.
 - Story points → difficulty → XP: 1–2 Easy/20, 3–5 Medium/40, 8+ Hard/70.
+- Jira tokens at rest are encrypted when `JIRA_TOKEN_ENCRYPTION_KEY` is set (T159).
 
 ## Testing strategy
 
@@ -30,7 +39,7 @@ The browser talks to Vercel for static assets; API calls go to Railway via `VITE
 |-------|------|----------|
 | Frontend units | Vitest + Testing Library | Stores, components, hooks |
 | Backend integration | Jest + Supertest | Routes, models, Jira nock |
-| E2E | Playwright (5 journeys) | Auth, join, tasks, rewards, sprints, assignees |
+| E2E | Playwright (15 tests) | Auth, onboarding, 5 journeys, assignees |
 | Security / edge / concurrency | Jest | Cross-workspace 403, races, edge cases |
 | Performance | Jest | 110-issue sync &lt; 3s |
 
@@ -47,6 +56,8 @@ CI (`.github/workflows/ci.yml`): backend tests → frontend coverage → E2E on 
 ## Lessons learned
 
 - Global Jira env vars are fine for demos but not multi-tenant SaaS — workspace DB credentials are the target model (#179).
+- Join approval must not throw when Jira lookup fails; developer Jira connect is optional until workspace approval.
+- Sync upserts by `jira_issue_id` only — stale tasks from old workspaces need assignment filtering (#203).
 - Join approval must not throw when Jira is unconfigured (CI E2E).
 - Playwright needs `workers: 1` and production build (`serve`) to match CI.
 - Lifetime vs sprint XP must be clearly labeled in UI (dashboard vs profile).
