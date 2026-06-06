@@ -96,6 +96,25 @@ describe('taskStore', () => {
     expect(useTaskStore.getState().error).toBe('Forbidden')
   })
 
+  it('fetchTasks sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Tasks unavailable'))
+
+    await expect(useTaskStore.getState().fetchTasks()).rejects.toThrow('Tasks unavailable')
+    expect(useTaskStore.getState().error).toBe('Tasks unavailable')
+  })
+
+  it('syncWorkspaceTasks sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Sync failed'))
+
+    await expect(useTaskStore.getState().syncWorkspaceTasks('ws-1')).rejects.toThrow('Sync failed')
+    expect(useTaskStore.getState().error).toBe('Sync failed')
+  })
+
+  it('toggleTaskCompletion no-ops when task is missing', async () => {
+    await useTaskStore.getState().toggleTaskCompletion('missing-id')
+    expect(apiFetch).not.toHaveBeenCalled()
+  })
+
   it('shows level-up overlay when lifetime XP crosses a level threshold', async () => {
     const task = createMockTask({ done: false })
     useTaskStore.setState({ tasks: [task] })
