@@ -41,4 +41,34 @@ export const useSprintStore = create((set) => ({
       throw err
     }
   },
+
+  createSprint: async (workspaceId, payload) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { sprint } = await apiFetch(`/api/workspaces/${workspaceId}/sprints`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      set({ activeSprint: sprint, isLoading: false })
+      return sprint
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
+
+  closeSprintById: async (sprintId, workspaceId) => {
+    set({ isLoading: true, error: null })
+    try {
+      await apiFetch(`/api/sprints/${sprintId}/close`, { method: 'POST' })
+      set({ activeSprint: null, isLoading: false })
+      if (workspaceId) {
+        await useSprintStore.getState().fetchSprints(workspaceId)
+      }
+      return true
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
 }))

@@ -280,8 +280,13 @@ export default function TaskList() {
     }
   }, [userRole, fetchTasks])
 
-  const toggleTask = (id) => {
-    toggleTaskCompletion(id).catch(() => {})
+  const toggleTask = async (id) => {
+    const task = tasks.find((t) => t.id === id)
+    if (task?.done) {
+      await toggleTaskCompletion(id).catch(() => {})
+      return
+    }
+    await toggleTaskCompletion(id).catch(() => {})
   }
 
   const filtered = tasks.filter(t => {

@@ -4,6 +4,7 @@ const TaskAssignmentModel = require('../models/taskAssignment')
 const TaskModel = require('../models/task')
 const jiraSync = require('../services/jiraSync')
 const taskRewards = require('../services/taskRewards')
+const { applyStreakUpdate } = require('../services/streak')
 
 function formatDueDate(value) {
   if (!value) return null
@@ -141,10 +142,14 @@ async function updateCompletion(req, res, next) {
 
     const assignment = await TaskAssignmentModel.findForUser(task.id, req.user.id)
     if (!assignment) {
-      return res.status(404).json({ error: 'Task assignment not found' })
+      return res.status(403).json({ error: 'You are not assigned to this task' })
     }
 
     const wasCompleted = Boolean(assignment.completed_at)
+
+    if (completed && wasCompleted) {
+      return res.status(409).json({ error: 'Task is already completed' })
+    }
 
     const result = await db.transaction(async (trx) => {
       const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, completed, trx)
@@ -154,9 +159,25 @@ async function updateCompletion(req, res, next) {
         wasCompleted,
         willComplete: completed,
       })
-      const user = await taskRewards.getUserBalances(req.user.id, trx)
 
-      return { updated, reward, user }
+      if (completed && !wasCompleted) {
+        await applyStreakUpdate(trx, req.user.id)
+      }
+
+      const balances = await taskRewards.getUserBalances(req.user.id, trx)
+      const profile = await trx('users')
+        .where({ id: req.user.id })
+        .select('current_sprint_xp', 'lifetime_xp', 'coin_balance', 'streak_days')
+        .first()
+
+      return {
+        updated,
+        reward,
+        user: {
+          ...balances,
+          streak_days: profile?.streak_days ?? 0,
+        },
+      }
     })
 
     const row = {
