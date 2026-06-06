@@ -128,6 +128,13 @@ node -e "console.log(process.env.DATABASE_URL ? 'DATABASE_URL is set' : 'DATABAS
 npm run migrate
 ```
 
+**One-time duplicate Jira task cleanup** (API service console, cwd is `/app` = `server/`):
+
+```bash
+WORKSPACE_ID=your-workspace-uuid node scripts/cleanup-duplicate-jira-tasks.cjs
+WORKSPACE_ID=your-workspace-uuid node scripts/cleanup-duplicate-jira-tasks.cjs --apply
+```
+
 Expected: `Batch 1 run: 12 migrations`
 
 **Or via CLI** (local machine):
