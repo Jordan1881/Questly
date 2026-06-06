@@ -1,7 +1,10 @@
 import { useNavigate, useLocation } from 'react-router'
 import logoIcon from '../assets/LOGO.svg'
 import logoHorizental from '../assets/LOGO-HORIZENTAL.svg'
+import LegalFooterLinks from './LegalFooterLinks'
 import { useAuthStore } from '../stores/authStore'
+import { getLifetimeXp } from '../lib/displayUser'
+import { xpLevelInfo } from '../lib/xpLevel'
 
 // ── Icons — paths lifted from asset SVGs; active color controlled via prop ──
 
@@ -102,6 +105,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const userRole = useAuthStore((s) => s.userRole)
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
+  const levelInfo = xpLevelInfo(getLifetimeXp(user))
   const NAV_LINKS = userRole === 'admin'
     ? ADMIN_NAV_LINKS
     : (!user?.workspace_id ? DEV_NAV_LINKS_WITH_JOIN : DEV_NAV_LINKS)
@@ -177,26 +181,30 @@ export default function Sidebar({ isOpen, onClose }) {
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-medium text-white opacity-90">Your Level</span>
               <div className="rounded-full px-[10px] py-1" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                <span className="text-[12px] font-semibold text-white">Level 3</span>
+                <span className="text-[12px] font-semibold text-white">Level {levelInfo.level}</span>
               </div>
             </div>
 
             <div>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-[24px] font-bold text-white leading-tight">650</span>
-                <span className="text-[13px] text-white/80">/ 1000 XP</span>
+                <span className="text-[24px] font-bold text-white leading-tight">{levelInfo.xpInLevel}</span>
+                <span className="text-[13px] text-white/80">/ {levelInfo.levelMax} XP</span>
               </div>
-              <p className="text-[11px] text-white/70">350 XP to Level 4</p>
+              <p className="text-[11px] text-white/70">{levelInfo.xpToNext} XP to Level {levelInfo.nextLevel}</p>
             </div>
 
             <div className="h-[6px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.2)' }}>
-              <div className="h-full bg-white rounded-full" style={{ width: '65%' }} />
+              <div className="h-full bg-white rounded-full" style={{ width: `${levelInfo.percent}%` }} />
             </div>
           </div>
           )}
 
+          <div className="mt-auto pt-3">
+            <LegalFooterLinks className="flex flex-col items-start gap-1.5 text-[11px] text-[#9ca3af] mb-3 px-4" />
+          </div>
+
           {/* Logout button */}
-          <div className="mt-auto pt-3 border-t border-[#f3f4f6]">
+          <div className="pt-3 border-t border-[#f3f4f6]">
             <button
               onClick={async () => {
                 await logout()

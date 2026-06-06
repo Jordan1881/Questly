@@ -1,8 +1,9 @@
 import { useNavigate, useLocation } from 'react-router'
-import { BurgerIcon, AvatarPlaceholder, ProfileAvatarPlaceholder } from './icons'
+import { BurgerIcon } from './icons'
+import ProfileAvatar from './ProfileAvatar'
 import { useAuthStore } from '../stores/authStore'
+import { getAvatarUrl, getDisplayUsername } from '../lib/displayUser'
 
-// Maps old page IDs to URL paths
 const PAGE_PATHS = {
   dashboard:       '/dashboard',
   profile:         '/profile',
@@ -27,9 +28,6 @@ const ADMIN_NAV_LINKS = [
   { id: 'profile',         label: 'Profile'      },
 ]
 
-// Shared top header used by all inner pages.
-// Props:
-//   onOpenSidebar — called when the burger button is clicked
 export default function PageHeader({ onOpenSidebar }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -40,14 +38,14 @@ export default function PageHeader({ onOpenSidebar }) {
     ? [...DEV_NAV_LINKS, { id: 'workspacejoin', label: 'Join Workspace' }]
     : DEV_NAV_LINKS
   const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : devLinks
-  const isProfile = pathname === '/profile'
   const isActive = (id) => pathname === PAGE_PATHS[id]
+  const displayName = getDisplayUsername(user, userRole)
+  const avatarUrl = getAvatarUrl(user)
 
   return (
     <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
       <div className="w-full flex items-center justify-between">
 
-        {/* Burger button + nav links */}
         <div className="flex items-stretch gap-6 h-full">
           <button
             onClick={onOpenSidebar}
@@ -74,20 +72,13 @@ export default function PageHeader({ onOpenSidebar }) {
           </nav>
         </div>
 
-        {/* User info — avatar background differs on the Profile page */}
         <div className="flex items-center gap-3">
-          <span className="text-[16px] font-semibold text-[#1f2937]">
-            {userRole === 'admin' ? 'Admin_User' : 'Ashton_44'}
-          </span>
-          <div
-            className="w-12 h-12 rounded-full overflow-hidden shrink-0"
-            style={isProfile
-              ? { background: 'linear-gradient(to bottom, #942fcd, #ca9af4)' }
-              : { background: '#e5e7eb' }
-            }
-          >
-            {isProfile ? <ProfileAvatarPlaceholder /> : <AvatarPlaceholder />}
-          </div>
+          <span className="text-[16px] font-semibold text-[#1f2937]">{displayName}</span>
+          <ProfileAvatar
+            avatarUrl={avatarUrl}
+            variant={userRole === 'admin' ? 'admin' : 'developer'}
+            size={48}
+          />
         </div>
 
       </div>
