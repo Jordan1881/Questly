@@ -3,7 +3,7 @@
  * Create S15/S16 developer Jira UX GitHub issues (T151–T159).
  * Closes superseded open issues #183–#188 from the prior multi-tenant plan.
  *
- * Usage: node scripts/create-s15-jira-ux-issues.mjs [--dry-run]
+ * Usage: node scripts/dev/create-s15-jira-ux-issues.mjs [--dry-run]
  */
 
 import { execSync } from 'node:child_process'
@@ -405,14 +405,14 @@ function buildBody(task, blockedByLine) {
     lines.push('', '## Blocked by', '', blockedByLine)
   }
 
-  lines.push('', '---', '', `Parent epic: #${EPIC} · See \`docs/S15-JIRA-DEVELOPER-UX.md\``)
+  lines.push('', '---', '', `Parent epic: #${EPIC} · See \`docs/sprints/S15-JIRA-DEVELOPER-UX.md\``)
 
   return lines.join('\n')
 }
 
 function closeSuperseded() {
   for (const { number, reason } of SUPERSEDED) {
-    const comment = `Closing as **superseded** by developer Jira UX sprint replan (docs/S15-JIRA-DEVELOPER-UX.md).\n\n${reason}\n\nTrack work under new **T151–T159** issues and epic #${EPIC}.`
+    const comment = `Closing as **superseded** by developer Jira UX sprint replan (docs/sprints/S15-JIRA-DEVELOPER-UX.md).\n\n${reason}\n\nTrack work under new **T151–T159** issues and epic #${EPIC}.`
     if (DRY_RUN) {
       console.log(`[dry-run] Would close #${number}: ${reason}`)
       continue
@@ -507,7 +507,7 @@ Questly is multi-tenant on one Railway deploy. **S14 (done)** fixed data isolati
 |------|-------|-------|
 ${s15Rows}
 
-See \`docs/S15-JIRA-DEVELOPER-UX.md\` for full AC.
+See \`docs/sprints/S15-JIRA-DEVELOPER-UX.md\` for full AC.
 
 **S15 exit criteria:** Yarden flow works — approve → see team site → token connect → tasks.
 

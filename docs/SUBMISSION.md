@@ -16,10 +16,12 @@ https://github.com/Jordan1881/Questly
 | Item | Location |
 |------|----------|
 | Source code | GitHub repo (this repository) |
+| Documentation index | [docs/README.md](./README.md) |
 | API documentation | [docs/API.md](./API.md) |
 | ER diagram | [docs/questly-schema.mermaid](./questly-schema.mermaid) |
 | Project write-up | [docs/WRITEUP.md](./WRITEUP.md) |
 | Demo script | [docs/DEMO.md](./DEMO.md) |
+| UI screenshots | [docs/screenshots/](./screenshots/) |
 | E2E tests | `e2e/journey-*.spec.js` (5 journeys) |
 | CI pipeline | `.github/workflows/ci.yml` |
 
