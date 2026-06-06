@@ -1,6 +1,7 @@
 const https = require('https')
 const { URL } = require('url')
 const config = require('../config')
+const { isJiraFallbackEnabled } = require('../lib/jiraConfig')
 const { XP_BY_DIFFICULTY, calculateXP } = require('./xp')
 const HIGH_PRIORITY_NAMES = new Set(['highest', 'high'])
 const STORY_POINT_FIELD_NAMES = ['story point estimate', 'story points', 'story point']
@@ -110,16 +111,20 @@ function jiraGet(path, { siteUrl, email, apiToken }) {
 }
 
 function getCredentials(overrides = {}) {
-  const siteUrl = (overrides.siteUrl || config.jira.siteUrl || '').replace(/\/$/, '')
-  const email = overrides.email || config.jira.adminEmail
-  const apiToken = overrides.apiToken || config.jira.adminApiToken
-  const projectKey = overrides.projectKey || config.jira.projectKey
+  const allowPlatformFallback = isJiraFallbackEnabled()
+  const platform = allowPlatformFallback ? config.jira : {}
+  const siteUrl = (overrides.siteUrl || platform.siteUrl || '').replace(/\/$/, '')
+  const email = overrides.email || platform.adminEmail
+  const apiToken = overrides.apiToken || platform.adminApiToken
+  const projectKey = overrides.projectKey || platform.projectKey
   const storyPointsFieldId =
-    overrides.storyPointsFieldId || config.jira.storyPointsFieldId || null
+    overrides.storyPointsFieldId || platform.storyPointsFieldId || null
 
   if (!siteUrl || !email || !apiToken || !projectKey) {
     const err = new Error(
-      'Jira is not configured — set JIRA_SITE_URL, JIRA_PROJECT_KEY, JIRA_ADMIN_EMAIL, and JIRA_ADMIN_API_TOKEN',
+      allowPlatformFallback
+        ? 'Jira is not configured — set JIRA_SITE_URL, JIRA_PROJECT_KEY, JIRA_ADMIN_EMAIL, and JIRA_ADMIN_API_TOKEN'
+        : 'Workspace Jira is not connected — connect Jira in Admin before syncing tasks',
     )
     err.status = 503
     throw err
