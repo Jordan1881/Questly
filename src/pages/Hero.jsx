@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import Button from '../design-system/components/Button'
+import LegalFooterLinks from '../components/LegalFooterLinks'
 
 const fadeUp = (delay) => ({
   animation: `heroFadeUp 0.7s ease ${delay}s both`,
@@ -97,6 +98,10 @@ export default function Hero() {
           </Button>
         </div>
 
+      </div>
+
+      <div className="absolute bottom-6 left-0 right-0 z-10">
+        <LegalFooterLinks />
       </div>
     </div>
   )

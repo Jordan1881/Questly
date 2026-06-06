@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { apiFetch } from '../lib/api'
 import { useAuthStore } from './authStore'
+import { useToastStore } from './toastStore'
 
 export const useProfileStore = create((set, get) => ({
   profile: null,
@@ -41,6 +42,7 @@ export const useProfileStore = create((set, get) => ({
     set({ purchases: previous.filter((p) => p.id !== purchaseId) })
     try {
       await apiFetch(`/api/users/me/purchases/${purchaseId}`, { method: 'DELETE' })
+      useToastStore.getState().showSuccess('Removed from My Rewards')
     } catch (err) {
       set({ purchases: previous, error: err.message })
       throw err
