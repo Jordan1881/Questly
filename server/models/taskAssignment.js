@@ -10,10 +10,16 @@ async function ensure(task_id, user_id) {
   return assignment
 }
 
-async function listForUser(user_id) {
-  return db(`${TABLE} as ta`)
+async function listForUser(user_id, workspace_id = null) {
+  let query = db(`${TABLE} as ta`)
     .join('tasks as t', 't.id', 'ta.task_id')
     .where('ta.user_id', user_id)
+
+  if (workspace_id) {
+    query = query.where('t.workspace_id', workspace_id)
+  }
+
+  return query
     .select(
       't.id',
       't.workspace_id',

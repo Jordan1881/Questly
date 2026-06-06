@@ -49,7 +49,10 @@ async function dashboard(req, res, next) {
       activeSprint = SprintModel.formatSprint(sprint)
     }
 
-    const assignmentRows = await TaskAssignmentModel.listForUser(req.user.id)
+    const assignmentRows = await TaskAssignmentModel.listForUser(
+      req.user.id,
+      user.workspace_id,
+    )
     const highPriorityTasks = assignmentRows
       .filter((row) => row.high_priority && !row.completed_at && row.status !== 'done')
       .slice(0, 5)
