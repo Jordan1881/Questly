@@ -61,7 +61,12 @@ export default function SignIn() {
     e.preventDefault()
     clearError()
     const result = await login({ email, password })
-    if (result.ok) setShowJiraAuth(true)
+    if (result.ok) {
+      const role = useAuthStore.getState().userRole
+      const jiraConnected = useAuthStore.getState().user?.jira_connected
+      if (role === 'developer' && !jiraConnected) setShowJiraAuth(true)
+      else navigate(await resolvePostAuthPath())
+    }
   }
 
   const finishAuth = async () => {
@@ -218,6 +223,7 @@ export default function SignIn() {
         <JiraAuth
           onClose={finishAuth}
           onConnect={finishAuth}
+          onSkip={finishAuth}
         />
       )}
 

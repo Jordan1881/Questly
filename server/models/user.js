@@ -61,6 +61,26 @@ async function updateJiraAccountId(user_id, jira_account_id) {
   return strip(user)
 }
 
+async function connectJira(user_id, { jira_access_token, jira_account_id }) {
+  const [user] = await db(TABLE)
+    .where({ id: user_id })
+    .update({ jira_access_token, jira_account_id })
+    .returning('*')
+  return strip(user)
+}
+
+async function disconnectJira(user_id) {
+  const [user] = await db(TABLE)
+    .where({ id: user_id })
+    .update({ jira_access_token: null, jira_account_id: null })
+    .returning('*')
+  return strip(user)
+}
+
+function isJiraConnected(user) {
+  return Boolean(user?.jira_access_token)
+}
+
 module.exports = {
   findByEmail,
   findById,
@@ -71,5 +91,8 @@ module.exports = {
   findByJiraAccountId,
   assignWorkspace,
   updateJiraAccountId,
+  connectJira,
+  disconnectJira,
+  isJiraConnected,
   strip,
 }

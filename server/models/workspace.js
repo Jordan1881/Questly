@@ -57,9 +57,44 @@ async function update(id, fields) {
   return workspace ?? undefined
 }
 
+function normalizeSiteUrl(url) {
+  return (url || '').trim().replace(/\/$/, '')
+}
+
+async function connectJira(id, { jira_site_url, jira_project_key, jira_access_token }) {
+  const [workspace] = await db(TABLE)
+    .where({ id })
+    .update({
+      jira_site_url: normalizeSiteUrl(jira_site_url),
+      jira_project_key: (jira_project_key || '').trim(),
+      jira_access_token,
+    })
+    .returning('*')
+  return workspace ?? undefined
+}
+
+async function disconnectJira(id) {
+  const [workspace] = await db(TABLE)
+    .where({ id })
+    .update({
+      jira_site_url: null,
+      jira_project_key: null,
+      jira_access_token: null,
+    })
+    .returning('*')
+  return workspace ?? undefined
+}
+
+function isJiraConnected(workspace) {
+  return Boolean(
+    workspace?.jira_site_url && workspace?.jira_project_key && workspace?.jira_access_token,
+  )
+}
+
 function sanitize(workspace) {
   if (!workspace) return null
   const { jira_access_token, ...safe } = workspace
+  safe.jira_connected = isJiraConnected(workspace)
   return safe
 }
 
@@ -69,6 +104,9 @@ module.exports = {
   findByCode,
   findByAdminId,
   update,
+  connectJira,
+  disconnectJira,
+  isJiraConnected,
   sanitize,
   PATCHABLE_FIELDS,
 }

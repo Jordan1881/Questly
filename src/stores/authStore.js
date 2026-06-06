@@ -86,6 +86,39 @@ export const useAuthStore = create(
         set({ user: null, token: null, userRole: 'developer', isLoggedIn: false, isLoading: false, error: null })
         useXpStore.getState().syncFromUser(null)
       },
+
+      connectJira: async (accessToken) => {
+        const { token } = get()
+        set({ isLoading: true, error: null })
+        try {
+          const { user } = await authFetch('/api/auth/me/jira/connect', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ access_token: accessToken }),
+          })
+          set({ user, isLoading: false })
+          return { ok: true, user }
+        } catch (err) {
+          set({ isLoading: false, error: err.message })
+          return { ok: false, error: err.message }
+        }
+      },
+
+      disconnectJira: async () => {
+        const { token } = get()
+        set({ isLoading: true, error: null })
+        try {
+          const { user } = await authFetch('/api/auth/me/jira/disconnect', {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          set({ user, isLoading: false })
+          return { ok: true, user }
+        } catch (err) {
+          set({ isLoading: false, error: err.message })
+          return { ok: false, error: err.message }
+        }
+      },
     }),
     {
       name: 'questly-auth',

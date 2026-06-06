@@ -126,4 +126,33 @@ export const useWorkspaceStore = create((set) => ({
       throw err
     }
   },
+
+  connectJira: async (workspaceId, credentials) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { workspace } = await apiFetch(`/api/workspaces/${workspaceId}/jira/connect`, {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+      })
+      set({ workspace, isLoading: false })
+      return workspace
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
+
+  disconnectJira: async (workspaceId) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { workspace } = await apiFetch(`/api/workspaces/${workspaceId}/jira/disconnect`, {
+        method: 'DELETE',
+      })
+      set({ workspace, isLoading: false })
+      return workspace
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
 }))
