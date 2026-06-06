@@ -7,7 +7,7 @@ const PAGE_PATHS = {
   dashboard:       '/dashboard',
   profile:         '/profile',
   tasklist:        '/tasks',
-  rewardshop:      '/shop',
+  rewardshop:      '/rewards',
   admin:           '/admin',
   workspacecreate: '/workspace/create',
   workspacejoin:   '/workspace/join',
