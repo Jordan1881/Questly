@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useSprintStore } from '../../stores/sprintStore'
 import { createMockSprint } from '../factories/index'
 
-const defaultState = { activeSprint: null }
+const defaultState = { activeSprint: null, sprints: [], isLoading: false, error: null }
 
 describe('sprintStore', () => {
   beforeEach(() => {

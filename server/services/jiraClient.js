@@ -1,8 +1,7 @@
 const https = require('https')
 const { URL } = require('url')
 const config = require('../config')
-
-const XP_BY_DIFFICULTY = { easy: 20, medium: 40, hard: 70 }
+const { XP_BY_DIFFICULTY, calculateXP } = require('./xp')
 const HIGH_PRIORITY_NAMES = new Set(['highest', 'high'])
 const STORY_POINT_FIELD_NAMES = ['story point estimate', 'story points', 'story point']
 
@@ -188,7 +187,7 @@ function mapIssue(issue, storyPointsFieldId, storyPointsByKey = new Map()) {
     description: typeof fields.description === 'string' ? fields.description : null,
     difficulty,
     storyPoints,
-    xpReward: XP_BY_DIFFICULTY[difficulty],
+    xpReward: calculateXP(difficulty),
     dueDate: fields.duedate || null,
     highPriority: isHighPriority(fields.priority?.name),
     status: mapJiraStatus(fields.status?.name),
@@ -239,6 +238,7 @@ async function lookupAccountIdByEmail(email, overrides = {}) {
 
 module.exports = {
   XP_BY_DIFFICULTY,
+  calculateXP,
   STORY_POINT_FIELD_NAMES,
   fetchProjectIssues,
   validateCredentials,

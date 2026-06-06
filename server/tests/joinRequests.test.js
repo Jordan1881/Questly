@@ -22,6 +22,7 @@ beforeEach(async () => {
   delete process.env.JIRA_DEVELOPER_ACCOUNT_ID
   delete process.env.JIRA_ACCOUNT_ID
   await db('join_requests').del()
+  await db('sprints').del()
   await db('users').del()
   await db('workspaces').del()
 })
