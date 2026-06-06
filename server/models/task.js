@@ -20,8 +20,22 @@ async function findById(id) {
   return db(TABLE).where({ id }).first()
 }
 
-async function listByWorkspace(workspace_id) {
-  return db(TABLE).where({ workspace_id }).orderBy('updated_at', 'desc')
+async function listByWorkspace(workspace_id, filters = {}) {
+  let query = db(TABLE).where({ workspace_id })
+
+  if (filters.status) {
+    query = query.where({ status: filters.status })
+  }
+  if (filters.difficulty) {
+    query = query.where({ difficulty: filters.difficulty })
+  }
+  if (filters.assignee) {
+    query = query.whereIn('id', function assigneeSubquery() {
+      this.select('task_id').from('task_assignments').where({ user_id: filters.assignee })
+    })
+  }
+
+  return query.orderBy('updated_at', 'desc')
 }
 
 module.exports = {

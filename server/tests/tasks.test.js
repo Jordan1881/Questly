@@ -227,6 +227,60 @@ describe('POST /api/tasks/sync/:workspaceId', () => {
   })
 })
 
+describe('GET /api/workspaces/:id/tasks', () => {
+  test('admin lists workspace tasks with filters', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('wstasks')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const allRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/tasks`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(allRes.status).toBe(200)
+    expect(allRes.body.tasks).toHaveLength(2)
+
+    const filteredRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/tasks?difficulty=hard&assignee=${devUserId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(filteredRes.status).toBe(200)
+    expect(filteredRes.body.tasks).toHaveLength(1)
+    expect(filteredRes.body.tasks[0].jiraId).toBe('SCRUM-2')
+
+    const devRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/tasks`)
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(devRes.status).toBe(403)
+  })
+})
+
+describe('GET /api/tasks/:id', () => {
+  test('developer gets task with assignment completion status', async () => {
+    const { adminToken, devToken, workspace } = await createWorkspaceWithDeveloper('taskid')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const taskId = listRes.body.tasks[0].id
+
+    const res = await request(app)
+      .get(`/api/tasks/${taskId}`)
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.task.id).toBe(taskId)
+    expect(res.body.task.completedAt).toBeNull()
+    expect(res.body.task.done).toBe(false)
+  })
+})
+
 describe('GET /api/tasks', () => {
   test('developer lists assigned workspace tasks', async () => {
     const { adminToken, devToken, workspace } = await createWorkspaceWithDeveloper('list')
@@ -356,6 +410,14 @@ describe('jiraClient helpers', () => {
     expect(jiraClient.parseDifficultyFromStoryPoints(5)).toBe('medium')
     expect(jiraClient.parseDifficultyFromStoryPoints(8)).toBe('hard')
     expect(jiraClient.parseDifficultyFromStoryPoints(null)).toBe('medium')
+  })
+
+  test('mapJiraIssueToDifficulty maps story points and labels; throws on unknown', () => {
+    expect(jiraClient.mapJiraIssueToDifficulty(2)).toBe('easy')
+    expect(jiraClient.mapJiraIssueToDifficulty('Hard')).toBe('hard')
+    expect(jiraClient.mapJiraIssueToDifficulty(null)).toBe('medium')
+    expect(() => jiraClient.mapJiraIssueToDifficulty('impossible')).toThrow(TypeError)
+    expect(() => jiraClient.mapJiraIssueToDifficulty(-1)).toThrow(TypeError)
   })
 
   test('mapIssues inherits parent story points for subtasks', () => {

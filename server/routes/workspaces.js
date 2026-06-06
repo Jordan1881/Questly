@@ -14,6 +14,7 @@ const {
   listPending,
   review,
 } = require('../controllers/joinRequest')
+const { listByWorkspace } = require('../controllers/tasks')
 const verifyToken = require('../middleware/verifyToken')
 const requireRole = require('../middleware/requireRole')
 
@@ -23,6 +24,7 @@ router.post('/', verifyToken, requireRole('admin'), create)
 router.get('/mine', verifyToken, requireRole('admin'), getMine)
 router.get('/by-code/:code', verifyToken, getByCode)
 router.get('/:id/members', verifyToken, requireRole('admin'), listMembers)
+router.get('/:id/tasks', verifyToken, requireRole('admin'), listByWorkspace)
 router.get('/:id/join-requests', verifyToken, requireRole('admin'), listPending)
 router.post('/:id/join-requests', verifyToken, requireRole('developer'), submit)
 router.patch('/:id/join-requests/:requestId', verifyToken, requireRole('admin'), review)
