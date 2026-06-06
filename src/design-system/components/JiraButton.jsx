@@ -6,23 +6,24 @@ import { useState } from 'react'
  * Default: dark purple gradient  (#942fcd → #b565e0)
  * Hover:   light gradient        (white   → #ba6aff) + purple text
  */
-export default function JiraButton({ onClick, children, className = '', type = 'button' }) {
+export default function JiraButton({ onClick, children, className = '', type = 'button', disabled = false }) {
   const [hovered, setHovered] = useState(false)
 
   return (
     <button
       type={type}
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
+      disabled={disabled}
+      onMouseEnter={() => !disabled && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`
         relative overflow-hidden
         w-[528px] h-[56px] rounded-[8px]
         text-[16px] font-semibold
-        cursor-pointer
         transition-all duration-300
         active:scale-[0.98]
-        ${hovered ? 'scale-[1.02] text-[#942fcd]' : 'scale-100 text-white'}
+        ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+        ${hovered && !disabled ? 'scale-[1.02] text-[#942fcd]' : 'scale-100 text-white'}
         ${className}
       `}
       style={{

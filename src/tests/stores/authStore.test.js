@@ -114,6 +114,52 @@ describe('authStore', () => {
 
   // ── logout ───────────────────────────────────────────────────────────────────
 
+  it('connectJira stores jira_connected on user', async () => {
+    useAuthStore.setState({ token: 'jwt', user: { id: '1', role: 'developer' } })
+    mockFetch({ user: { id: '1', role: 'developer', jira_connected: true } })
+
+    const result = await useAuthStore.getState().connectJira('dev-token')
+
+    expect(result.ok).toBe(true)
+    expect(useAuthStore.getState().user.jira_connected).toBe(true)
+  })
+
+  it('disconnectJira clears jira_connected on user', async () => {
+    useAuthStore.setState({
+      token: 'jwt',
+      user: { id: '1', role: 'developer', jira_connected: true },
+    })
+    mockFetch({ user: { id: '1', role: 'developer', jira_connected: false } })
+
+    const result = await useAuthStore.getState().disconnectJira()
+
+    expect(result.ok).toBe(true)
+    expect(useAuthStore.getState().user.jira_connected).toBe(false)
+  })
+
+  it('connectJira returns ok:false on server error', async () => {
+    useAuthStore.setState({ token: 'jwt', user: { id: '1', role: 'developer' } })
+    mockFetch({ error: 'Invalid Jira credentials' }, false, 400)
+
+    const result = await useAuthStore.getState().connectJira('bad-token')
+
+    expect(result.ok).toBe(false)
+    expect(useAuthStore.getState().error).toBe('Invalid Jira credentials')
+  })
+
+  it('disconnectJira returns ok:false on server error', async () => {
+    useAuthStore.setState({
+      token: 'jwt',
+      user: { id: '1', role: 'developer', jira_connected: true },
+    })
+    mockFetch({ error: 'Server error' }, false, 500)
+
+    const result = await useAuthStore.getState().disconnectJira()
+
+    expect(result.ok).toBe(false)
+    expect(useAuthStore.getState().error).toBe('Server error')
+  })
+
   it('logout clears all auth state', async () => {
     mockFetch({ message: 'Logged out' })
     useAuthStore.setState({

@@ -1,5 +1,6 @@
 const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
+const jiraClient = require('../services/jiraClient')
 
 function canAccessWorkspace(user, workspace) {
   return workspace.admin_id === user.id || user.workspace_id === workspace.id
@@ -127,4 +128,75 @@ async function listMembers(req, res, next) {
   }
 }
 
-module.exports = { create, getById, update, getByCode, getMine, listMembers }
+async function connectJira(req, res, next) {
+  try {
+    const workspace = await WorkspaceModel.findById(req.params.id)
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' })
+    }
+
+    if (!isWorkspaceAdmin(req.user, workspace)) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const { jira_site_url, jira_project_key } = req.body
+    const accessToken = req.body.access_token || req.body.jira_access_token
+
+    if (!jira_site_url || !jira_project_key || !accessToken) {
+      return res.status(400).json({
+        error: 'jira_site_url, jira_project_key, and access_token are required',
+      })
+    }
+
+    try {
+      await jiraClient.validateCredentials({
+        siteUrl: jira_site_url,
+        email: req.user.email,
+        apiToken: accessToken,
+        projectKey: jira_project_key,
+      })
+    } catch (err) {
+      const status = err.status && err.status >= 400 && err.status < 500 ? 400 : 502
+      return res.status(status).json({ error: err.message || 'Invalid Jira credentials' })
+    }
+
+    const updated = await WorkspaceModel.connectJira(workspace.id, {
+      jira_site_url,
+      jira_project_key,
+      jira_access_token: accessToken,
+    })
+
+    res.json({ workspace: WorkspaceModel.sanitize(updated) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function disconnectJira(req, res, next) {
+  try {
+    const workspace = await WorkspaceModel.findById(req.params.id)
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' })
+    }
+
+    if (!isWorkspaceAdmin(req.user, workspace)) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const updated = await WorkspaceModel.disconnectJira(workspace.id)
+    res.json({ workspace: WorkspaceModel.sanitize(updated) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = {
+  create,
+  getById,
+  update,
+  getByCode,
+  getMine,
+  listMembers,
+  connectJira,
+  disconnectJira,
+}

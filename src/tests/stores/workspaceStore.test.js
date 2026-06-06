@@ -115,4 +115,58 @@ describe('workspaceStore', () => {
     expect(useWorkspaceStore.getState().lastJiraSyncResult.created).toBe(2)
     expect(useWorkspaceStore.getState().lastJiraSyncAt).toBeTruthy()
   })
+
+  it('connectJira stores connected workspace', async () => {
+    apiFetch.mockResolvedValue({
+      workspace: { id: 'ws-1', jira_connected: true, jira_site_url: 'https://acme.atlassian.net' },
+    })
+
+    const workspace = await useWorkspaceStore.getState().connectJira('ws-1', {
+      jira_site_url: 'https://acme.atlassian.net',
+      jira_project_key: 'QUEST',
+      access_token: 'token',
+    })
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/workspaces/ws-1/jira/connect', {
+      method: 'POST',
+      body: JSON.stringify({
+        jira_site_url: 'https://acme.atlassian.net',
+        jira_project_key: 'QUEST',
+        access_token: 'token',
+      }),
+    })
+    expect(workspace.jira_connected).toBe(true)
+  })
+
+  it('disconnectJira clears workspace Jira connection', async () => {
+    useWorkspaceStore.setState({
+      workspace: { id: 'ws-1', jira_connected: true },
+    })
+    apiFetch.mockResolvedValue({ workspace: { id: 'ws-1', jira_connected: false } })
+
+    const workspace = await useWorkspaceStore.getState().disconnectJira('ws-1')
+
+    expect(apiFetch).toHaveBeenCalledWith('/api/workspaces/ws-1/jira/disconnect', {
+      method: 'DELETE',
+    })
+    expect(workspace.jira_connected).toBe(false)
+  })
+
+  it('connectJira sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Invalid Jira credentials'))
+    await expect(
+      useWorkspaceStore.getState().connectJira('ws-1', {
+        jira_site_url: 'https://acme.atlassian.net',
+        jira_project_key: 'QUEST',
+        access_token: 'bad',
+      }),
+    ).rejects.toThrow('Invalid Jira credentials')
+    expect(useWorkspaceStore.getState().error).toBe('Invalid Jira credentials')
+  })
+
+  it('disconnectJira sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Forbidden'))
+    await expect(useWorkspaceStore.getState().disconnectJira('ws-1')).rejects.toThrow('Forbidden')
+    expect(useWorkspaceStore.getState().error).toBe('Forbidden')
+  })
 })

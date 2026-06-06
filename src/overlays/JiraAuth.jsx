@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
 import JiraButton from '../design-system/components/JiraButton'
+import { useAuthStore } from '../stores/authStore'
 
 const CheckIcon = () => (
   <svg viewBox="0 0 14 14" fill="none" className="w-[14px] h-[14px]">
@@ -13,7 +15,26 @@ const features = [
   'Read-only access (no changes in Jira)',
 ]
 
-export default function JiraAuth({ onClose, onConnect }) {
+export default function JiraAuth({ onClose, onConnect, onSkip }) {
+  const connectJira = useAuthStore((s) => s.connectJira)
+  const isLoading = useAuthStore((s) => s.isLoading)
+  const [accessToken, setAccessToken] = useState('')
+  const [error, setError] = useState(null)
+
+  const handleConnect = async () => {
+    if (!accessToken.trim()) {
+      setError('Enter your Jira API token to connect.')
+      return
+    }
+    setError(null)
+    const result = await connectJira(accessToken.trim())
+    if (result.ok) {
+      onConnect?.()
+    } else {
+      setError(result.error || 'Failed to connect Jira.')
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -25,13 +46,11 @@ export default function JiraAuth({ onClose, onConnect }) {
         style={{ animation: 'heroFadeUp 0.35s ease both' }}
       >
 
-        {/* ── Main card ── */}
         <div
           className="bg-white rounded-[16px] w-[640px] pt-[56px] px-[56px] pb-[56px] relative flex flex-col items-center gap-8"
           style={{ boxShadow: '0px 8px 32px 0px rgba(148, 47, 205, 0.12)' }}
         >
 
-          {/* Close button */}
           <button
             onClick={onClose}
             className="absolute top-4 right-5 text-[#9ca3af] hover:text-[#374151] text-[22px] leading-none cursor-pointer transition-colors duration-200"
@@ -39,7 +58,6 @@ export default function JiraAuth({ onClose, onConnect }) {
             ✕
           </button>
 
-          {/* Jira icon */}
           <div
             className="w-[80px] h-[80px] rounded-[16px] flex items-center justify-center"
             style={{
@@ -50,7 +68,6 @@ export default function JiraAuth({ onClose, onConnect }) {
             <img src={jiraLogo} alt="Jira" className="w-[52px] h-[52px] object-contain" />
           </div>
 
-          {/* Heading */}
           <div className="flex flex-col items-center gap-3 text-center">
             <h2
               className="text-[36px] font-semibold text-black leading-tight"
@@ -66,7 +83,6 @@ export default function JiraAuth({ onClose, onConnect }) {
             </p>
           </div>
 
-          {/* Feature list */}
           <div className="flex flex-col gap-4 w-[400px]">
             {features.map((feature) => (
               <div key={feature} className="flex items-center gap-3">
@@ -86,19 +102,51 @@ export default function JiraAuth({ onClose, onConnect }) {
             ))}
           </div>
 
-          {/* Connect button */}
-          <JiraButton onClick={onConnect}>
-            Connect with Jira
-          </JiraButton>
+          <div className="w-[400px] flex flex-col gap-2">
+            <label
+              htmlFor="jira-access-token"
+              className="text-[14px] font-medium text-[#374151]"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              Jira API token
+            </label>
+            <input
+              id="jira-access-token"
+              type="password"
+              value={accessToken}
+              onChange={(e) => setAccessToken(e.target.value)}
+              placeholder="Paste your Atlassian API token"
+              className="w-full px-4 py-3 rounded-[10px] border border-[#e5e7eb] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30 focus:border-[#942fcd]"
+            />
+            <p className="text-[12px] text-[#9ca3af]">
+              Use the same email as your Questly account. Your token is stored securely.
+            </p>
+          </div>
+
+          {error && (
+            <p className="text-[13px] text-[#ef4444] -mt-4">{error}</p>
+          )}
+
+          <div className="flex flex-col items-center gap-3 w-[400px]">
+            <JiraButton onClick={handleConnect} disabled={isLoading}>
+              {isLoading ? 'Connecting…' : 'Connect with Jira'}
+            </JiraButton>
+            <button
+              type="button"
+              onClick={onSkip || onClose}
+              className="text-[14px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+            >
+              Skip for now
+            </button>
+          </div>
 
         </div>
 
-        {/* Security note — outside the card */}
         <p
           className="text-[14px] text-[#9ca3af] text-center max-w-[611px] leading-[1.6]"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
-          We use secure OAuth 2.0 authentication. Questly only has read-only access to your Jira tasks.
+          Questly uses your personal API token for read-only access to your Jira tasks.
         </p>
 
       </div>

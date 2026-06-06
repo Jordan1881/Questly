@@ -5,17 +5,38 @@ const TaskModel = require('../models/task')
 const TaskAssignmentModel = require('../models/taskAssignment')
 const UserModel = require('../models/user')
 
+async function buildWorkspaceJiraOverrides(workspace, overrides = {}) {
+  const merged = { ...overrides }
+
+  if (workspace.jira_site_url) {
+    merged.siteUrl = workspace.jira_site_url
+  }
+  if (workspace.jira_project_key) {
+    merged.projectKey = workspace.jira_project_key
+  }
+  if (workspace.jira_access_token) {
+    merged.apiToken = workspace.jira_access_token
+    const admin = await UserModel.findByIdInternal(workspace.admin_id)
+    if (admin?.email) {
+      merged.email = admin.email
+    }
+  }
+
+  return merged
+}
+
 async function syncWorkspaceTasks(workspace, overrides = {}) {
+  const jiraOverrides = await buildWorkspaceJiraOverrides(workspace, overrides)
   const projectKey = workspace.jira_project_key || config.jira.projectKey
   const issues = await jiraClient.fetchProjectIssues({
-    ...overrides,
+    ...jiraOverrides,
     projectKey,
-    siteUrl: workspace.jira_site_url || overrides.siteUrl,
+    siteUrl: workspace.jira_site_url || jiraOverrides.siteUrl,
   })
 
   let developers = await UserModel.listDevelopersByWorkspace(workspace.id)
   if (developers.length > 0) {
-    developers = await ensureWorkspaceDeveloperJiraIds(developers, overrides)
+    developers = await ensureWorkspaceDeveloperJiraIds(developers, jiraOverrides)
   }
   const developersByJiraId = new Map(
     developers.filter((dev) => dev.jira_account_id).map((dev) => [dev.jira_account_id, dev]),

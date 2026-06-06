@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const config = require('../config')
 const UserModel = require('../models/user')
+const WorkspaceModel = require('../models/workspace')
+const jiraClient = require('../services/jiraClient')
 
 const SALT_ROUNDS = 12
 const INVALID_CREDENTIALS = 'Invalid credentials'
@@ -56,20 +58,10 @@ async function login(req, res, next) {
   }
 }
 
-async function me(req, res) {
-  const {
-    id,
-    email,
-    username,
-    role,
-    workspace_id,
-    avatar_url,
-    current_sprint_xp,
-    lifetime_xp,
-    coin_balance,
-  } = req.user
-  res.json({
-    user: {
+async function me(req, res, next) {
+  try {
+    const internal = await UserModel.findByIdInternal(req.user.id)
+    const {
       id,
       email,
       username,
@@ -79,12 +71,101 @@ async function me(req, res) {
       current_sprint_xp,
       lifetime_xp,
       coin_balance,
-    },
-  })
+    } = req.user
+
+    res.json({
+      user: {
+        id,
+        email,
+        username,
+        role,
+        workspace_id,
+        avatar_url,
+        current_sprint_xp,
+        lifetime_xp,
+        coin_balance,
+        jira_connected: UserModel.isJiraConnected(internal),
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function resolveDeveloperJiraSiteUrl(user) {
+  if (user.workspace_id) {
+    const workspace = await WorkspaceModel.findById(user.workspace_id)
+    if (workspace?.jira_site_url) return workspace.jira_site_url
+  }
+  return config.jira.siteUrl
+}
+
+async function connectJira(req, res, next) {
+  try {
+    const accessToken = req.body.access_token || req.body.jira_access_token
+    if (!accessToken) {
+      return res.status(400).json({ error: 'access_token is required' })
+    }
+
+    const siteUrl = await resolveDeveloperJiraSiteUrl(req.user)
+    if (!siteUrl) {
+      return res.status(400).json({
+        error: 'Jira site URL is not configured — ask your admin to connect the workspace first',
+      })
+    }
+
+    let accountId = req.body.jira_account_id || req.body.account_id || null
+
+    try {
+      const validation = await jiraClient.validateCredentials({
+        siteUrl,
+        email: req.user.email,
+        apiToken: accessToken,
+      })
+      if (!accountId) accountId = validation.accountId
+    } catch (err) {
+      const status = err.status && err.status >= 400 && err.status < 500 ? 400 : 502
+      return res.status(status).json({ error: err.message || 'Invalid Jira credentials' })
+    }
+
+    if (!accountId) {
+      return res.status(400).json({
+        error: 'Could not resolve Jira account ID — provide jira_account_id explicitly',
+      })
+    }
+
+    const user = await UserModel.connectJira(req.user.id, {
+      jira_access_token: accessToken,
+      jira_account_id: accountId,
+    })
+
+    res.json({
+      user: {
+        ...user,
+        jira_connected: true,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function disconnectJira(req, res, next) {
+  try {
+    const user = await UserModel.disconnectJira(req.user.id)
+    res.json({
+      user: {
+        ...user,
+        jira_connected: false,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
 }
 
 function logout(_req, res) {
   res.json({ message: 'Logged out' })
 }
 
-module.exports = { register, login, me, logout }
+module.exports = { register, login, me, logout, connectJira, disconnectJira }
