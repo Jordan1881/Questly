@@ -12,6 +12,16 @@ const emptyForm = {
   couponCodes: '',
 }
 
+function rewardToForm(reward) {
+  return {
+    title: reward.title ?? '',
+    description: reward.description ?? '',
+    xpCost: String(reward.xpCost ?? ''),
+    imageUrl: reward.imageUrl ?? '',
+    couponCodes: '',
+  }
+}
+
 export default function RewardManagementTab() {
   const workspace = useWorkspaceStore((s) => s.workspace)
   const fetchMine = useWorkspaceStore((s) => s.fetchMine)
@@ -19,12 +29,16 @@ export default function RewardManagementTab() {
   const isLoading = useRewardStore((s) => s.isLoading)
   const fetchRewards = useRewardStore((s) => s.fetchRewards)
   const createReward = useRewardStore((s) => s.createReward)
+  const updateReward = useRewardStore((s) => s.updateReward)
   const uploadCoupons = useRewardStore((s) => s.uploadCoupons)
   const deleteReward = useRewardStore((s) => s.deleteReward)
 
   const [form, setForm] = useState(emptyForm)
+  const [editingRewardId, setEditingRewardId] = useState(null)
   const [message, setMessage] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const isEditing = editingRewardId !== null
 
   useEffect(() => {
     fetchMine()
@@ -33,6 +47,17 @@ export default function RewardManagementTab() {
       })
       .catch(() => {})
   }, [fetchMine, fetchRewards])
+
+  const resetForm = () => {
+    setForm(emptyForm)
+    setEditingRewardId(null)
+  }
+
+  const handleEdit = (reward) => {
+    setEditingRewardId(reward.id)
+    setForm(rewardToForm(reward))
+    setMessage(null)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -47,19 +72,30 @@ export default function RewardManagementTab() {
     setSubmitting(true)
     setMessage(null)
     try {
-      const reward = await createReward(workspace.id, {
+      const payload = {
         title: form.title.trim(),
         description: form.description.trim() || null,
         xpCost,
         imageUrl: form.imageUrl.trim() || null,
-      })
-
-      if (form.couponCodes.trim()) {
-        await uploadCoupons(reward.id, form.couponCodes)
       }
 
-      setForm(emptyForm)
-      setMessage({ type: 'success', text: 'Reward created successfully.' })
+      let rewardId = editingRewardId
+      if (isEditing) {
+        await updateReward(editingRewardId, payload)
+      } else {
+        const reward = await createReward(workspace.id, payload)
+        rewardId = reward.id
+      }
+
+      if (form.couponCodes.trim()) {
+        await uploadCoupons(rewardId, form.couponCodes)
+      }
+
+      resetForm()
+      setMessage({
+        type: 'success',
+        text: isEditing ? 'Reward updated successfully.' : 'Reward created successfully.',
+      })
       await fetchRewards(workspace.id)
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
@@ -73,6 +109,7 @@ export default function RewardManagementTab() {
     setMessage(null)
     try {
       await deleteReward(rewardId)
+      if (editingRewardId === rewardId) resetForm()
       setMessage({ type: 'success', text: 'Reward deleted.' })
       await fetchRewards(workspace.id)
     } catch (err) {
@@ -83,7 +120,9 @@ export default function RewardManagementTab() {
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       <div className={`${CARD} p-6`}>
-        <h2 className="text-[18px] font-semibold text-[#1f2937] mb-4">Add reward</h2>
+        <h2 className="text-[18px] font-semibold text-[#1f2937] mb-4">
+          {isEditing ? 'Edit reward' : 'Add reward'}
+        </h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium text-[#374151]">Title</span>
@@ -123,7 +162,9 @@ export default function RewardManagementTab() {
             </label>
           </div>
           <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-medium text-[#374151]">Coupon codes (one per line)</span>
+            <span className="text-[13px] font-medium text-[#374151]">
+              {isEditing ? 'Add coupon codes (one per line)' : 'Coupon codes (one per line)'}
+            </span>
             <textarea
               value={form.couponCodes}
               onChange={(e) => setForm((f) => ({ ...f, couponCodes: e.target.value }))}
@@ -139,14 +180,25 @@ export default function RewardManagementTab() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="self-start px-4 py-2 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60"
-            style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
-          >
-            {submitting ? 'Saving…' : 'Create reward'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60"
+              style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+            >
+              {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create reward'}
+            </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-4 py-2 rounded-[8px] text-[14px] font-medium text-[#374151] border border-[#e5e7eb] cursor-pointer hover:bg-[#f9fafb]"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -160,7 +212,9 @@ export default function RewardManagementTab() {
           {rewards.map((reward) => (
             <div
               key={reward.id}
-              className="flex items-center justify-between gap-4 p-4 rounded-[10px] border border-[#e5e7eb]"
+              className={`flex items-center justify-between gap-4 p-4 rounded-[10px] border ${
+                editingRewardId === reward.id ? 'border-[#942fcd] bg-[#faf5ff]' : 'border-[#e5e7eb]'
+              }`}
             >
               <div>
                 <p className="text-[14px] font-semibold text-[#1f2937]">{reward.title}</p>
@@ -168,13 +222,22 @@ export default function RewardManagementTab() {
                   {reward.xpCost} XP · {reward.stockCount ?? 0} in stock
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => handleDelete(reward.id)}
-                className="text-[12px] font-semibold text-[#ef4444] cursor-pointer"
-              >
-                Delete
-              </button>
+              <div className="flex items-center gap-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleEdit(reward)}
+                  className="text-[12px] font-semibold text-[#942fcd] cursor-pointer"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(reward.id)}
+                  className="text-[12px] font-semibold text-[#ef4444] cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
