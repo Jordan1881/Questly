@@ -17,7 +17,7 @@ const PUBLIC_FIELDS = [
 
 function strip(user) {
   if (!user) return null
-  const { password_hash, jira_access_token, jira_account_id, ...safe } = user
+  const { password_hash, jira_access_token, jira_refresh_token, jira_account_id, ...safe } = user
   return safe
 }
 
@@ -63,18 +63,23 @@ async function updateJiraAccountId(user_id, jira_account_id) {
   return strip(user)
 }
 
-async function connectJira(user_id, { jira_access_token, jira_account_id }) {
-  const [user] = await db(TABLE)
-    .where({ id: user_id })
-    .update({ jira_access_token, jira_account_id })
-    .returning('*')
+async function connectJira(
+  user_id,
+  { jira_access_token, jira_account_id, jira_refresh_token = undefined },
+) {
+  const patch = { jira_access_token, jira_account_id }
+  if (jira_refresh_token !== undefined) {
+    patch.jira_refresh_token = jira_refresh_token
+  }
+
+  const [user] = await db(TABLE).where({ id: user_id }).update(patch).returning('*')
   return strip(user)
 }
 
 async function disconnectJira(user_id) {
   const [user] = await db(TABLE)
     .where({ id: user_id })
-    .update({ jira_access_token: null, jira_account_id: null })
+    .update({ jira_access_token: null, jira_refresh_token: null, jira_account_id: null })
     .returning('*')
   return strip(user)
 }
