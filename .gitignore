@@ -20,6 +20,11 @@ server/.env
 
 # Test coverage output
 coverage/
+server/coverage/
+
+# Build / test artifacts
+dist/
+test-results/
 
 # Editor directories and files
 .vscode/*

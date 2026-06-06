@@ -2,7 +2,7 @@
 
 ## Cursor Cloud specific instructions
 
-Questly is a two-app repo: React/Vite frontend at the repo root and Express API in `server/`. Full local dev and E2E require PostgreSQL plus both apps running.
+Questly is a two-app repo: React/Vite frontend at the repo root and Express API in `server/`. Full local dev and E2E require PostgreSQL plus both apps running. Documentation index: `docs/README.md`. Ops scripts: `scripts/README.md`.
 
 ### Services
 
