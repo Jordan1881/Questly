@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test'
 
 const ts = Date.now()
-const DEV_EMAIL = `dev_${ts}@e2e.test`
-const ADMIN_EMAIL = `admin_${ts}@e2e.test`
 const PASSWORD = 'Password123!'
 
 // ── Hero page ─────────────────────────────────────────────────────────────────
@@ -49,24 +47,31 @@ test('sign-up shows validation error when passwords do not match', async ({ page
 
 // ── Developer sign-up golden path ─────────────────────────────────────────────
 
-test('developer can sign up and reach the Jira connect screen', async ({ page }) => {
+test('developer can sign up and reach the optional Jira connect screen', async ({ page }) => {
+  const devEmail = `dev_signup_${ts}@e2e.test`
+
   await page.goto('/signup')
   await page.getByText('Developer').first().click()
-  await page.getByPlaceholder('Enter your email').fill(DEV_EMAIL)
-  await page.getByPlaceholder('Create a username').fill(`dev_${ts}`)
+  await page.getByPlaceholder('Enter your email').fill(devEmail)
+  await page.getByPlaceholder('Create a username').fill(`dev_signup_${ts}`)
   await page.getByPlaceholder('Create a password').fill(PASSWORD)
   await page.getByPlaceholder('Re-enter your password').fill(PASSWORD)
   await page.getByRole('button', { name: /create account/i }).click()
-  await expect(page.getByText(/connect.*jira|jira.*connect/i).first()).toBeVisible({ timeout: 8000 })
+
+  await expect(page.getByText('Connect your Jira account')).toBeVisible({ timeout: 8000 })
+  await expect(page.getByText(/join your team first/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /skip for now/i })).toBeVisible()
 })
 
 // ── Admin sign-up golden path ─────────────────────────────────────────────────
 
 test('admin can sign up and reach workspace create (Jira connect is developer-only)', async ({ page }) => {
+  const adminEmail = `admin_signup_${ts}@e2e.test`
+
   await page.goto('/signup')
   await page.getByText('Admin').first().click()
-  await page.getByPlaceholder('Enter your email').fill(ADMIN_EMAIL)
-  await page.getByPlaceholder('Create a username').fill(`admin_${ts}`)
+  await page.getByPlaceholder('Enter your email').fill(adminEmail)
+  await page.getByPlaceholder('Create a username').fill(`admin_signup_${ts}`)
   await page.getByPlaceholder('Create a password').fill(PASSWORD)
   await page.getByPlaceholder('Re-enter your password').fill(PASSWORD)
   await page.getByRole('button', { name: /create account/i }).click()
@@ -76,6 +81,8 @@ test('admin can sign up and reach workspace create (Jira connect is developer-on
 // ── Duplicate email error ─────────────────────────────────────────────────────
 
 test('sign-up shows error when email is already registered', async ({ page }) => {
+  const duplicateEmail = `dup_${ts}@e2e.test`
+
   const fillSignup = async (email, username) => {
     await page.goto('/signup')
     await page.getByPlaceholder('Enter your email').fill(email)
@@ -85,8 +92,9 @@ test('sign-up shows error when email is already registered', async ({ page }) =>
     await page.getByRole('button', { name: /create account/i }).click()
   }
 
-  await fillSignup(DEV_EMAIL, `dev_${ts}`)
-  await page.waitForTimeout(1500)
-  await fillSignup(DEV_EMAIL, `dev2_${ts}`)
+  await fillSignup(duplicateEmail, `dup_${ts}`)
+  await expect(page.getByText('Connect your Jira account')).toBeVisible({ timeout: 8000 })
+
+  await fillSignup(duplicateEmail, `dup2_${ts}`)
   await expect(page.getByText('Email already registered')).toBeVisible({ timeout: 8000 })
 })

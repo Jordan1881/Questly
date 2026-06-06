@@ -60,6 +60,35 @@ export async function approveJoinRequest(token, workspaceId, requestId) {
   })
 }
 
+/** Register admin + dev, approve join — common setup for journey specs. */
+export async function setupApprovedDeveloper({
+  adminEmail,
+  devEmail,
+  adminUsername,
+  devUsername,
+  workspaceName,
+  password = 'Password123!',
+}) {
+  const { token: adminToken, user: adminUser } = await register({
+    email: adminEmail,
+    username: adminUsername,
+    password,
+    role: 'admin',
+  })
+  const workspace = await createWorkspace(adminToken, workspaceName)
+  const { token: devToken, user: devUser } = await register({
+    email: devEmail,
+    username: devUsername,
+    password,
+    role: 'developer',
+  })
+  const joinRequest = await submitJoinRequest(devToken, workspace.id)
+  const pending = await listPendingJoinRequests(adminToken, workspace.id)
+  await approveJoinRequest(adminToken, workspace.id, pending[0]?.id || joinRequest.id)
+
+  return { adminToken, adminUser, devToken, devUser, workspace, password }
+}
+
 export async function seedTask(body) {
   return api('/api/e2e/seed/task', { method: 'POST', body })
 }
