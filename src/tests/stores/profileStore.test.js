@@ -42,4 +42,20 @@ describe('profileStore', () => {
     expect(profile.username).toBe('newdev')
     expect(useProfileStore.getState().profile.username).toBe('newdev')
   })
+
+  it('fetchProfile sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Server error'))
+
+    await expect(useProfileStore.getState().fetchProfile()).rejects.toThrow('Server error')
+    expect(useProfileStore.getState().error).toBe('Server error')
+  })
+
+  it('deletePurchase restores purchases when API fails', async () => {
+    useProfileStore.setState({ purchases: [{ id: 'p1' }, { id: 'p2' }] })
+    apiFetch.mockRejectedValue(new Error('Delete failed'))
+
+    await expect(useProfileStore.getState().deletePurchase('p1')).rejects.toThrow('Delete failed')
+    expect(useProfileStore.getState().purchases).toEqual([{ id: 'p1' }, { id: 'p2' }])
+    expect(useProfileStore.getState().error).toBe('Delete failed')
+  })
 })
