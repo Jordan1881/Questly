@@ -29,6 +29,66 @@ function formatTask(row) {
   }
 }
 
+function isWorkspaceAdmin(user, workspace) {
+  return workspace.admin_id === user.id
+}
+
+function canAccessWorkspace(user, workspace) {
+  return workspace.admin_id === user.id || user.workspace_id === workspace.id
+}
+
+async function listByWorkspace(req, res, next) {
+  try {
+    const workspace = await WorkspaceModel.findById(req.params.id)
+    if (!workspace) {
+      return res.status(404).json({ error: 'Workspace not found' })
+    }
+
+    if (!isWorkspaceAdmin(req.user, workspace)) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const filters = {}
+    if (req.query.status) filters.status = req.query.status
+    if (req.query.difficulty) filters.difficulty = req.query.difficulty
+    if (req.query.assignee) filters.assignee = req.query.assignee
+
+    const rows = await TaskModel.listByWorkspace(workspace.id, filters)
+    res.json({ tasks: rows.map((row) => formatTask(row)) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function getById(req, res, next) {
+  try {
+    const task = await TaskModel.findById(req.params.id)
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' })
+    }
+
+    const workspace = await WorkspaceModel.findById(task.workspace_id)
+    if (!workspace || !canAccessWorkspace(req.user, workspace)) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const assignment = await TaskAssignmentModel.findForUser(task.id, req.user.id)
+    const row = {
+      ...task,
+      completed_at: assignment?.completed_at ?? null,
+    }
+
+    res.json({
+      task: {
+        ...formatTask(row),
+        completedAt: assignment?.completed_at ?? null,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 async function listMine(req, res, next) {
   try {
     if (!req.user.workspace_id) {
@@ -115,6 +175,8 @@ async function updateCompletion(req, res, next) {
 }
 
 module.exports = {
+  listByWorkspace,
+  getById,
   listMine,
   sync,
   updateCompletion,
