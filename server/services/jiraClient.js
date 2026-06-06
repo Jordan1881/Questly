@@ -222,6 +222,7 @@ module.exports = {
   lookupAccountIdByEmail,
   mapIssue,
   mapIssues,
+  mapJiraIssueToDifficulty,
   parseDifficultyFromStoryPoints,
   extractStoryPoints,
   resolveStoryPointsFieldId,
