@@ -47,6 +47,7 @@ module.exports = {
         : process.env.RAILWAY_PUBLIC_DOMAIN
           ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/workspaces/jira/oauth/callback`
           : `http://localhost:${Number(process.env.PORT) || 3001}/api/workspaces/jira/oauth/callback`),
+    reportingRefreshToken: process.env.ATLASSIAN_REPORTING_REFRESH_TOKEN || null,
   },
   jira: {
     siteUrl: process.env.JIRA_SITE_URL || null,
