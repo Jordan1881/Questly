@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
 import { useAuthStore } from '../stores/authStore'
 
 const ATLASSIAN_TOKEN_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens'
+
+const NO_WORKSPACE_COPY =
+  'Join a team first, or connect Jira after your admin approves you.'
 
 const CheckIcon = () => (
   <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 shrink-0">
@@ -24,6 +27,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
   const [accessToken, setAccessToken] = useState('')
   const [message, setMessage] = useState(null)
 
+  const hasWorkspace = Boolean(user?.workspace_id)
   const isConnected = Boolean(user?.jira_connected)
 
   useEffect(() => {
@@ -34,6 +38,10 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
   }, [fetchJiraOAuthStatus])
 
   const handleOAuthConnect = async () => {
+    if (!hasWorkspace) {
+      setMessage({ type: 'error', text: NO_WORKSPACE_COPY })
+      return
+    }
     setMessage(null)
     const result = await startJiraOAuth(location.pathname || '/profile')
     if (!result.ok) {
@@ -43,6 +51,10 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
 
   const handleManualConnect = async (e) => {
     e.preventDefault()
+    if (!hasWorkspace) {
+      setMessage({ type: 'error', text: NO_WORKSPACE_COPY })
+      return
+    }
     if (!accessToken.trim()) return
     setMessage(null)
     const result = await connectJira(accessToken.trim())
@@ -64,6 +76,8 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
     }
   }
 
+  const statusLabel = isConnected ? 'Connected' : hasWorkspace ? 'Not connected' : 'Awaiting team'
+
   return (
     <div className="p-4 bg-[#f8faff] rounded-[10px] border border-[#dbeafe] mb-4">
       <div className="flex items-center justify-between mb-2">
@@ -73,11 +87,15 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
         </div>
         <span
           className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-[6px] ${
-            isConnected ? 'bg-[#d1fae5] text-[#059669]' : 'bg-[#f3f4f6] text-[#6b7280]'
+            isConnected
+              ? 'bg-[#d1fae5] text-[#059669]'
+              : hasWorkspace
+                ? 'bg-[#f3f4f6] text-[#6b7280]'
+                : 'bg-[#fef3c7] text-[#d97706]'
           }`}
         >
           {isConnected && <CheckIcon />}
-          {isConnected ? 'Connected' : 'Not connected'}
+          {statusLabel}
         </span>
       </div>
 
@@ -91,8 +109,27 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
         </p>
       )}
 
-      {showConnectForm && !isConnected && (
+      {showConnectForm && !hasWorkspace && (
         <div className="flex flex-col gap-2 mt-2">
+          <p className="text-[12px] text-[#6b7280] leading-relaxed">{NO_WORKSPACE_COPY}</p>
+          <p className="text-[11px] text-[#9ca3af]">
+            Jira links your Atlassian identity to assigned tasks. You can set it up on Profile after
+            your admin approves you.
+          </p>
+          <Link
+            to="/workspace/join"
+            className="self-start text-[12px] font-semibold text-[#942fcd] hover:underline"
+          >
+            Join a workspace
+          </Link>
+        </div>
+      )}
+
+      {showConnectForm && hasWorkspace && !isConnected && (
+        <div className="flex flex-col gap-2 mt-2">
+          <p className="text-[11px] text-[#6b7280]">
+            Connect your Jira account to receive tasks assigned to you in Questly.
+          </p>
           {oauthAvailable && (
             <button
               type="button"
@@ -154,7 +191,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
         </div>
       )}
 
-      {showConnectForm && isConnected && (
+      {showConnectForm && hasWorkspace && isConnected && (
         <button
           type="button"
           onClick={handleDisconnect}
@@ -167,7 +204,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
 
       {!showConnectForm && (
         <p className="text-[11px] text-[#9ca3af]">
-          Manage workspace Jira connection in the Admin panel.
+          Manage team Jira sync in the Admin panel.
         </p>
       )}
     </div>
