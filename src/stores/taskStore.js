@@ -70,7 +70,7 @@ export const useTaskStore = create((set, get) => ({
         useAuthStore.setState({ user: { ...currentUser, ...user } })
 
         if (completed && reward?.xpDelta > 0) {
-          useToastStore.getState().show(`+${reward.xpDelta} XP`)
+          useToastStore.getState().showSuccess(`+${reward.xpDelta} XP`)
           const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
           const oldLevel = levelFromLifetime(prevLifetime)
           if (newLevel > oldLevel) {

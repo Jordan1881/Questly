@@ -6,6 +6,7 @@ import { useAuthStore } from './authStore'
 export const useRewardStore = create((set, get) => ({
   rewards: [],
   isLoading: false,
+  isPurchasing: false,
   error: null,
 
   fetchRewards: async (workspaceId) => {
@@ -57,29 +58,36 @@ export const useRewardStore = create((set, get) => ({
   },
 
   purchaseReward: async (rewardId) => {
-    const result = await apiFetch(`/api/rewards/${rewardId}/purchase`, { method: 'POST' })
-    const balances = result.balances
-    useXpStore.getState().syncFromUser({
-      ...useAuthStore.getState().user,
-      current_sprint_xp: balances.current_sprint_xp,
-      lifetime_xp: balances.lifetime_xp,
-      coin_balance: balances.coin_balance,
-    })
-    useAuthStore.setState((s) => ({
-      user: s.user
-        ? {
-            ...s.user,
-            current_sprint_xp: balances.current_sprint_xp,
-            lifetime_xp: balances.lifetime_xp,
-            coin_balance: balances.coin_balance,
-          }
-        : s.user,
-    }))
-    const { rewards } = get()
-    if (rewards.length) {
-      const workspaceId = rewards[0]?.workspaceId
-      if (workspaceId) await get().fetchRewards(workspaceId)
+    set({ isPurchasing: true })
+    try {
+      const result = await apiFetch(`/api/rewards/${rewardId}/purchase`, { method: 'POST' })
+      const balances = result.balances
+      useXpStore.getState().syncFromUser({
+        ...useAuthStore.getState().user,
+        current_sprint_xp: balances.current_sprint_xp,
+        lifetime_xp: balances.lifetime_xp,
+        coin_balance: balances.coin_balance,
+      })
+      useAuthStore.setState((s) => ({
+        user: s.user
+          ? {
+              ...s.user,
+              current_sprint_xp: balances.current_sprint_xp,
+              lifetime_xp: balances.lifetime_xp,
+              coin_balance: balances.coin_balance,
+            }
+          : s.user,
+      }))
+      const { rewards } = get()
+      if (rewards.length) {
+        const workspaceId = rewards[0]?.workspaceId
+        if (workspaceId) await get().fetchRewards(workspaceId)
+      }
+      set({ isPurchasing: false })
+      return result
+    } catch (err) {
+      set({ isPurchasing: false })
+      throw err
     }
-    return result
   },
 }))
