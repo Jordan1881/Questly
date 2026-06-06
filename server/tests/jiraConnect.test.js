@@ -9,6 +9,8 @@ jest.mock('../services/jiraClient', () => ({
   validateCredentials: jest.fn(),
 }))
 
+const { isEncrypted, decryptToken } = require('../lib/jiraTokenCrypto')
+
 const app = createApp()
 
 beforeAll(async () => {
@@ -276,6 +278,67 @@ describe('DELETE /api/auth/me/jira/disconnect', () => {
     const row = await db('users').where({ id: devUser.id }).first()
     expect(row.jira_access_token).toBeNull()
     expect(row.jira_account_id).toBeNull()
+  })
+})
+
+describe('Jira token encryption at rest', () => {
+  const savedKey = process.env.JIRA_TOKEN_ENCRYPTION_KEY
+
+  beforeEach(() => {
+    process.env.JIRA_TOKEN_ENCRYPTION_KEY = 'test-encryption-secret'
+  })
+
+  afterEach(() => {
+    if (savedKey === undefined) delete process.env.JIRA_TOKEN_ENCRYPTION_KEY
+    else process.env.JIRA_TOKEN_ENCRYPTION_KEY = savedKey
+  })
+
+  test('workspace connect stores encrypted token and decrypts for Jira API calls', async () => {
+    const { token, workspace } = await createWorkspaceAsAdmin('encws')
+
+    const res = await request(app)
+      .post(`/api/workspaces/${workspace.id}/jira/connect`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(CONNECT_BODY)
+
+    expect(res.status).toBe(200)
+
+    const row = await db('workspaces').where({ id: workspace.id }).first()
+    expect(isEncrypted(row.jira_access_token)).toBe(true)
+    expect(decryptToken(row.jira_access_token)).toBe(CONNECT_BODY.access_token)
+    expect(jiraClient.validateCredentials).toHaveBeenCalledWith({
+      siteUrl: CONNECT_BODY.jira_site_url,
+      email: 'adminencws@test.com',
+      apiToken: CONNECT_BODY.access_token,
+      projectKey: CONNECT_BODY.jira_project_key,
+    })
+  })
+
+  test('developer connect stores encrypted token and decrypts for Jira API calls', async () => {
+    const { token: adminToken, workspace } = await createWorkspaceAsAdmin('encdev')
+    await request(app)
+      .post(`/api/workspaces/${workspace.id}/jira/connect`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(CONNECT_BODY)
+
+    const { token: devToken, user: devUser } = await registerAndLogin('developer', 'encdev')
+    await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id })
+
+    const res = await request(app)
+      .post('/api/auth/me/jira/connect')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ access_token: 'dev-jira-token' })
+
+    expect(res.status).toBe(200)
+
+    const row = await db('users').where({ id: devUser.id }).first()
+    expect(isEncrypted(row.jira_access_token)).toBe(true)
+    expect(decryptToken(row.jira_access_token)).toBe('dev-jira-token')
+    expect(jiraClient.validateCredentials).toHaveBeenLastCalledWith({
+      siteUrl: CONNECT_BODY.jira_site_url,
+      email: 'devencdev@test.com',
+      apiToken: 'dev-jira-token',
+    })
   })
 })
 

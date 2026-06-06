@@ -100,6 +100,21 @@ describe('POST /api/auth/login', () => {
     expect(wrongEmail.status).toBe(401)
     expect(wrongEmail.body.error).toBe(wrongPassword.body.error)
   })
+
+  test('does not expose Jira tokens in login response', async () => {
+    await db('users').where({ email: 'dev@test.com' }).update({
+      jira_access_token: 'secret-jira-token',
+      jira_refresh_token: 'secret-refresh-token',
+      jira_account_id: 'jira-acct-1',
+    })
+
+    const res = await loginUser()
+
+    expect(res.status).toBe(200)
+    expect(res.body.user.jira_access_token).toBeUndefined()
+    expect(res.body.user.jira_refresh_token).toBeUndefined()
+    expect(res.body.user.jira_account_id).toBeUndefined()
+  })
 })
 
 // ── GET /api/auth/me ──────────────────────────────────────────────────────────
