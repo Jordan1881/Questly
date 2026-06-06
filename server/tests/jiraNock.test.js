@@ -72,4 +72,41 @@ describe('Jira HTTP via nock', () => {
     expect(accountId).toBe('lookup-id')
     assertNoPendingNock()
   })
+
+})
+
+describe('lookupAccountIdByEmail without Jira config', () => {
+  const savedEnv = {}
+
+  beforeEach(() => {
+    for (const key of [
+      'JIRA_SITE_URL',
+      'JIRA_PROJECT_KEY',
+      'JIRA_ADMIN_EMAIL',
+      'JIRA_ADMIN_API_TOKEN',
+    ]) {
+      savedEnv[key] = process.env[key]
+      delete process.env[key]
+    }
+    jest.resetModules()
+  })
+
+  afterEach(() => {
+    for (const key of [
+      'JIRA_SITE_URL',
+      'JIRA_PROJECT_KEY',
+      'JIRA_ADMIN_EMAIL',
+      'JIRA_ADMIN_API_TOKEN',
+    ]) {
+      if (savedEnv[key] === undefined) delete process.env[key]
+      else process.env[key] = savedEnv[key]
+    }
+    jest.resetModules()
+  })
+
+  test('returns null when Jira is not configured', async () => {
+    const { lookupAccountIdByEmail } = require('../services/jiraClient')
+    const accountId = await lookupAccountIdByEmail('dev@test.com')
+    expect(accountId).toBeNull()
+  })
 })

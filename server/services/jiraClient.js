@@ -220,7 +220,12 @@ async function validateCredentials({ siteUrl, email, apiToken, projectKey }) {
 async function lookupAccountIdByEmail(email, overrides = {}) {
   if (!email) return null
 
-  const credentials = getCredentials(overrides)
+  let credentials
+  try {
+    credentials = getCredentials(overrides)
+  } catch {
+    return null
+  }
   const { siteUrl, email: apiEmail, apiToken } = credentials
   const query = encodeURIComponent(email)
   const users = await jiraGet(`/rest/api/3/user/search?query=${query}`, {
