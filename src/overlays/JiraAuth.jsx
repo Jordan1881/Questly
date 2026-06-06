@@ -146,7 +146,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
                 onClick={() => setShowManual(true)}
                 className="text-[13px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
               >
-                Use API token instead
+                Advanced: use API token
               </button>
             )}
 

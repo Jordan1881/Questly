@@ -40,6 +40,13 @@ module.exports = {
         : process.env.RAILWAY_PUBLIC_DOMAIN
           ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/auth/jira/oauth/callback`
           : `http://localhost:${Number(process.env.PORT) || 3001}/api/auth/jira/oauth/callback`),
+    workspaceCallbackUrl:
+      process.env.ATLASSIAN_WORKSPACE_OAUTH_CALLBACK_URL ||
+      (process.env.API_PUBLIC_URL
+        ? `${process.env.API_PUBLIC_URL.replace(/\/$/, '')}/api/workspaces/jira/oauth/callback`
+        : process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/workspaces/jira/oauth/callback`
+          : `http://localhost:${Number(process.env.PORT) || 3001}/api/workspaces/jira/oauth/callback`),
   },
   jira: {
     siteUrl: process.env.JIRA_SITE_URL || null,
