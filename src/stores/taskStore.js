@@ -1,6 +1,13 @@
 import { create } from 'zustand'
 import { apiFetch } from '../lib/api'
 import { useXpStore } from './xpStore'
+import { useAuthStore } from './authStore'
+import { useToastStore } from './toastStore'
+import { useLevelUpStore } from './levelUpStore'
+
+function levelFromLifetime(lifetimeXp) {
+  return Math.floor(Math.max(0, lifetimeXp ?? 0) / 1000) + 1
+}
 
 export const useTaskStore = create((set, get) => ({
   tasks: [],
@@ -47,15 +54,31 @@ export const useTaskStore = create((set, get) => ({
       tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: completed } : t)),
     }))
 
+    const prevLifetime = useAuthStore.getState().user?.lifetime_xp ?? 0
+
     try {
-      const { task: updated, user } = await apiFetch(`/api/tasks/${id}/completion`, {
+      const { task: updated, user, reward } = await apiFetch(`/api/tasks/${id}/completion`, {
         method: 'PATCH',
         body: JSON.stringify({ completed }),
       })
       set((s) => ({
         tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
       }))
-      if (user) useXpStore.getState().syncFromUser(user)
+      if (user) {
+        useXpStore.getState().syncFromUser(user)
+        const currentUser = useAuthStore.getState().user
+        useAuthStore.setState({ user: { ...currentUser, ...user } })
+
+        if (completed && reward?.xpDelta > 0) {
+          useToastStore.getState().show(`+${reward.xpDelta} XP`)
+          const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
+          const oldLevel = levelFromLifetime(prevLifetime)
+          if (newLevel > oldLevel) {
+            useLevelUpStore.getState().show(newLevel)
+          }
+        }
+      }
+      return { task: updated, user, reward }
     } catch (err) {
       set((s) => ({
         tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: task.done } : t)),

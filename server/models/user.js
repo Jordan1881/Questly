@@ -11,6 +11,8 @@ const PUBLIC_FIELDS = [
   'current_sprint_xp',
   'lifetime_xp',
   'coin_balance',
+  'streak_days',
+  'last_activity_date',
 ]
 
 function strip(user) {

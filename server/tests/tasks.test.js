@@ -362,6 +362,7 @@ describe('PATCH /api/tasks/:id/completion', () => {
 
     const devUser = await db('users').where({ id: devUserId }).first()
     expect(devUser.current_sprint_xp).toBe(20)
+    expect(devUser.lifetime_xp).toBe(20)
     expect(devUser.coin_balance).toBe(2)
 
     const tx = await db('xp_transactions')
@@ -400,6 +401,84 @@ describe('PATCH /api/tasks/:id/completion', () => {
     const devUser = await db('users').where({ id: devUserId }).first()
     expect(devUser.current_sprint_xp).toBe(0)
     expect(devUser.coin_balance).toBe(0)
+  })
+
+  test('second completion on same assignment returns 409 without duplicate XP', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('double')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const taskId = listRes.body.tasks[0].id
+
+    await request(app)
+      .patch(`/api/tasks/${taskId}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: true })
+
+    const res = await request(app)
+      .patch(`/api/tasks/${taskId}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: true })
+
+    expect(res.status).toBe(409)
+
+    const txCount = await db('xp_transactions')
+      .where({ user_id: devUserId, task_id: taskId, reason: 'task_completed' })
+      .where('amount', '>', 0)
+    expect(txCount).toHaveLength(1)
+
+    const devUser = await db('users').where({ id: devUserId }).first()
+    expect(devUser.current_sprint_xp).toBe(listRes.body.tasks[0].xp)
+  })
+
+  test('completing task without assignment returns 403', async () => {
+    const { adminToken, workspace } = await createWorkspaceWithDeveloper('unassigned')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const { token: otherDevToken, user: otherDev } = await registerAndLogin('developer', 'other')
+    await db('users').where({ id: otherDev.id }).update({ workspace_id: workspace.id })
+
+    const tasks = await db('tasks').where({ workspace_id: workspace.id })
+    const taskId = tasks[0].id
+
+    const res = await request(app)
+      .patch(`/api/tasks/${taskId}/completion`)
+      .set('Authorization', `Bearer ${otherDevToken}`)
+      .send({ completed: true })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toMatch(/not assigned/i)
+  })
+
+  test('task completion increments streak on first activity of the day', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('streak')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const taskId = listRes.body.tasks[0].id
+
+    const res = await request(app)
+      .patch(`/api/tasks/${taskId}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: true })
+
+    expect(res.status).toBe(200)
+    expect(res.body.user.streak_days).toBe(1)
+
+    const devUser = await db('users').where({ id: devUserId }).first()
+    expect(devUser.streak_days).toBe(1)
+    expect(devUser.last_activity_date).toBeTruthy()
   })
 })
 

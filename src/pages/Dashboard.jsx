@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import { apiFetch } from '../lib/api'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import DifficultyBadge from '../components/DifficultyBadge'
@@ -9,6 +10,7 @@ import { useSprintStore } from '../stores/sprintStore'
 import XPProgressBar from '../components/XPProgressBar'
 import SprintStatusWidget from '../components/SprintStatusWidget'
 import { useXP } from '../hooks/useXP'
+import XPHistory from '../components/XPHistory'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
@@ -75,12 +77,29 @@ export default function Dashboard() {
   const activeSprint = useSprintStore((s) => s.activeSprint)
   const fetchActiveSprint = useSprintStore((s) => s.fetchActiveSprint)
   const [showSidebar, setShowSidebar] = useState(false)
+  const [xpHistory, setXpHistory] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState(null)
+
+  const loadXpHistory = useCallback(async () => {
+    setHistoryLoading(true)
+    setHistoryError(null)
+    try {
+      const { transactions } = await apiFetch('/api/users/me/xp-history')
+      setXpHistory(transactions)
+    } catch (err) {
+      setHistoryError(err.message)
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (userRole === 'developer') {
       fetchTasks().catch(() => {})
+      loadXpHistory().catch(() => {})
     }
-  }, [userRole, fetchTasks])
+  }, [userRole, fetchTasks, loadXpHistory])
 
   useEffect(() => {
     if (user?.workspace_id) {
@@ -106,8 +125,13 @@ export default function Dashboard() {
   const streakDays = user?.streak_days ?? 0
   const isConnected = Boolean(user?.workspace_id)
 
-  const toggleTask = (id) => {
-    toggleTaskCompletion(id).catch(() => {})
+  const toggleTask = async (id) => {
+    try {
+      await toggleTaskCompletion(id)
+      await loadXpHistory()
+    } catch {
+      // taskStore handles rollback
+    }
   }
 
   return (
@@ -331,6 +355,16 @@ export default function Dashboard() {
                 </div>
               </div>
 
+            </div>
+
+            {/* XP History */}
+            <div className={`${CARD} p-6`}>
+              <h2 className="text-[18px] font-medium text-[#374151] mb-6">XP History</h2>
+              <XPHistory
+                transactions={xpHistory}
+                isLoading={historyLoading}
+                error={historyError}
+              />
             </div>
 
           </div>
