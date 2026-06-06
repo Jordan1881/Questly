@@ -21,6 +21,7 @@ export default function JoinRequestsTab() {
     pendingJoinRequests,
     fetchMine,
     fetchPendingJoinRequests,
+    fetchMembers,
     reviewJoinRequest,
     error,
   } = useWorkspaceStore()
@@ -37,6 +38,9 @@ export default function JoinRequestsTab() {
     setRowStatus((s) => ({ ...s, [request.id]: status }))
     setTimeout(async () => {
       await reviewJoinRequest(workspace.id, request.id, status)
+      if (status === 'approved') {
+        await fetchMembers(workspace.id).catch(() => {})
+      }
       setRowStatus((s) => {
         const next = { ...s }
         delete next[request.id]

@@ -6,6 +6,7 @@ const tasksRouter = require('./tasks')
 const sprintsRouter = require('./sprints')
 const usersRouter = require('./users')
 const rewardsRouter = require('./rewards')
+const e2eSeedRouter = require('./e2eSeed')
 
 const router = Router()
 
@@ -20,5 +21,6 @@ router.use('/tasks', tasksRouter)
 router.use('/sprints', sprintsRouter)
 router.use('/users', usersRouter)
 router.use('/rewards', rewardsRouter)
+router.use('/e2e/seed', e2eSeedRouter)
 
 module.exports = router

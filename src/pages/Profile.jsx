@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { StarIcon } from '../components/icons'
 import JiraIntegrationCard from '../components/JiraIntegrationCard'
 import MyRewards from '../components/MyRewards'
+import ProfileAvatar from '../components/ProfileAvatar'
+import { SkeletonList } from '../components/Skeleton'
 import { useAuthStore } from '../stores/authStore'
 import { useXpStore } from '../stores/xpStore'
 import { useProfileStore } from '../stores/profileStore'
+import { useWorkspaceStore } from '../stores/workspaceStore'
 import { xpLevelInfo } from '../lib/xpLevel'
+import { apiFetch } from '../lib/api'
+import { buildWeeklyXpData, weeklyXpTotal } from '../lib/xpHistoryChart'
+import { summarizeTeam } from '../lib/adminMembers'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
@@ -37,27 +43,17 @@ const TrendUpIcon = () => (
 
 // ── XP History Chart ──────────────────────────────────────────
 
-const XP_DATA = [
-  { day: 'Mon', xp: 130 },
-  { day: 'Tue', xp: 150 },
-  { day: 'Wed', xp: 200 },
-  { day: 'Thu', xp: 310 },
-  { day: 'Fri', xp: 300 },
-  { day: 'Sat', xp: 350 },
-  { day: 'Sun', xp: 480 },
-]
-
-function XPHistoryChart() {
+function XPHistoryChart({ data = [] }) {
   const [hoveredIdx, setHoveredIdx] = useState(null)
 
   const W = 540, H = 190
   const PAD = { l: 44, r: 20, t: 24, b: 36 }
   const cW = W - PAD.l - PAD.r
   const cH = H - PAD.t - PAD.b
-  const maxY = 600
-  const n = XP_DATA.length
+  const maxY = Math.max(600, ...data.map((d) => d.xp), 1)
+  const n = data.length
 
-  const pts = XP_DATA.map((d, i) => ({
+  const pts = data.map((d, i) => ({
     x: PAD.l + (i / (n - 1)) * cW,
     y: PAD.t + (1 - d.xp / maxY) * cH,
     ...d,
@@ -211,73 +207,6 @@ const ShieldIcon = () => (
   </svg>
 )
 
-// ── Purchased Reward Card ─────────────────────────────────────
-
-function PurchasedRewardCard({ reward }) {
-  const { title, desc, cost, Icon, gradient } = reward
-  return (
-    <div
-      className="border border-[#e5e7eb] rounded-[12px] p-5 flex flex-col gap-3 bg-white transition-all duration-200"
-      style={{ boxShadow: '0px 1px 3px rgba(0,0,0,0.06)' }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0px 6px 20px rgba(0,0,0,0.10)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0px 1px 3px rgba(0,0,0,0.06)'; e.currentTarget.style.transform = 'translateY(0)' }}
-    >
-      {/* Icon */}
-      <div className="w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0"
-        style={{ background: gradient }}>
-        <Icon color="white" />
-      </div>
-
-      {/* Purchased badge */}
-      <span className="flex items-center gap-1 bg-[#d1fae5] text-[#059669] text-[11px] font-semibold px-2 py-0.5 rounded-[6px] w-fit">
-        <CheckIcon />
-        Purchased
-      </span>
-
-      {/* Text */}
-      <div className="flex-1">
-        <h3 className="text-[13px] font-semibold text-[#1f2937] leading-snug">{title}</h3>
-        <p className="text-[12px] text-[#6b7280] mt-1 leading-[1.5]">{desc}</p>
-      </div>
-
-      {/* Cost */}
-      <div className="flex items-center gap-1">
-        <StarIcon color="#9ca3af" size={12} />
-        <span className="text-[12px] font-medium text-[#9ca3af]">{cost.toLocaleString()} XP</span>
-      </div>
-    </div>
-  )
-}
-
-// ── Pending Reward Card ───────────────────────────────────────
-
-function PendingRewardCard({ reward }) {
-  const { title, desc, cost, Icon, gradient } = reward
-  return (
-    <div
-      className="border border-[#fde68a] rounded-[12px] p-5 flex flex-col gap-3 bg-[#fffbeb] transition-all duration-200"
-      style={{ boxShadow: '0px 1px 3px rgba(0,0,0,0.06)' }}
-    >
-      <div className="w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0"
-        style={{ background: gradient }}>
-        <Icon color="white" />
-      </div>
-      <span className="flex items-center gap-1 bg-[#fef3c7] text-[#d97706] text-[11px] font-semibold px-2 py-0.5 rounded-[6px] w-fit">
-        <ClockBadgeIcon />
-        Pending Approval
-      </span>
-      <div className="flex-1">
-        <h3 className="text-[13px] font-semibold text-[#1f2937] leading-snug">{title}</h3>
-        <p className="text-[12px] text-[#6b7280] mt-1 leading-[1.5]">{desc}</p>
-      </div>
-      <div className="flex items-center gap-1">
-        <CoinIcon size={12} color="#9ca3af" />
-        <span className="text-[12px] font-medium text-[#9ca3af]">{cost} Coins</span>
-      </div>
-    </div>
-  )
-}
-
 // ── Profile page ─────────────────────────────────────────────
 
 export default function Profile() {
@@ -290,7 +219,14 @@ export default function Profile() {
   const fetchProfile = useProfileStore((s) => s.fetchProfile)
   const updateProfile = useProfileStore((s) => s.updateProfile)
   const deletePurchase = useProfileStore((s) => s.deletePurchase)
+  const members = useWorkspaceStore((s) => s.members)
+  const pendingJoinRequests = useWorkspaceStore((s) => s.pendingJoinRequests)
+  const fetchMine = useWorkspaceStore((s) => s.fetchMine)
+  const fetchMembers = useWorkspaceStore((s) => s.fetchMembers)
+  const fetchPendingJoinRequests = useWorkspaceStore((s) => s.fetchPendingJoinRequests)
   const [showSidebar, setShowSidebar] = useState(false)
+  const [xpTransactions, setXpTransactions] = useState([])
+  const [xpHistoryLoading, setXpHistoryLoading] = useState(false)
   const [editUsername, setEditUsername] = useState('')
   const [editAvatarUrl, setEditAvatarUrl] = useState('')
   const [saveMessage, setSaveMessage] = useState(null)
@@ -303,6 +239,37 @@ export default function Profile() {
   useEffect(() => {
     fetchProfile().catch(() => {})
   }, [fetchProfile])
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setXpHistoryLoading(true)
+      apiFetch('/api/users/me/xp-history')
+        .then(({ transactions }) => setXpTransactions(transactions))
+        .catch(() => setXpTransactions([]))
+        .finally(() => setXpHistoryLoading(false))
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchMine()
+        .then((ws) => {
+          if (!ws?.id) return null
+          return Promise.all([
+            fetchMembers(ws.id),
+            fetchPendingJoinRequests(ws.id),
+          ])
+        })
+        .catch(() => {})
+    }
+  }, [isAdmin, fetchMine, fetchMembers, fetchPendingJoinRequests])
+
+  const weeklyXpData = useMemo(() => buildWeeklyXpData(xpTransactions), [xpTransactions])
+  const weekXpGain = useMemo(() => weeklyXpTotal(xpTransactions), [xpTransactions])
+  const teamSummary = useMemo(
+    () => summarizeTeam(members, pendingJoinRequests.length),
+    [members, pendingJoinRequests.length],
+  )
 
   useEffect(() => {
     if (profile) {
@@ -350,18 +317,12 @@ export default function Profile() {
             /* Admin Hero */
             <div className={`${CARD} p-8`}>
               <div className="flex items-center gap-8">
-                <div
-                  className="w-[110px] h-[110px] rounded-full overflow-hidden shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', boxShadow: '0px 8px 28px rgba(99,102,241,0.35)' }}
-                >
-                  <svg viewBox="0 0 120 120" fill="none" className="w-full h-full">
-                    <circle cx="60" cy="80" r="38" fill="rgba(255,255,255,0.25)" />
-                    <circle cx="60" cy="44" r="22" fill="rgba(255,255,255,0.45)" />
-                  </svg>
-                </div>
+                <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="admin" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h1 className="text-[26px] font-bold text-[#1f2937] leading-tight">Alex Admin</h1>
+                    <h1 className="text-[26px] font-bold text-[#1f2937] leading-tight">
+                      {displayProfile?.username ?? 'Admin'}
+                    </h1>
                     <span
                       className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-semibold text-white shrink-0"
                       style={{ background: 'linear-gradient(to right, #6366f1, #a855f7)' }}
@@ -370,12 +331,12 @@ export default function Profile() {
                       Admin / Manager
                     </span>
                   </div>
-                  <p className="text-[14px] text-[#9ca3af] mb-6">alex.admin@company.com</p>
+                  <p className="text-[14px] text-[#9ca3af] mb-6">{displayProfile?.email}</p>
                   <div className="flex gap-10">
                     {[
-                      { label: 'Developers Managed', value: '8' },
-                      { label: 'Active Members',      value: '7' },
-                      { label: 'Pending Approvals',   value: '0' },
+                      { label: 'Developers Managed', value: String(teamSummary.total) },
+                      { label: 'Active Members',      value: String(teamSummary.active) },
+                      { label: 'Pending Approvals',   value: String(teamSummary.pending) },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex flex-col gap-1">
                         <span className="text-[32px] font-bold text-[#1f2937] leading-none">{value}</span>
@@ -392,15 +353,7 @@ export default function Profile() {
             /* Developer Hero */
             <div className={`${CARD} p-8`}>
               <div className="flex items-center gap-8">
-                <div
-                  className="w-[110px] h-[110px] rounded-full overflow-hidden shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #942fcd 0%, #ca9af4 100%)', boxShadow: '0px 8px 28px rgba(148,47,205,0.35)' }}
-                >
-                  <svg viewBox="0 0 120 120" fill="none" className="w-full h-full">
-                    <circle cx="60" cy="80" r="38" fill="rgba(255,255,255,0.25)" />
-                    <circle cx="60" cy="44" r="22" fill="rgba(255,255,255,0.45)" />
-                  </svg>
-                </div>
+                <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="developer" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
                     <h1 className="text-[26px] font-bold text-[#1f2937] leading-tight">
@@ -471,12 +424,18 @@ export default function Profile() {
                     <h2 className="text-[16px] font-semibold text-[#1f2937]">XP History</h2>
                     <p className="text-[13px] text-[#6b7280] mt-0.5">Your last 7 days</p>
                   </div>
-                  <div className="flex items-center gap-1.5 border border-[#d1fae5] rounded-[8px] px-3 py-1.5 shrink-0" style={{ background: '#f0fdf4' }}>
-                    <TrendUpIcon />
-                    <span className="text-[13px] font-semibold text-[#059669]">+480 XP this week</span>
-                  </div>
+                  {weekXpGain > 0 && (
+                    <div className="flex items-center gap-1.5 border border-[#d1fae5] rounded-[8px] px-3 py-1.5 shrink-0" style={{ background: '#f0fdf4' }}>
+                      <TrendUpIcon />
+                      <span className="text-[13px] font-semibold text-[#059669]">+{weekXpGain} XP this week</span>
+                    </div>
+                  )}
                 </div>
-                <XPHistoryChart />
+                {xpHistoryLoading ? (
+                  <SkeletonList count={2} />
+                ) : (
+                  <XPHistoryChart data={weeklyXpData} />
+                )}
               </div>
               <div className={`w-[288px] shrink-0 ${CARD} p-6`}>
                 <h2 className="text-[16px] font-semibold text-[#1f2937] mb-5">Account Details</h2>
@@ -544,10 +503,10 @@ export default function Profile() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: 'Total Developers', value: '8',   color: '#6366f1', bg: '#eef2ff' },
-                    { label: 'Active Members',   value: '7',   color: '#10b981', bg: '#d1fae5' },
-                    { label: 'Inactive Members', value: '1',   color: '#9ca3af', bg: '#f3f4f6' },
-                    { label: 'Tasks Completed',  value: '198', color: '#f59e0b', bg: '#fef3c7' },
+                    { label: 'Total Developers', value: String(teamSummary.total), color: '#6366f1', bg: '#eef2ff' },
+                    { label: 'Active Members',   value: String(teamSummary.active), color: '#10b981', bg: '#d1fae5' },
+                    { label: 'Inactive Members', value: String(teamSummary.inactive), color: '#9ca3af', bg: '#f3f4f6' },
+                    { label: 'Pending Approvals', value: String(teamSummary.pending), color: '#f59e0b', bg: '#fef3c7' },
                   ].map(({ label, value, color, bg }) => (
                     <div key={label} className="rounded-[10px] p-4 flex flex-col gap-1" style={{ background: bg }}>
                       <span className="text-[28px] font-bold leading-none" style={{ color }}>{value}</span>
@@ -562,8 +521,8 @@ export default function Profile() {
                 <div className="flex flex-col divide-y divide-[#f3f4f6]">
                   {[
                     { label: 'Role',        value: 'Admin / Manager' },
-                    { label: 'Team Size',   value: '8 developers' },
-                    { label: 'Admin Since', value: 'January 2026' },
+                    { label: 'Team Size',   value: `${teamSummary.total} developer${teamSummary.total === 1 ? '' : 's'}` },
+                    { label: 'Pending Joins', value: String(teamSummary.pending) },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex items-center justify-between py-3">
                       <span className="text-[13px] text-[#6b7280]">{label}</span>

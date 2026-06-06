@@ -23,18 +23,26 @@ export const useAuthStore = create(
       isLoggedIn: false,
       isLoading: false,
       error: null,
+      sessionExpired: false,
 
       setUserRole: (role) => set({ userRole: role }),
       setLoggedIn: (val) => set({ isLoggedIn: val }),
       clearError: () => set({ error: null }),
+      clearSessionExpired: () => set({ sessionExpired: false }),
 
       fetchMe: async () => {
-        const { token } = get()
+        const { token, logout } = get()
         if (!token) return null
         try {
-          const { user } = await authFetch('/api/auth/me', {
-            headers: { Authorization: `Bearer ${token}` },
+          const res = await fetch(`${API_BASE}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           })
+          if (res.status === 401) {
+            logout({ sessionExpired: true })
+            return null
+          }
+          if (!res.ok) return null
+          const { user } = await res.json()
           set({ user, userRole: user.role })
           useXpStore.getState().syncFromUser(user)
           return user
@@ -75,7 +83,7 @@ export const useAuthStore = create(
         }
       },
 
-      logout: async () => {
+      logout: async ({ sessionExpired = false } = {}) => {
         const { token } = get()
         if (token) {
           authFetch('/api/auth/logout', {
@@ -83,7 +91,15 @@ export const useAuthStore = create(
             headers: { Authorization: `Bearer ${token}` },
           }).catch(() => {})
         }
-        set({ user: null, token: null, userRole: 'developer', isLoggedIn: false, isLoading: false, error: null })
+        set({
+          user: null,
+          token: null,
+          userRole: 'developer',
+          isLoggedIn: false,
+          isLoading: false,
+          error: null,
+          sessionExpired,
+        })
         useXpStore.getState().syncFromUser(null)
       },
 
