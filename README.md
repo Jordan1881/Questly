@@ -19,9 +19,19 @@
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
   <img src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" alt="Vite 7" />
+  <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4" />
+  <img src="https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white" alt="Express" />
   <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/Jira-Cloud-0052CC?logo=jira&logoColor=white" alt="Jira Cloud" />
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white" alt="Vercel" />
+  <img src="https://img.shields.io/badge/Railway-Deploy-0B0D0E?logo=railway&logoColor=white" alt="Railway" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Jira_Cloud-0052CC?logo=jira&logoColor=white" alt="Jira Cloud" />
+  <img src="https://img.shields.io/badge/Atlassian_OAuth-0052CC?logo=atlassian&logoColor=white" alt="Atlassian OAuth" />
+  <img src="https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white" alt="Playwright" />
 </p>
 
 ---
@@ -213,15 +223,71 @@ Decisions made during development, with rationale:
 
 ## Tech stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 19, Vite 7, Tailwind CSS v4, React Router 7, Zustand, Motion |
-| Backend | Node.js, Express 4, Knex, PostgreSQL 15 |
-| Auth | JWT (`jsonwebtoken`), bcrypt |
-| Integrations | Jira Cloud REST API, Atlassian OAuth 3LO |
-| Testing | Vitest, Testing Library, Jest, Supertest, Playwright, nock |
-| Infrastructure | Vercel, Railway, Docker Compose (local Postgres) |
-| CI | GitHub Actions |
+### Frontend
+
+| Technology | Role |
+|------------|------|
+| [React 19](https://react.dev) | UI framework |
+| [Vite 7](https://vite.dev) | Build tool & dev server |
+| [Tailwind CSS v4](https://tailwindcss.com) | Utility-first styling |
+| [React Router 7](https://reactrouter.com) | Client-side routing & role guards |
+| [Zustand](https://zustand.docs.pmnd.rs) | Lightweight global state |
+| [Motion](https://motion.dev) | Animations & transitions |
+| [Lucide React](https://lucide.dev) | Icon library |
+| [ESLint 9](https://eslint.org) | Linting (flat config) |
+
+### Backend
+
+| Technology | Role |
+|------------|------|
+| [Node.js](https://nodejs.org) | JavaScript runtime |
+| [Express 4](https://expressjs.com) | HTTP API framework |
+| [Knex.js](https://knexjs.org) | SQL query builder & migrations |
+| [PostgreSQL 15](https://www.postgresql.org) | Primary database |
+| [pg](https://node-postgres.com) | Postgres driver |
+| [Helmet](https://helmetjs.github.io) | Security headers |
+| [CORS](https://github.com/expressjs/cors) | Cross-origin policy |
+| [Morgan](https://github.com/expressjs/morgan) | HTTP request logging |
+| [dotenv](https://github.com/motdotla/dotenv) | Environment configuration |
+
+### Auth & security
+
+| Technology | Role |
+|------------|------|
+| [JWT](https://github.com/auth0/node-jsonwebtoken) (`jsonwebtoken`) | Stateless session tokens |
+| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | Password hashing |
+| AES-256-GCM | Jira token encryption at rest (`JIRA_TOKEN_ENCRYPTION_KEY`) |
+
+### Integrations
+
+| Technology | Role |
+|------------|------|
+| [Jira Cloud REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) | Issue sync, assignee lookup |
+| [Atlassian OAuth 3LO](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/) | Developer & admin Jira connect |
+| [Atlassian Personal Data API](https://developer.atlassian.com/cloud/jira/platform/user-privacy-guide/) | GDPR-style data reporting |
+
+### Infrastructure & DevOps
+
+| Technology | Role |
+|------------|------|
+| [Vercel](https://vercel.com) | Frontend hosting & CDN |
+| [Railway](https://railway.app) | API hosting + managed PostgreSQL |
+| [GitHub](https://github.com/Jordan1881/Questly) | Source control & issue tracking |
+| [GitHub Actions](https://github.com/features/actions) | CI pipeline (test → E2E → deploy) |
+| [Docker Compose](https://docs.docker.com/compose/) | Local PostgreSQL 15 for development |
+| [vercel.json](vercel.json) | SPA rewrites for client-side routing |
+
+### Testing
+
+| Technology | Role |
+|------------|------|
+| [Vitest](https://vitest.dev) | Frontend unit tests |
+| [Testing Library](https://testing-library.com) | Component testing |
+| [Jest](https://jestjs.io) | Backend integration tests |
+| [Supertest](https://github.com/ladjs/supertest) | HTTP assertion helper |
+| [nock](https://github.com/nock/nock) | Jira HTTP mocking in backend tests |
+| [Playwright](https://playwright.dev) | End-to-end browser tests |
+| [jsdom](https://github.com/jsdom/jsdom) | DOM environment for Vitest |
 
 ---
 
