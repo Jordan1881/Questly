@@ -7,6 +7,7 @@ import { useShopContext } from '../AppProviders'
 import JoinRequestsTab from '../components/JoinRequestsTab'
 import JiraSyncTab from '../components/JiraSyncTab'
 import SprintManagementTab from '../components/SprintManagementTab'
+import RewardManagementTab from '../components/RewardManagementTab'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 
 // ── Constants ──────────────────────────────────────────────
@@ -674,18 +675,7 @@ export default function Admin() {
         {activeTab === 'jira' && <JiraSyncTab />}
         {activeTab === 'sprints' && <SprintManagementTab />}
         {activeTab === 'joins' && <JoinRequestsTab />}
-        {activeTab === 'rewards' && (
-          <RewardsTab
-            mockPending={mockPending}
-            setMockPending={setMockPending}
-            pendingRequests={pendingRequests}
-            setPendingRequests={setPendingRequests}
-            purchased={purchased}
-            setPurchased={setPurchased}
-            userCoins={userCoins}
-            setUserCoins={setUserCoins}
-          />
-        )}
+        {activeTab === 'rewards' && <RewardManagementTab />}
         {activeTab === 'xp' && <XPSettingsTab />}
         {activeTab === 'users' && (
           <UsersTab developers={developers} setDevelopers={setDevelopers} />

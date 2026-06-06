@@ -12,6 +12,9 @@ beforeAll(async () => {
 beforeEach(async () => {
   await db('join_requests').del()
   await db('sprints').del()
+  await db('purchases').del()
+  await db('reward_coupons').del()
+  await db('rewards').del()
   await db('users').del()
   await db('workspaces').del()
 })

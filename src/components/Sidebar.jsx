@@ -66,7 +66,7 @@ const LogoutIcon = () => (
 const PAGE_PATHS = {
   dashboard:       '/dashboard',
   tasklist:        '/tasks',
-  rewardshop:      '/shop',
+  rewardshop:      '/rewards',
   profile:         '/profile',
   admin:           '/admin',
   workspacecreate: '/workspace/create',
