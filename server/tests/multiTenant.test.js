@@ -2,16 +2,14 @@ require('dotenv').config()
 const db = require('../config/db')
 const TaskModel = require('../models/task')
 const WorkspaceModel = require('../models/workspace')
+const { cleanupCoreTables } = require('./helpers/cleanup')
 
 beforeAll(async () => {
   await db.migrate.latest()
 })
 
 beforeEach(async () => {
-  await db('task_assignments').del()
-  await db('tasks').del()
-  await db('users').del()
-  await db('workspaces').del()
+  await cleanupCoreTables(db)
 })
 
 afterAll(async () => {
