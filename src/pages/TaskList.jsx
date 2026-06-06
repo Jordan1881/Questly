@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
+import NoWorkspacePrompt from '../components/NoWorkspacePrompt'
 import TaskCard from '../components/TaskCard'
 import FilterBar, { filterTasks } from '../components/FilterBar'
 import { useAuthStore } from '../stores/authStore'
@@ -153,6 +154,7 @@ export default function TaskList() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [difficultyFilter, setDifficultyFilter] = useState('all')
 
+  const hasWorkspace = Boolean(user?.workspace_id)
   const jiraConnected = Boolean(user?.jira_connected)
   const syncLabel = isLoading
     ? 'Syncing tasks…'
@@ -165,10 +167,10 @@ export default function TaskList() {
     : 'Jira not connected'
 
   useEffect(() => {
-    if (userRole === 'developer') {
+    if (userRole === 'developer' && hasWorkspace) {
       fetchTasks().catch(() => {})
     }
-  }, [userRole, fetchTasks])
+  }, [userRole, hasWorkspace, fetchTasks])
 
   const toggleTask = async (id) => {
     await toggleTaskCompletion(id).catch(() => {})
@@ -182,6 +184,13 @@ export default function TaskList() {
       <PageHeader onOpenSidebar={() => setShowSidebar(true)} />
 
       <main className="px-12 py-9">
+        {!hasWorkspace ? (
+          <NoWorkspacePrompt
+            title="Join a team to see your tasks"
+            description="Tasks are synced from Jira after you join a workspace. Ask your admin for a join code."
+            showJiraHint
+          />
+        ) : (
         <div className="flex gap-8 items-start">
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-8 gap-4">
@@ -256,6 +265,7 @@ export default function TaskList() {
             <CalendarCard tasks={tasks} />
           </div>
         </div>
+        )}
       </main>
     </div>
   )

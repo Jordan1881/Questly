@@ -204,6 +204,43 @@ describe('POST /api/auth/me/jira/connect', () => {
     expect(res.status).toBe(400)
   })
 
+  test('invalid Jira credentials receive readable 400 message', async () => {
+    const { token: adminToken, workspace } = await createWorkspaceAsAdmin('devbad')
+    jiraClient.validateCredentials
+      .mockResolvedValueOnce({ accountId: 'jira-acct-1' })
+      .mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { status: 401 }))
+
+    await request(app)
+      .post(`/api/workspaces/${workspace.id}/jira/connect`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(CONNECT_BODY)
+
+    const { token: devToken, user: devUser } = await registerAndLogin('developer', 'devbad')
+    await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id })
+
+    const res = await request(app)
+      .post('/api/auth/me/jira/connect')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ access_token: 'bad-token' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toMatch(/acme\.atlassian\.net/i)
+    expect(res.body.error).not.toMatch(/HTTP 401/)
+  })
+
+  test('developer without workspace receives 400 with join-first message', async () => {
+    const { token } = await registerAndLogin('developer', 'noworkspace')
+
+    const res = await request(app)
+      .post('/api/auth/me/jira/connect')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ access_token: 'dev-jira-token' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toMatch(/Join a team first/i)
+    expect(jiraClient.validateCredentials).not.toHaveBeenCalled()
+  })
+
   test('unauthenticated request receives 401', async () => {
     const res = await request(app)
       .post('/api/auth/me/jira/connect')
@@ -264,5 +301,8 @@ describe('GET /api/auth/me', () => {
     expect(res.status).toBe(200)
     expect(res.body.user.jira_connected).toBe(true)
     expect(res.body.user.jira_access_token).toBeUndefined()
+    expect(res.body.user.expected_jira_site_url).toBe('https://acme.atlassian.net')
+    expect(res.body.user.team_jira_site_host).toBe('acme.atlassian.net')
+    expect(res.body.user.team_jira_connected).toBe(true)
   })
 })
