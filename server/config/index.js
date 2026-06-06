@@ -25,6 +25,22 @@ module.exports = {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  apiPublicUrl:
+    process.env.API_PUBLIC_URL ||
+    (process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+      : null),
+  atlassian: {
+    clientId: process.env.ATLASSIAN_CLIENT_ID || null,
+    clientSecret: process.env.ATLASSIAN_CLIENT_SECRET || null,
+    callbackUrl:
+      process.env.ATLASSIAN_OAUTH_CALLBACK_URL ||
+      (process.env.API_PUBLIC_URL
+        ? `${process.env.API_PUBLIC_URL.replace(/\/$/, '')}/api/auth/jira/oauth/callback`
+        : process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/auth/jira/oauth/callback`
+          : `http://localhost:${Number(process.env.PORT) || 3001}/api/auth/jira/oauth/callback`),
+  },
   jira: {
     siteUrl: process.env.JIRA_SITE_URL || null,
     projectKey: process.env.JIRA_PROJECT_KEY || null,
