@@ -1,16 +1,13 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
-import {
-  StarIcon,
-  CoffeeIcon, PackageIcon, ShoeIcon, FoodIcon,
-  HeadphonesIcon, FilmIcon, BookIcon, ControllerIcon,
-} from '../components/icons'
+import { StarIcon } from '../components/icons'
 import JiraIntegrationCard from '../components/JiraIntegrationCard'
+import MyRewards from '../components/MyRewards'
 import { useAuthStore } from '../stores/authStore'
 import { useXpStore } from '../stores/xpStore'
-import { useShopContext } from '../AppProviders'
+import { useProfileStore } from '../stores/profileStore'
+import { xpLevelInfo } from '../lib/xpLevel'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
@@ -298,21 +295,52 @@ function PendingRewardCard({ reward }) {
 // ── Profile page ─────────────────────────────────────────────
 
 export default function Profile() {
-  const navigate = useNavigate()
+  const authUser = useAuthStore((s) => s.user)
   const userRole = useAuthStore((s) => s.userRole)
   const userXP = useXpStore((s) => s.userXP)
-  const userCoins = useXpStore((s) => s.userCoins)
-  const { purchased, pendingRequests } = useShopContext()
+  const profile = useProfileStore((s) => s.profile)
+  const purchases = useProfileStore((s) => s.purchases)
+  const profileLoading = useProfileStore((s) => s.isLoading)
+  const fetchProfile = useProfileStore((s) => s.fetchProfile)
+  const updateProfile = useProfileStore((s) => s.updateProfile)
+  const deletePurchase = useProfileStore((s) => s.deletePurchase)
   const [showSidebar, setShowSidebar] = useState(false)
+  const [editUsername, setEditUsername] = useState('')
+  const [editAvatarUrl, setEditAvatarUrl] = useState('')
+  const [saveMessage, setSaveMessage] = useState(null)
+  const [saving, setSaving] = useState(false)
 
-  const LEVEL_XP   = 650
-  const LEVEL_MAX  = 1000
-  const LEVEL_NUM  = 3
-  const levelPercent = (LEVEL_XP / LEVEL_MAX) * 100
-
-  const purchasedRewards = REWARDS.filter(r => purchased.has(r.id))
-  const pendingRewards   = REWARDS.filter(r => pendingRequests.has(r.id))
   const isAdmin = userRole === 'admin'
+  const displayProfile = profile ?? authUser
+  const levelInfo = xpLevelInfo(displayProfile?.lifetimeXp ?? displayProfile?.lifetime_xp ?? 0)
+
+  useEffect(() => {
+    fetchProfile().catch(() => {})
+  }, [fetchProfile])
+
+  useEffect(() => {
+    if (profile) {
+      setEditUsername(profile.username ?? '')
+      setEditAvatarUrl(profile.avatarUrl ?? '')
+    }
+  }, [profile])
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMessage(null)
+    try {
+      await updateProfile({
+        username: editUsername.trim(),
+        avatarUrl: editAvatarUrl.trim() || null,
+      })
+      setSaveMessage({ type: 'success', text: 'Profile updated.' })
+    } catch (err) {
+      setSaveMessage({ type: 'error', text: err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f9fafb]" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -361,7 +389,7 @@ export default function Profile() {
                     {[
                       { label: 'Developers Managed', value: '8' },
                       { label: 'Active Members',      value: '7' },
-                      { label: 'Pending Approvals',   value: String(pendingRequests.size) },
+                      { label: 'Pending Approvals',   value: '0' },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex flex-col gap-1">
                         <span className="text-[32px] font-bold text-[#1f2937] leading-none">{value}</span>
@@ -389,20 +417,22 @@ export default function Profile() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h1 className="text-[26px] font-bold text-[#1f2937] leading-tight">Ashton Rodriguez</h1>
+                    <h1 className="text-[26px] font-bold text-[#1f2937] leading-tight">
+                      {displayProfile?.username ?? 'Developer'}
+                    </h1>
                     <span
                       className="px-3 py-1 rounded-full text-[13px] font-semibold text-white shrink-0"
                       style={{ background: 'linear-gradient(to right, #942fcd, #b565e0)' }}
                     >
-                      Level {LEVEL_NUM}
+                      Level {levelInfo.level}
                     </span>
                   </div>
-                  <p className="text-[14px] text-[#9ca3af] mb-5">ashton.rodriguez@company.com</p>
+                  <p className="text-[14px] text-[#9ca3af] mb-5">{displayProfile?.email}</p>
                   <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-[36px] font-bold leading-none" style={{ color: '#942fcd' }}>{LEVEL_XP}</span>
-                    <span className="text-[16px] font-medium text-[#6b7280]">/ {LEVEL_MAX} XP</span>
+                    <span className="text-[36px] font-bold leading-none" style={{ color: '#942fcd' }}>{levelInfo.xpInLevel}</span>
+                    <span className="text-[16px] font-medium text-[#6b7280]">/ {levelInfo.levelMax} XP</span>
                   </div>
-                  <p className="text-[12px] text-[#9ca3af] mb-3">{LEVEL_MAX - LEVEL_XP} XP to reach Level {LEVEL_NUM + 1}</p>
+                  <p className="text-[12px] text-[#9ca3af] mb-3">{levelInfo.xpToNext} XP to reach Level {levelInfo.nextLevel}</p>
                   <div className="max-w-[440px] mt-1">
                     <div className="flex items-center justify-between mb-1.5">
                       {[0, 250, 500, 750].map(n => (
@@ -419,16 +449,16 @@ export default function Profile() {
                     <div className="h-3 rounded-full bg-[#e5e7eb] overflow-hidden relative mb-1.5">
                       <div
                         className="absolute top-0 left-0 h-full rounded-full"
-                        style={{ width: `${levelPercent}%`, background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+                        style={{ width: `${levelInfo.percent}%`, background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
                       />
                       <div
                         className="absolute top-0 h-full w-[2.4px] bg-white"
-                        style={{ left: `${levelPercent}%`, boxShadow: '0 0 6px rgba(148,47,205,0.6)' }}
+                        style={{ left: `${levelInfo.percent}%`, boxShadow: '0 0 6px rgba(148,47,205,0.6)' }}
                       />
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-medium text-[#6b7280]">Progress</span>
-                      <span className="text-[11px] font-semibold text-[#942fcd]">{Math.round(levelPercent)}%</span>
+                      <span className="text-[11px] font-semibold text-[#942fcd]">{levelInfo.percent}%</span>
                     </div>
                   </div>
                 </div>
@@ -464,12 +494,43 @@ export default function Profile() {
               </div>
               <div className={`w-[288px] shrink-0 ${CARD} p-6`}>
                 <h2 className="text-[16px] font-semibold text-[#1f2937] mb-5">Account Details</h2>
+                <form onSubmit={handleSaveProfile} className="flex flex-col gap-3 mb-5">
+                  <label className="text-[12px] font-medium text-[#374151]">
+                    Username
+                    <input
+                      value={editUsername}
+                      onChange={(e) => setEditUsername(e.target.value)}
+                      className="mt-1 w-full px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[13px]"
+                    />
+                  </label>
+                  <label className="text-[12px] font-medium text-[#374151]">
+                    Avatar URL
+                    <input
+                      value={editAvatarUrl}
+                      onChange={(e) => setEditAvatarUrl(e.target.value)}
+                      className="mt-1 w-full px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[13px]"
+                    />
+                  </label>
+                  {saveMessage && (
+                    <p className={`text-[12px] ${saveMessage.type === 'success' ? 'text-[#059669]' : 'text-[#ef4444]'}`}>
+                      {saveMessage.text}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="self-start px-3 py-1.5 rounded-[6px] text-[12px] font-semibold text-white cursor-pointer disabled:opacity-60"
+                    style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+                  >
+                    {saving ? 'Saving…' : 'Save profile'}
+                  </button>
+                </form>
                 <JiraIntegrationCard showConnectForm />
                 <div className="flex flex-col divide-y divide-[#f3f4f6]">
                   {[
-                    { label: 'Total Tasks Completed', value: '47 tasks' },
-                    { label: 'Total XP Earned',        value: '2,650 XP', star: true },
-                    { label: 'Member Since',            value: 'January 2026' },
+                    { label: 'Sprint XP', value: `${userXP.toLocaleString()} XP`, star: true },
+                    { label: 'Lifetime XP', value: `${(displayProfile?.lifetimeXp ?? 0).toLocaleString()} XP`, star: true },
+                    { label: 'Streak', value: `${displayProfile?.streakDays ?? 0} days` },
                   ].map(({ label, value, star }) => (
                     <div key={label} className="flex items-center justify-between py-3">
                       <span className="text-[13px] text-[#6b7280]">{label}</span>
@@ -536,40 +597,21 @@ export default function Profile() {
                   <h2 className="text-[16px] font-semibold text-[#1f2937]">My Rewards</h2>
                   <p className="text-[13px] text-[#6b7280] mt-0.5">Coupons you've redeemed</p>
                 </div>
-                {(purchasedRewards.length + pendingRewards.length) > 0 && (
+                {purchases.length > 0 && (
                   <span
                     className="text-[12px] font-semibold px-3 py-1 rounded-[6px]"
                     style={{ background: 'linear-gradient(to right, #f3e8ff, #ede9fe)', color: '#942fcd' }}
                   >
-                    {purchasedRewards.length + pendingRewards.length} reward{(purchasedRewards.length + pendingRewards.length) !== 1 ? 's' : ''}
+                    {purchases.length} reward{purchases.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>
 
-              {(purchasedRewards.length + pendingRewards.length) === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-12 text-center">
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: '#f3f4f6' }}>
-                    <ShopBagIcon />
-                  </div>
-                  <div>
-                    <p className="text-[15px] font-semibold text-[#1f2937]">No rewards yet</p>
-                    <p className="text-[13px] text-[#9ca3af] mt-1">Head over to the Reward Shop to redeem your XP for coupons</p>
-                  </div>
-                  <button
-                    onClick={() => navigate('/shop')}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-medium text-white cursor-pointer transition-all duration-200 hover:opacity-90 active:scale-95"
-                    style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)', boxShadow: '0px 4px 12px rgba(148,47,205,0.3)' }}
-                  >
-                    <ShopBagIcon color="white" />
-                    Browse Reward Shop
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-4">
-                  {pendingRewards.map(r => <PendingRewardCard key={r.id} reward={r} />)}
-                  {purchasedRewards.map(r => <PurchasedRewardCard key={r.id} reward={r} />)}
-                </div>
-              )}
+              <MyRewards
+                purchases={purchases}
+                onDelete={deletePurchase}
+                isLoading={profileLoading}
+              />
             </div>
           )}
 
