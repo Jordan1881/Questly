@@ -1,3 +1,4 @@
+const nock = require('nock')
 const jiraClient = require('../services/jiraClient')
 const {
   mockFullJiraSync,
@@ -70,6 +71,18 @@ describe('Jira HTTP via nock', () => {
     const accountId = await jiraClient.lookupAccountIdByEmail('dev@test.com', credentials)
 
     expect(accountId).toBe('lookup-id')
+    assertNoPendingNock()
+  })
+
+  test('lookupAccountIdByEmail returns null when Jira user search fails', async () => {
+    nock(DEFAULT_SITE.replace(/\/$/, ''))
+      .get('/rest/api/3/user/search')
+      .query(true)
+      .reply(404, { errorMessages: ['Site not found'] })
+
+    const accountId = await jiraClient.lookupAccountIdByEmail('dev@test.com', credentials)
+
+    expect(accountId).toBeNull()
     assertNoPendingNock()
   })
 

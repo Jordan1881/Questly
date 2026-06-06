@@ -233,11 +233,16 @@ async function lookupAccountIdByEmail(email, overrides = {}) {
   }
   const { siteUrl, email: apiEmail, apiToken } = credentials
   const query = encodeURIComponent(email)
-  const users = await jiraGet(`/rest/api/3/user/search?query=${query}`, {
-    siteUrl,
-    email: apiEmail,
-    apiToken,
-  })
+  let users
+  try {
+    users = await jiraGet(`/rest/api/3/user/search?query=${query}`, {
+      siteUrl,
+      email: apiEmail,
+      apiToken,
+    })
+  } catch {
+    return null
+  }
 
   const match = (users || []).find(
     (user) => user.emailAddress?.toLowerCase() === email.toLowerCase(),
