@@ -1,0 +1,83 @@
+name: Questly Task
+description: Sprint task from the Questly backlog (T###)
+title: "T### — "
+labels: ["afk"]
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - AFK
+        - HITL
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Sprint / Milestone
+
+        | Field | Value |
+        |-------|-------|
+        | Task ID | T### |
+        | Sprint | S## |
+        | Milestone | M# |
+        | Layer | Backend / Frontend / Testing / Documentation / DevOps |
+        | Effort | S / M / L |
+        | Assigned | Dev 1 / Dev 2 / Shared |
+        | Plan dependency | T### |
+
+  - type: textarea
+    id: what_to_build
+    attributes:
+      label: What to build
+      description: One-line summary of the deliverable (do not change after sprint planning)
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature_ac
+    attributes:
+      label: Feature-specific acceptance criteria
+      description: Concrete, testable checks for this task
+      value: |
+        - [ ] 
+    validations:
+      required: true
+
+  - type: textarea
+    id: hints
+    attributes:
+      label: Implementation hints
+      description: File paths, patterns, and dependencies in the repo
+      value: |
+        - 
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test plan
+      description: Commands and test files to run
+      value: |
+        - 
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Standard acceptance criteria
+      options:
+        - label: Implementation matches the task description end-to-end
+          required: true
+        - label: Relevant tests pass for the task layer (unit / integration / E2E)
+          required: true
+        - label: CI checks remain green
+          required: true
+
+  - type: input
+    id: blocked_by
+    attributes:
+      label: Blocked by
+      description: GitHub issue numbers (e.g. "#61 (T054)")
+    validations:
+      required: false
