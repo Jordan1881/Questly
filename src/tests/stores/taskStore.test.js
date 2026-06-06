@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { useTaskStore } from '../../stores/taskStore'
+import { useAuthStore } from '../../stores/authStore'
+import { useXpStore } from '../../stores/xpStore'
+import { useToastStore } from '../../stores/toastStore'
+import { useLevelUpStore } from '../../stores/levelUpStore'
 import { createMockTask } from '../factories/index'
 import { apiFetch } from '../../lib/api'
 
@@ -17,6 +21,10 @@ const RESET = {
 describe('taskStore', () => {
   beforeEach(() => {
     useTaskStore.setState(RESET)
+    useAuthStore.setState({ user: { lifetime_xp: 0, current_sprint_xp: 0, coin_balance: 0 } })
+    useXpStore.setState({ userXP: 0, userCoins: 0 })
+    useToastStore.setState({ message: null })
+    useLevelUpStore.setState({ level: null, lastShownLevel: 0 })
     vi.clearAllMocks()
   })
 
@@ -63,7 +71,7 @@ describe('taskStore', () => {
     useTaskStore.setState({ tasks: [task] })
     apiFetch.mockResolvedValue({
       task: { ...task, done: true },
-      user: { current_sprint_xp: 40, lifetime_xp: 40, coin_balance: 4 },
+      user: { current_sprint_xp: 40, lifetime_xp: 40, coin_balance: 4, streak_days: 1 },
       reward: { xpDelta: 40, coinsDelta: 4 },
     })
 
@@ -74,5 +82,31 @@ describe('taskStore', () => {
       body: JSON.stringify({ completed: true }),
     })
     expect(useTaskStore.getState().tasks[0].done).toBe(true)
+    expect(useToastStore.getState().message).toBe('+40 XP')
+  })
+
+  it('rolls back optimistic completion on API error', async () => {
+    const task = createMockTask({ done: false })
+    useTaskStore.setState({ tasks: [task] })
+    apiFetch.mockRejectedValue(new Error('Forbidden'))
+
+    await expect(useTaskStore.getState().toggleTaskCompletion(task.id)).rejects.toThrow('Forbidden')
+
+    expect(useTaskStore.getState().tasks[0].done).toBe(false)
+    expect(useTaskStore.getState().error).toBe('Forbidden')
+  })
+
+  it('shows level-up overlay when lifetime XP crosses a level threshold', async () => {
+    const task = createMockTask({ done: false })
+    useTaskStore.setState({ tasks: [task] })
+    apiFetch.mockResolvedValue({
+      task: { ...task, done: true },
+      reward: { xpDelta: 1000, coinsDelta: 100 },
+      user: { lifetime_xp: 1000, current_sprint_xp: 1000, coin_balance: 100, streak_days: 1 },
+    })
+
+    await useTaskStore.getState().toggleTaskCompletion(task.id)
+
+    expect(useLevelUpStore.getState().level).toBe(2)
   })
 })
