@@ -6,6 +6,7 @@ import {
   setApiErrorHandler,
   notifyApiError,
 } from '../../lib/api'
+import { useAuthStore } from '../../stores/authStore'
 
 describe('resolveErrorMessage', () => {
   it('prefers body error message', () => {
@@ -81,6 +82,23 @@ describe('apiFetch', () => {
       message: 'You do not have permission to do that',
       status: 403,
     })
+  })
+
+  it('logs out with sessionExpired and throws ApiError on 401', async () => {
+    useAuthStore.setState({ token: 'bad-token', isLoggedIn: true, user: { id: 'u1' } })
+
+    fetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: 'Unauthorized' }),
+    })
+
+    await expect(apiFetch('/api/test')).rejects.toMatchObject({
+      message: 'Session expired — please sign in again',
+      status: 401,
+    })
+    expect(useAuthStore.getState().isLoggedIn).toBe(false)
+    expect(useAuthStore.getState().sessionExpired).toBe(true)
   })
 
   it('throws network-friendly ApiError when fetch rejects', async () => {

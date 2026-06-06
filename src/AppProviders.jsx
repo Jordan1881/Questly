@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import Toast from './components/Toast'
 import LevelUp from './overlays/LevelUp'
+import SessionExpired from './overlays/SessionExpired'
 import { useLevelUpStore } from './stores/levelUpStore'
 import { setApiErrorHandler } from './lib/api'
 import { useToastStore } from './stores/toastStore'
@@ -34,6 +35,7 @@ export default function AppProviders({ children }) {
     <ShopContext.Provider value={{ purchased, setPurchased, pendingRequests, setPendingRequests }}>
       {children}
       <Toast />
+      <SessionExpired />
       <GlobalOverlays />
     </ShopContext.Provider>
   )

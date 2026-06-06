@@ -40,6 +40,10 @@ export default function SprintManagementTab() {
       setFormError('Sprint name is required.')
       return
     }
+    if (startDate && endDate && endDate < startDate) {
+      setFormError('End date must be on or after the start date.')
+      return
+    }
     setFormError(null)
     try {
       await createSprint(workspace.id, {

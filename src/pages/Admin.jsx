@@ -1,14 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { useAuthStore } from '../stores/authStore'
-import { useXpStore } from '../stores/xpStore'
-import { useShopContext } from '../AppProviders'
 import JoinRequestsTab from '../components/JoinRequestsTab'
 import JiraSyncTab from '../components/JiraSyncTab'
 import SprintManagementTab from '../components/SprintManagementTab'
 import RewardManagementTab from '../components/RewardManagementTab'
 import { useWorkspaceStore } from '../stores/workspaceStore'
+import { mapMemberToDeveloper } from '../lib/adminMembers'
+import { SkeletonList } from '../components/Skeleton'
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -23,36 +23,6 @@ const AVATAR_GRADIENTS = [
   'linear-gradient(135deg, #8b5cf6, #6d28d9)',
   'linear-gradient(135deg, #ec4899, #be185d)',
   'linear-gradient(135deg, #14b8a6, #0d9488)',
-]
-
-const INITIAL_DEVELOPERS = [
-  { id: 1, name: 'Alex Kim',     level: 5, xp: 3200, xpMax: 4000, coins: 320, tasks: 28, status: 'active'   },
-  { id: 2, name: 'Jordan Lee',   level: 4, xp: 2750, xpMax: 3000, coins: 275, tasks: 22, status: 'active'   },
-  { id: 3, name: 'Sam Rivera',   level: 6, xp: 4100, xpMax: 5000, coins: 410, tasks: 35, status: 'active'   },
-  { id: 4, name: 'Taylor Park',  level: 3, xp: 1900, xpMax: 2000, coins: 190, tasks: 15, status: 'active'   },
-  { id: 5, name: 'Morgan Chen',  level: 5, xp: 3050, xpMax: 4000, coins: 305, tasks: 26, status: 'active'   },
-  { id: 6, name: 'Casey Kim',    level: 2, xp: 1200, xpMax: 2000, coins: 120, tasks: 9,  status: 'inactive' },
-  { id: 7, name: 'Riley Hassan', level: 4, xp: 2400, xpMax: 3000, coins: 240, tasks: 19, status: 'active'   },
-  { id: 8, name: 'Drew Yamada',  level: 7, xp: 5300, xpMax: 6000, coins: 530, tasks: 44, status: 'active'   },
-]
-
-const REWARD_NAMES = {
-  1: 'Starbucks $10 Gift Card',
-  2: 'Amazon $25 Gift Card',
-  3: 'Nike Store $20 Voucher',
-  4: 'Uber Eats $15 Credit',
-  5: 'Spotify Premium 3 Months',
-  6: 'Netflix 1 Month',
-  7: 'Audible Credits (3 Books)',
-  8: 'Steam $50 Gift Card',
-}
-
-const REWARD_COSTS = { 1: 40, 2: 80, 3: 60, 4: 45, 5: 150, 6: 50, 7: 180, 8: 160 }
-
-const INITIAL_MOCK_PENDING = [
-  { id: 'mp1', devName: 'Alex Kim',    devIdx: 0, rewardId: 2, date: 'Mar 10, 2026' },
-  { id: 'mp2', devName: 'Sam Rivera',  devIdx: 2, rewardId: 5, date: 'Mar 11, 2026' },
-  { id: 'mp3', devName: 'Drew Yamada', devIdx: 7, rewardId: 8, date: 'Mar 12, 2026' },
 ]
 
 // ── Icons ──────────────────────────────────────────────────
@@ -179,7 +149,7 @@ function TeamTab({ developers }) {
                   </td>
                   <td className={TD}>
                     <div className="flex items-center gap-2.5">
-                      <DevAvatar idx={dev.id - 1} size={32} />
+                      <DevAvatar idx={dev.avatarIdx ?? 0} size={32} />
                       <span className="font-medium text-[#1f2937]">{dev.name}</span>
                     </div>
                   </td>
@@ -251,133 +221,6 @@ function TeamTab({ developers }) {
               </div>
             )
           })}
-        </div>
-
-      )}
-    </div>
-  )
-}
-
-// ── Rewards Tab ───────────────────────────────────────────
-
-function RewardsTab({ mockPending, setMockPending, pendingRequests, setPendingRequests, purchased, setPurchased, userCoins, setUserCoins }) {
-  const [rowStatus, setRowStatus] = useState({})
-
-  const livePending = [...pendingRequests].map(rId => ({
-    id: `live-${rId}`,
-    devName: 'Ashton Rodriguez',
-    devIdx: 0,
-    rewardId: rId,
-    date: 'Mar 12, 2026',
-    isLive: true,
-  }))
-
-  const allRequests = [...mockPending, ...livePending]
-
-  const handle = (req, action) => {
-    setRowStatus(s => ({ ...s, [req.id]: action }))
-    setTimeout(() => {
-      if (req.isLive) {
-        setPendingRequests(prev => { const n = new Set(prev); n.delete(req.rewardId); return n })
-        if (action === 'approved') {
-          setPurchased(prev => new Set([...prev, req.rewardId]))
-          setUserCoins(c => Math.max(0, c - (REWARD_COSTS[req.rewardId] ?? 0)))
-        }
-      } else {
-        setMockPending(prev => prev.filter(r => r.id !== req.id))
-      }
-      setRowStatus(s => { const n = { ...s }; delete n[req.id]; return n })
-    }, 1200)
-  }
-
-  const TH = 'text-[12px] font-semibold text-[#6b7280] uppercase tracking-wide text-left py-3 px-4'
-  const TD = 'py-3.5 px-4 text-[13px] text-[#374151]'
-
-  return (
-    <div>
-      <div className="mb-6">
-        <p className="text-[14px] font-semibold text-[#1f2937]">Pending Approvals</p>
-        <p className="text-[13px] text-[#6b7280] mt-0.5">
-          {allRequests.length} request{allRequests.length !== 1 ? 's' : ''} awaiting your review
-        </p>
-      </div>
-
-      {allRequests.length === 0 ? (
-
-        <div className={`${CARD} p-12 flex flex-col items-center gap-3 text-center`}>
-          <div className="w-12 h-12 rounded-full bg-[#d1fae5] flex items-center justify-center text-[#059669]">
-            <CheckIcon />
-          </div>
-          <p className="text-[15px] font-semibold text-[#1f2937]">All caught up!</p>
-          <p className="text-[13px] text-[#9ca3af]">No pending reward requests at this time.</p>
-        </div>
-
-      ) : (
-
-        <div className={`${CARD} overflow-hidden`}>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-[#f3f4f6]">
-                <th className={TH}>Developer</th>
-                <th className={TH}>Reward</th>
-                <th className={TH}>Coin Cost</th>
-                <th className={TH}>Requested</th>
-                <th className={TH}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allRequests.map((req) => {
-                const status = rowStatus[req.id]
-                const rowBg = status === 'approved'
-                  ? 'bg-[#f0fdf4]'
-                  : status === 'denied'
-                  ? 'bg-[#fff5f5]'
-                  : 'hover:bg-[#fafafa]'
-                return (
-                  <tr key={req.id} className={`border-b border-[#f9fafb] transition-colors ${rowBg}`}>
-                    <td className={TD}>
-                      <div className="flex items-center gap-2.5">
-                        <DevAvatar idx={req.devIdx ?? 0} size={32} />
-                        <span className="font-medium text-[#1f2937]">{req.devName}</span>
-                      </div>
-                    </td>
-                    <td className={TD}>{REWARD_NAMES[req.rewardId] ?? '—'}</td>
-                    <td className={TD}>
-                      <div className="flex items-center gap-1">
-                        <CoinIcon size={13} />
-                        <span className="font-semibold">{REWARD_COSTS[req.rewardId] ?? '—'}</span>
-                      </div>
-                    </td>
-                    <td className={TD}>{req.date}</td>
-                    <td className={TD}>
-                      {status ? (
-                        <span className={`text-[12px] font-semibold ${status === 'approved' ? 'text-[#059669]' : 'text-[#ef4444]'}`}>
-                          {status === 'approved' ? '✓ Approved' : '✗ Denied'}
-                        </span>
-                      ) : (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handle(req, 'approved')}
-                            className="flex items-center gap-1 px-3 py-1 rounded-[6px] text-[12px] font-semibold bg-[#d1fae5] text-[#059669] cursor-pointer hover:bg-[#a7f3d0] transition-colors"
-                          >
-                            <CheckIcon />
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handle(req, 'denied')}
-                            className="flex items-center gap-1 px-3 py-1 rounded-[6px] text-[12px] font-semibold bg-[#fee2e2] text-[#ef4444] cursor-pointer hover:bg-[#fecaca] transition-colors"
-                          >
-                            <XIcon />
-                            Deny
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
         </div>
 
       )}
@@ -488,23 +331,20 @@ function XPSettingsTab() {
 
 // ── Users Tab ─────────────────────────────────────────────
 
-function UsersTab({ developers, setDevelopers }) {
-  const [adjustingId, setAdjustingId] = useState(null)
-  const [xpAmount, setXpAmount] = useState('')
-
-  const toggleStatus = (id) =>
-    setDevelopers(prev => prev.map(d =>
-      d.id === id ? { ...d, status: d.status === 'active' ? 'inactive' : 'active' } : d
-    ))
-
-  const applyXP = (id, delta) => {
-    setDevelopers(prev => prev.map(d => d.id === id ? { ...d, xp: Math.max(0, d.xp + delta) } : d))
-    setAdjustingId(null)
-    setXpAmount('')
-  }
-
+function UsersTab({ developers, isLoading }) {
   const TH = 'text-[12px] font-semibold text-[#6b7280] uppercase tracking-wide text-left py-3 px-4'
   const TD = 'py-3.5 px-4 text-[13px] text-[#374151] align-top'
+
+  if (isLoading) return <SkeletonList count={4} />
+
+  if (developers.length === 0) {
+    return (
+      <div className={`${CARD} p-10 text-center`}>
+        <p className="text-[15px] font-medium text-[#374151]">No team members yet</p>
+        <p className="text-[13px] text-[#6b7280] mt-2">Approved developers will appear here.</p>
+      </div>
+    )
+  }
 
   return (
     <div className={`${CARD} overflow-hidden`}>
@@ -513,9 +353,8 @@ function UsersTab({ developers, setDevelopers }) {
           <tr className="border-b border-[#f3f4f6]">
             <th className={TH}>Developer</th>
             <th className={TH}>Status</th>
-            <th className={TH}>XP</th>
+            <th className={TH}>Sprint XP</th>
             <th className={TH}>Coins</th>
-            <th className={TH}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -523,7 +362,7 @@ function UsersTab({ developers, setDevelopers }) {
             <tr key={dev.id} className="border-b border-[#f9fafb] hover:bg-[#fafafa] transition-colors">
               <td className={TD}>
                 <div className="flex items-center gap-2.5 pt-0.5">
-                  <DevAvatar idx={dev.id - 1} size={32} />
+                  <DevAvatar idx={dev.avatarIdx ?? 0} size={32} />
                   <div>
                     <p className="font-medium text-[#1f2937]">{dev.name}</p>
                     <p className="text-[11px] text-[#9ca3af]">Level {dev.level}</p>
@@ -541,50 +380,6 @@ function UsersTab({ developers, setDevelopers }) {
                   <span className="font-medium">{dev.coins}</span>
                 </div>
               </td>
-              <td className={TD}>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => toggleStatus(dev.id)}
-                    className={`px-3 py-1 rounded-[6px] text-[12px] font-semibold cursor-pointer transition-colors ${
-                      dev.status === 'active'
-                        ? 'bg-[#fee2e2] text-[#ef4444] hover:bg-[#fecaca]'
-                        : 'bg-[#d1fae5] text-[#059669] hover:bg-[#a7f3d0]'
-                    }`}
-                  >
-                    {dev.status === 'active' ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button
-                    onClick={() => { setAdjustingId(adjustingId === dev.id ? null : dev.id); setXpAmount('') }}
-                    className="flex items-center gap-1 px-3 py-1 rounded-[6px] text-[12px] font-semibold bg-[#eef2ff] text-[#6366f1] cursor-pointer hover:bg-[#e0e7ff] transition-colors"
-                  >
-                    <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3"><path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-                    Adjust XP
-                  </button>
-                </div>
-                {adjustingId === dev.id && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <input
-                      type="number"
-                      value={xpAmount}
-                      onChange={e => setXpAmount(e.target.value)}
-                      placeholder="e.g. 100"
-                      className="w-24 h-8 border border-[#e5e7eb] rounded-[6px] px-2 text-[12px] focus:outline-none focus:border-[#6366f1]"
-                    />
-                    <button
-                      onClick={() => applyXP(dev.id, Number(xpAmount) || 0)}
-                      className="px-2 py-1 rounded-[6px] text-[11px] font-semibold bg-[#d1fae5] text-[#059669] cursor-pointer hover:bg-[#a7f3d0]"
-                    >
-                      + Add
-                    </button>
-                    <button
-                      onClick={() => applyXP(dev.id, -(Number(xpAmount) || 0))}
-                      className="px-2 py-1 rounded-[6px] text-[11px] font-semibold bg-[#fee2e2] text-[#ef4444] cursor-pointer hover:bg-[#fecaca]"
-                    >
-                      − Sub
-                    </button>
-                  </div>
-                )}
-              </td>
             </tr>
           ))}
         </tbody>
@@ -597,17 +392,32 @@ function UsersTab({ developers, setDevelopers }) {
 
 export default function Admin() {
   const userRole = useAuthStore((s) => s.userRole)
-  const userCoins = useXpStore((s) => s.userCoins)
-  const setUserCoins = useXpStore((s) => s.setUserCoins)
-  const { pendingRequests, setPendingRequests, purchased, setPurchased } = useShopContext()
-  const [showSidebar, setShowSidebar]     = useState(false)
-  const [activeTab, setActiveTab]         = useState('team')
-  const [developers, setDevelopers]       = useState(INITIAL_DEVELOPERS)
-  const [mockPending, setMockPending]     = useState(INITIAL_MOCK_PENDING)
+  const members = useWorkspaceStore((s) => s.members)
+  const fetchMine = useWorkspaceStore((s) => s.fetchMine)
+  const fetchMembers = useWorkspaceStore((s) => s.fetchMembers)
   const pendingJoinRequests = useWorkspaceStore((s) => s.pendingJoinRequests)
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [activeTab, setActiveTab] = useState('team')
+  const [membersLoading, setMembersLoading] = useState(true)
 
-  const totalPending = mockPending.length + pendingRequests.size
+  const developers = members.map(mapMemberToDeveloper)
   const totalJoinPending = pendingJoinRequests.length
+
+  const loadMembers = () => {
+    setMembersLoading(true)
+    fetchMine()
+      .then((ws) => (ws?.id ? fetchMembers(ws.id) : []))
+      .catch(() => {})
+      .finally(() => setMembersLoading(false))
+  }
+
+  useEffect(() => {
+    if (userRole === 'admin') loadMembers()
+  }, [userRole])
+
+  useEffect(() => {
+    if (activeTab === 'team' || activeTab === 'users') loadMembers()
+  }, [activeTab, pendingJoinRequests.length])
 
   const TABS = [
     { id: 'team',    label: 'Team'           },
@@ -653,14 +463,6 @@ export default function Admin() {
                   {totalJoinPending}
                 </span>
               )}
-              {id === 'rewards' && totalPending > 0 && (
-                <span
-                  className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{ color: '#942fcd', background: 'rgba(148,47,205,0.1)' }}
-                >
-                  {totalPending}
-                </span>
-              )}
               {activeTab === id && (
                 <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full bg-[#942fcd]" />
               )}
@@ -670,7 +472,7 @@ export default function Admin() {
 
         {/* Tab content */}
         {activeTab === 'team' && (
-          <TeamTab developers={developers} />
+          membersLoading ? <SkeletonList count={4} /> : <TeamTab developers={developers} />
         )}
         {activeTab === 'jira' && <JiraSyncTab />}
         {activeTab === 'sprints' && <SprintManagementTab />}
@@ -678,7 +480,7 @@ export default function Admin() {
         {activeTab === 'rewards' && <RewardManagementTab />}
         {activeTab === 'xp' && <XPSettingsTab />}
         {activeTab === 'users' && (
-          <UsersTab developers={developers} setDevelopers={setDevelopers} />
+          <UsersTab developers={developers} isLoading={membersLoading} />
         )}
 
       </main>
