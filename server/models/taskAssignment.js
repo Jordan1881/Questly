@@ -41,9 +41,22 @@ async function setCompleted(task_id, user_id, completed, trx = db) {
   return assignment ?? null
 }
 
+async function listByTask(task_id) {
+  return db(TABLE).where({ task_id })
+}
+
+async function removeUncompleted(task_id, user_id) {
+  return db(TABLE)
+    .where({ task_id, user_id })
+    .whereNull('completed_at')
+    .del()
+}
+
 module.exports = {
   ensure,
   listForUser,
+  listByTask,
   findForUser,
   setCompleted,
+  removeUncompleted,
 }

@@ -2,8 +2,8 @@ const config = require('../config')
 const jiraClient = require('./jiraClient')
 const { ensureWorkspaceDeveloperJiraIds } = require('./jiraAssignee')
 const TaskModel = require('../models/task')
-const TaskAssignmentModel = require('../models/taskAssignment')
 const UserModel = require('../models/user')
+const { reconcileTaskAssignments } = require('./taskAssignmentReconcile')
 
 async function buildWorkspaceJiraOverrides(workspace, overrides = {}) {
   const merged = { ...overrides }
@@ -45,6 +45,7 @@ async function syncWorkspaceTasks(workspace, overrides = {}) {
   let created = 0
   let updated = 0
   let assignments = 0
+  let assignmentsRemoved = 0
 
   for (const issue of issues) {
     const result = await TaskModel.upsertByJiraIssue({
@@ -64,10 +65,10 @@ async function syncWorkspaceTasks(workspace, overrides = {}) {
     else updated += 1
 
     const assignees = resolveAssignees(issue.assigneeAccountId, developers, developersByJiraId)
-    for (const dev of assignees) {
-      await TaskAssignmentModel.ensure(result.task.id, dev.id)
-      assignments += 1
-    }
+    const desiredUserIds = assignees.map((dev) => dev.id)
+    const { added, removed } = await reconcileTaskAssignments(result.task.id, desiredUserIds)
+    assignments += added
+    assignmentsRemoved += removed
   }
 
   return {
@@ -75,6 +76,7 @@ async function syncWorkspaceTasks(workspace, overrides = {}) {
     created,
     updated,
     assignments,
+    assignmentsRemoved,
   }
 }
 

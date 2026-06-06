@@ -121,6 +121,87 @@ describe('POST /api/tasks/sync/:workspaceId', () => {
     expect(jiraClient.fetchProjectIssues).not.toHaveBeenCalled()
   })
 
+  test('re-sync removes uncompleted assignments when Jira assignee changes', async () => {
+    const { adminToken, workspace, devUserId } = await createWorkspaceWithDeveloper('reassign')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const { token: dev2Token, user: dev2User } = await registerAndLogin('developer', 'reassign2')
+    await db('users')
+      .where({ id: dev2User.id })
+      .update({ workspace_id: workspace.id, jira_account_id: 'dev2-jira-id' })
+
+    jiraClient.fetchProjectIssues.mockResolvedValue([
+      MOCK_ISSUES[0],
+      { ...MOCK_ISSUES[1], assigneeAccountId: 'dev2-jira-id' },
+    ])
+
+    const res = await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.assignmentsRemoved).toBeGreaterThanOrEqual(1)
+
+    const dev1Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: devUserId, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev1Assignment).toBeUndefined()
+
+    const dev2Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: dev2User.id, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev2Assignment).toBeDefined()
+    expect(dev2Token).toBeDefined()
+  })
+
+  test('re-sync keeps completed assignments when Jira assignee changes', async () => {
+    const { adminToken, devToken, workspace, devUserId } =
+      await createWorkspaceWithDeveloper('keepdone')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const listRes = await request(app).get('/api/tasks').set('Authorization', `Bearer ${devToken}`)
+    const scrum2 = listRes.body.tasks.find((task) => task.jiraId === 'SCRUM-2')
+
+    await request(app)
+      .patch(`/api/tasks/${scrum2.id}/completion`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ completed: true })
+
+    const { user: dev2User } = await registerAndLogin('developer', 'keepdone2')
+    await db('users')
+      .where({ id: dev2User.id })
+      .update({ workspace_id: workspace.id, jira_account_id: 'dev2-jira-id' })
+
+    jiraClient.fetchProjectIssues.mockResolvedValue([
+      MOCK_ISSUES[0],
+      { ...MOCK_ISSUES[1], assigneeAccountId: 'dev2-jira-id' },
+    ])
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    const dev1Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: devUserId, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev1Assignment.completed_at).not.toBeNull()
+
+    const dev2Assignment = await db('task_assignments')
+      .join('tasks', 'tasks.id', 'task_assignments.task_id')
+      .where({ user_id: dev2User.id, jira_issue_key: 'SCRUM-2' })
+      .first()
+    expect(dev2Assignment).toBeDefined()
+  })
+
   test('re-sync updates existing tasks instead of duplicating them', async () => {
     const { adminToken, workspace } = await createWorkspaceWithDeveloper('upsert')
 

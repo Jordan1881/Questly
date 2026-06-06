@@ -4,14 +4,32 @@ const XP_BY_DIFFICULTY = { easy: 20, medium: 40, hard: 70 }
 const HIGH_PRIORITY_NAMES = new Set(['highest', 'high'])
 const STORY_POINT_FIELD_NAMES = ['story point estimate', 'story points', 'story point']
 
+const VALID_DIFFICULTIES = new Set(['easy', 'medium', 'hard'])
+
+function mapJiraIssueToDifficulty(value) {
+  if (value == null || value === '') return 'medium'
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (VALID_DIFFICULTIES.has(normalized)) return normalized
+    throw new TypeError(`Unknown difficulty value: ${value}`)
+  }
+
+  const points = Number(value)
+  if (Number.isNaN(points) || points <= 0) {
+    throw new TypeError(`Unknown difficulty value: ${value}`)
+  }
+  if (points <= 2) return 'easy'
+  if (points <= 5) return 'medium'
+  return 'hard'
+}
+
 function parseDifficultyFromStoryPoints(storyPoints) {
   if (storyPoints == null || storyPoints === '') return 'medium'
 
   const points = Number(storyPoints)
   if (Number.isNaN(points) || points <= 0) return 'medium'
-  if (points <= 2) return 'easy'
-  if (points <= 5) return 'medium'
-  return 'hard'
+  return mapJiraIssueToDifficulty(points)
 }
 
 function extractStoryPoints(fields, storyPointsFieldId) {
