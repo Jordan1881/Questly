@@ -35,20 +35,6 @@ const TrendUpIcon = () => (
   </svg>
 )
 
-// ── Rewards data ──────────────────────────────────────────────
-// Mirrors RewardShop, but each entry includes a gradient for the icon background in "My Rewards"
-
-const REWARDS = [
-  { id: 1, title: 'Starbucks $10 Gift Card',     desc: 'Enjoy your favorite coffee on us',       cost: 400,  Icon: CoffeeIcon,      gradient: 'linear-gradient(135deg, #10b981, #059669)' },
-  { id: 2, title: 'Amazon $25 Gift Card',         desc: 'Shop anything you want on Amazon',       cost: 800,  Icon: PackageIcon,     gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
-  { id: 3, title: 'Nike Store $20 Voucher',       desc: 'Get the latest sportswear and gear',     cost: 600,  Icon: ShoeIcon,        gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
-  { id: 4, title: 'Uber Eats $15 Credit',         desc: 'Order your favorite meal delivered',     cost: 450,  Icon: FoodIcon,        gradient: 'linear-gradient(135deg, #ef4444, #dc2626)' },
-  { id: 5, title: 'Spotify Premium 3 Months',     desc: 'Unlimited music streaming ad-free',      cost: 1500, Icon: HeadphonesIcon,  gradient: 'linear-gradient(135deg, #1db954, #17a044)' },
-  { id: 6, title: 'Netflix 1 Month',              desc: 'Unlimited movies and TV shows',          cost: 500,  Icon: FilmIcon,        gradient: 'linear-gradient(135deg, #dc2626, #b91c1c)' },
-  { id: 7, title: 'Audible Credits (3 Books)',    desc: 'Listen to your favorite audiobooks',     cost: 1800, Icon: BookIcon,        gradient: 'linear-gradient(135deg, #f97316, #ea580c)' },
-  { id: 8, title: 'Steam $50 Gift Card',          desc: 'Buy the latest games on Steam',          cost: 1600, Icon: ControllerIcon,  gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
-]
-
 // ── XP History Chart ──────────────────────────────────────────
 
 const XP_DATA = [
