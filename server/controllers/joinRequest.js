@@ -93,7 +93,12 @@ async function review(req, res, next) {
       await ensureDeveloperJiraAccountId(developer, jiraOverrides)
     }
 
-    res.json({ join_request: updated })
+    const payload = { join_request: updated }
+    if (status === 'approved') {
+      payload.workspace = WorkspaceModel.sanitize(workspace)
+    }
+
+    res.json(payload)
   } catch (err) {
     next(err)
   }

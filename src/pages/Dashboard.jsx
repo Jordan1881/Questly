@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { apiFetch } from '../lib/api'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
+import NoWorkspacePrompt from '../components/NoWorkspacePrompt'
+import TeamJiraBanner from '../components/TeamJiraBanner'
 import DifficultyBadge from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
 import { useAuthStore } from '../stores/authStore'
@@ -103,11 +105,13 @@ export default function Dashboard() {
     ])
   }, [fetchDashboard, fetchTasks, loadXpHistory])
 
+  const hasWorkspace = Boolean(user?.workspace_id)
+
   useEffect(() => {
-    if (userRole === 'developer') {
+    if (userRole === 'developer' && hasWorkspace) {
       refreshDashboard().catch(() => {})
     }
-  }, [userRole, refreshDashboard])
+  }, [userRole, hasWorkspace, refreshDashboard])
 
   const stats = useMemo(() => {
     const total = tasks.length
@@ -123,8 +127,7 @@ export default function Dashboard() {
   const streakDays = dashboardData?.streak ?? user?.streak_days ?? 0
 
   const displayName = user?.username || 'Developer'
-  const isConnected = Boolean(user?.workspace_id)
-  const isInitialLoading = dashboardLoading && !dashboardData
+  const isInitialLoading = hasWorkspace && dashboardLoading && !dashboardData
 
   const toggleTask = async (id) => {
     try {
@@ -152,7 +155,11 @@ export default function Dashboard() {
 
         <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Welcome back, {displayName}</h1>
 
-        {/* Two-column layout */}
+        {hasWorkspace && <TeamJiraBanner user={user} />}
+
+        {!hasWorkspace ? (
+          <NoWorkspacePrompt showJiraHint />
+        ) : (
         <div className="flex gap-8 items-start">
 
           {/* ── Left column ── */}
@@ -238,7 +245,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon />
                   <span className="text-[20px] font-semibold text-[#1f2937]">
-                    {isConnected ? 'Connected' : 'Not connected'}
+                    {hasWorkspace ? 'Connected' : 'Not connected'}
                   </span>
                 </div>
               </div>
@@ -372,6 +379,7 @@ export default function Dashboard() {
 
           </div>
         </div>
+        )}
       </main>
     </div>
   )

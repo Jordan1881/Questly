@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/authStore'
 const ERROR_MESSAGES = {
   denied: 'Jira connection was cancelled.',
   wrong_account: 'Use the same Atlassian account email as your Questly account.',
-  site_not_granted: 'Grant access to your workspace Jira site during authorization.',
+  site_not_granted: 'Grant access to your team Jira site during authorization.',
   invalid_state: 'Jira connection expired — please try again.',
   exchange_failed: 'Could not complete Jira connection. Try again.',
   not_configured: 'Jira OAuth is not configured on this server.',

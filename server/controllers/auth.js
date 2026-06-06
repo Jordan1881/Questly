@@ -4,6 +4,8 @@ const config = require('../config')
 const UserModel = require('../models/user')
 const WorkspaceModel = require('../models/workspace')
 const jiraClient = require('../services/jiraClient')
+const { developerJiraContext } = require('../lib/jiraSiteContext')
+const { formatDeveloperConnectError } = require('../lib/jiraConnectErrors')
 
 const SALT_ROUNDS = 12
 const INVALID_CREDENTIALS = 'Invalid credentials'
@@ -74,6 +76,8 @@ async function me(req, res, next) {
       streak_days,
     } = req.user
 
+    const jiraContext = await developerJiraContext(req.user)
+
     res.json({
       user: {
         id,
@@ -87,6 +91,7 @@ async function me(req, res, next) {
         coin_balance,
         streak_days: streak_days ?? 0,
         jira_connected: UserModel.isJiraConnected(internal),
+        ...jiraContext,
       },
     })
   } catch (err) {
@@ -109,10 +114,18 @@ async function connectJira(req, res, next) {
       return res.status(400).json({ error: 'access_token is required' })
     }
 
+    if (!req.user.workspace_id) {
+      return res.status(400).json({
+        error:
+          'Join a team first — connect Jira after your admin approves you to a workspace.',
+      })
+    }
+
     const siteUrl = await resolveDeveloperJiraSiteUrl(req.user)
     if (!siteUrl) {
       return res.status(400).json({
-        error: 'Jira site URL is not configured — ask your admin to connect the workspace first',
+        error:
+          "Your admin hasn't connected team Jira yet — ask them to connect Jira in Admin before you can link your account.",
       })
     }
 
@@ -127,7 +140,9 @@ async function connectJira(req, res, next) {
       if (!accountId) accountId = validation.accountId
     } catch (err) {
       const status = err.status && err.status >= 400 && err.status < 500 ? 400 : 502
-      return res.status(status).json({ error: err.message || 'Invalid Jira credentials' })
+      return res.status(status).json({
+        error: formatDeveloperConnectError(err, siteUrl),
+      })
     }
 
     if (!accountId) {

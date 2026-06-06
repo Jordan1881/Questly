@@ -52,4 +52,23 @@ describe('rewardStore', () => {
 
     expect(useRewardStore.getState().rewards).toEqual([{ id: 'r2' }])
   })
+
+  it('updateReward patches reward in list', async () => {
+    useRewardStore.setState({ rewards: [{ id: 'r1', title: 'Old' }] })
+    apiFetch.mockResolvedValue({ reward: { id: 'r1', title: 'New' } })
+
+    const reward = await useRewardStore.getState().updateReward('r1', { title: 'New' })
+
+    expect(reward.title).toBe('New')
+    expect(useRewardStore.getState().rewards[0].title).toBe('New')
+  })
+
+  it('uploadCoupons updates reward stock in list', async () => {
+    useRewardStore.setState({ rewards: [{ id: 'r1', stockCount: 0 }] })
+    apiFetch.mockResolvedValue({ reward: { id: 'r1', stockCount: 2 } })
+
+    await useRewardStore.getState().uploadCoupons('r1', ['CODE1', 'CODE2'])
+
+    expect(useRewardStore.getState().rewards[0].stockCount).toBe(2)
+  })
 })
