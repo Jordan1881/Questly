@@ -62,7 +62,7 @@ test('developer can sign up and reach the Jira connect screen', async ({ page })
 
 // ── Admin sign-up golden path ─────────────────────────────────────────────────
 
-test('admin can sign up and reach the Jira connect screen', async ({ page }) => {
+test('admin can sign up and reach workspace create (Jira connect is developer-only)', async ({ page }) => {
   await page.goto('/signup')
   await page.getByText('Admin').first().click()
   await page.getByPlaceholder('Enter your email').fill(ADMIN_EMAIL)
@@ -70,7 +70,7 @@ test('admin can sign up and reach the Jira connect screen', async ({ page }) => 
   await page.getByPlaceholder('Create a password').fill(PASSWORD)
   await page.getByPlaceholder('Re-enter your password').fill(PASSWORD)
   await page.getByRole('button', { name: /create account/i }).click()
-  await expect(page.getByText(/connect.*jira|jira.*connect/i).first()).toBeVisible({ timeout: 8000 })
+  await expect(page).toHaveURL(/\/workspace\/create/, { timeout: 8000 })
 })
 
 // ── Duplicate email error ─────────────────────────────────────────────────────
