@@ -71,6 +71,7 @@ async function me(req, res, next) {
       current_sprint_xp,
       lifetime_xp,
       coin_balance,
+      streak_days,
     } = req.user
 
     res.json({
@@ -84,6 +85,7 @@ async function me(req, res, next) {
         current_sprint_xp,
         lifetime_xp,
         coin_balance,
+        streak_days: streak_days ?? 0,
         jira_connected: UserModel.isJiraConnected(internal),
       },
     })
