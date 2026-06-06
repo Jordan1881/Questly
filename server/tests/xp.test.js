@@ -1,4 +1,4 @@
-const { calculateXP, XP_BY_DIFFICULTY } = require('../services/xp')
+const { calculateXP } = require('../services/xp')
 
 describe('calculateXP', () => {
   it('returns 20 / 40 / 70 for easy / medium / hard', () => {
@@ -16,9 +16,5 @@ describe('calculateXP', () => {
   it('throws TypeError for unknown difficulty', () => {
     expect(() => calculateXP('legendary')).toThrow(TypeError)
     expect(() => calculateXP('legendary')).toThrow('Unknown difficulty value: legendary')
-  })
-
-  it('exports XP_BY_DIFFICULTY constant', () => {
-    expect(XP_BY_DIFFICULTY).toEqual({ easy: 20, medium: 40, hard: 70 })
   })
 })

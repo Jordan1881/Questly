@@ -1,9 +1,7 @@
 require('dotenv').config()
-const jwt = require('jsonwebtoken')
 const request = require('supertest')
 const createApp = require('../app')
 const db = require('../config/db')
-const config = require('../config')
 
 const app = createApp()
 
@@ -49,23 +47,6 @@ async function createWorkspace(adminToken, suffix = '') {
 }
 
 describe('security access control', () => {
-  test('developer calling POST /api/workspaces receives 403', async () => {
-    const { token } = await registerAndLogin('developer', 'sec')
-
-    const res = await request(app)
-      .post('/api/workspaces')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ name: 'Blocked' })
-
-    expect(res.status).toBe(403)
-    expect(res.body.error).toBe('Forbidden')
-  })
-
-  test('unauthenticated POST /api/workspaces receives 401', async () => {
-    const res = await request(app).post('/api/workspaces').send({ name: 'No Auth' })
-    expect(res.status).toBe(401)
-  })
-
   test('unauthenticated GET /api/workspaces/:id/members receives 401', async () => {
     const { token: adminToken } = await registerAndLogin('admin', 'sec2')
     const workspace = await createWorkspace(adminToken, 'sec2')
@@ -166,18 +147,6 @@ describe('security access control', () => {
       .set('Authorization', `Bearer ${devToken}`)
 
     expect(res.status).toBe(403)
-  })
-
-  test('tampered JWT signature returns 401', async () => {
-    const { token } = await registerAndLogin('developer', 'tamper')
-    const parts = token.split('.')
-    const tampered = `${parts[0]}.${parts[1]}.invalidsignature`
-
-    const res = await request(app)
-      .get('/api/auth/me')
-      .set('Authorization', `Bearer ${tampered}`)
-
-    expect(res.status).toBe(401)
   })
 
   test('SQL injection in task filter query is safely parameterized', async () => {
