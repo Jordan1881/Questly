@@ -109,10 +109,18 @@ async function connectJira(req, res, next) {
       return res.status(400).json({ error: 'access_token is required' })
     }
 
+    if (!req.user.workspace_id) {
+      return res.status(400).json({
+        error:
+          'Join a team first — connect Jira after your admin approves you to a workspace.',
+      })
+    }
+
     const siteUrl = await resolveDeveloperJiraSiteUrl(req.user)
     if (!siteUrl) {
       return res.status(400).json({
-        error: 'Jira site URL is not configured — ask your admin to connect the workspace first',
+        error:
+          "Your admin hasn't connected team Jira yet — ask them to connect Jira in Admin before you can link your account.",
       })
     }
 

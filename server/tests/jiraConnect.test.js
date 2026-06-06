@@ -204,6 +204,19 @@ describe('POST /api/auth/me/jira/connect', () => {
     expect(res.status).toBe(400)
   })
 
+  test('developer without workspace receives 400 with join-first message', async () => {
+    const { token } = await registerAndLogin('developer', 'noworkspace')
+
+    const res = await request(app)
+      .post('/api/auth/me/jira/connect')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ access_token: 'dev-jira-token' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toMatch(/Join a team first/i)
+    expect(jiraClient.validateCredentials).not.toHaveBeenCalled()
+  })
+
   test('unauthenticated request receives 401', async () => {
     const res = await request(app)
       .post('/api/auth/me/jira/connect')
