@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
 import { useAuthStore } from '../stores/authStore'
+
+const ATLASSIAN_TOKEN_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens'
 
 const CheckIcon = () => (
   <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 shrink-0">
@@ -9,16 +12,36 @@ const CheckIcon = () => (
 )
 
 export default function JiraIntegrationCard({ showConnectForm = true }) {
+  const location = useLocation()
   const user = useAuthStore((s) => s.user)
   const isLoading = useAuthStore((s) => s.isLoading)
+  const startJiraOAuth = useAuthStore((s) => s.startJiraOAuth)
+  const fetchJiraOAuthStatus = useAuthStore((s) => s.fetchJiraOAuthStatus)
   const connectJira = useAuthStore((s) => s.connectJira)
   const disconnectJira = useAuthStore((s) => s.disconnectJira)
+  const [oauthAvailable, setOauthAvailable] = useState(false)
+  const [showManual, setShowManual] = useState(false)
   const [accessToken, setAccessToken] = useState('')
   const [message, setMessage] = useState(null)
 
   const isConnected = Boolean(user?.jira_connected)
 
-  const handleConnect = async (e) => {
+  useEffect(() => {
+    fetchJiraOAuthStatus().then((status) => {
+      setOauthAvailable(Boolean(status.available))
+      if (!status.available) setShowManual(true)
+    })
+  }, [fetchJiraOAuthStatus])
+
+  const handleOAuthConnect = async () => {
+    setMessage(null)
+    const result = await startJiraOAuth(location.pathname || '/profile')
+    if (!result.ok) {
+      setMessage({ type: 'error', text: result.error || 'Failed to start Jira connection.' })
+    }
+  }
+
+  const handleManualConnect = async (e) => {
     e.preventDefault()
     if (!accessToken.trim()) return
     setMessage(null)
@@ -69,23 +92,66 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
       )}
 
       {showConnectForm && !isConnected && (
-        <form onSubmit={handleConnect} className="flex flex-col gap-2 mt-2">
-          <input
-            type="password"
-            value={accessToken}
-            onChange={(e) => setAccessToken(e.target.value)}
-            placeholder="Jira API token"
-            className="w-full px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[12px] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30"
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !accessToken.trim()}
-            className="self-start px-3 py-1.5 rounded-[6px] text-[12px] font-semibold text-white cursor-pointer disabled:opacity-60"
-            style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
-          >
-            {isLoading ? 'Connecting…' : 'Connect'}
-          </button>
-        </form>
+        <div className="flex flex-col gap-2 mt-2">
+          {oauthAvailable && (
+            <button
+              type="button"
+              onClick={handleOAuthConnect}
+              disabled={isLoading}
+              className="self-start px-3 py-1.5 rounded-[6px] text-[12px] font-semibold text-white cursor-pointer disabled:opacity-60"
+              style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+            >
+              {isLoading ? 'Redirecting…' : 'Connect with Jira'}
+            </button>
+          )}
+
+          {oauthAvailable && !showManual && (
+            <button
+              type="button"
+              onClick={() => setShowManual(true)}
+              className="self-start text-[11px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+            >
+              Use API token instead
+            </button>
+          )}
+
+          {showManual && (
+            <form onSubmit={handleManualConnect} className="flex flex-col gap-2">
+              {oauthAvailable && (
+                <button
+                  type="button"
+                  onClick={() => setShowManual(false)}
+                  className="self-start text-[11px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+                >
+                  Back to OAuth
+                </button>
+              )}
+              <input
+                type="password"
+                value={accessToken}
+                onChange={(e) => setAccessToken(e.target.value)}
+                placeholder="Jira API token"
+                className="w-full px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[12px] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30"
+              />
+              <a
+                href={ATLASSIAN_TOKEN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-[#942fcd] hover:underline"
+              >
+                Create an API token at Atlassian
+              </a>
+              <button
+                type="submit"
+                disabled={isLoading || !accessToken.trim()}
+                className="self-start px-3 py-1.5 rounded-[6px] text-[12px] font-semibold text-white cursor-pointer disabled:opacity-60"
+                style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+              >
+                {isLoading ? 'Connecting…' : 'Connect with token'}
+              </button>
+            </form>
+          )}
+        </div>
       )}
 
       {showConnectForm && isConnected && (
