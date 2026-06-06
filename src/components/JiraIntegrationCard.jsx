@@ -29,6 +29,8 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
 
   const hasWorkspace = Boolean(user?.workspace_id)
   const isConnected = Boolean(user?.jira_connected)
+  const teamHost = user?.team_jira_site_host
+  const teamJiraReady = Boolean(user?.team_jira_connected)
 
   useEffect(() => {
     fetchJiraOAuthStatus().then((status) => {
@@ -125,10 +127,24 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
         </div>
       )}
 
-      {showConnectForm && hasWorkspace && !isConnected && (
+      {showConnectForm && hasWorkspace && !teamJiraReady && !isConnected && (
+        <p className="text-[12px] text-[#6b7280] mt-2 leading-relaxed">
+          Your admin has not connected team Jira yet. You can link your personal Jira account
+          after they set up Jira sync in Admin.
+        </p>
+      )}
+
+      {showConnectForm && hasWorkspace && teamJiraReady && !isConnected && (
         <div className="flex flex-col gap-2 mt-2">
           <p className="text-[11px] text-[#6b7280]">
             Connect your Jira account to receive tasks assigned to you in Questly.
+            {teamHost ? (
+              <>
+                {' '}
+                Your team site: <strong>{teamHost}</strong>. Use the same email as Questly (
+                {user?.email}).
+              </>
+            ) : null}
           </p>
           {oauthAvailable && (
             <button

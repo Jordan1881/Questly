@@ -64,6 +64,13 @@ export async function seedTask(body) {
   return api('/api/e2e/seed/task', { method: 'POST', body })
 }
 
+export async function seedWorkspaceJira({ workspaceId, jira_site_url, jira_project_key }) {
+  return api('/api/e2e/seed/workspace-jira', {
+    method: 'POST',
+    body: { workspaceId, jira_site_url, jira_project_key },
+  })
+}
+
 export async function seedReward(body) {
   return api('/api/e2e/seed/reward', { method: 'POST', body })
 }

@@ -105,7 +105,8 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
               className="text-[18px] text-[#6b7280]"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
-              Sync your Jira tasks to start earning XP in Questly.
+              Optional now — join your team first, then connect your personal Jira on Profile after
+              admin approval.
             </p>
           </div>
 

@@ -48,14 +48,39 @@ describe('JiraIntegrationCard', () => {
 
   it('shows connect form when developer has workspace but is not connected', async () => {
     useAuthStore.setState({
-      user: { id: '1', email: 'dev@test.com', workspace_id: 'ws-1', jira_connected: false },
+      user: {
+        id: '1',
+        email: 'dev@test.com',
+        workspace_id: 'ws-1',
+        jira_connected: false,
+        team_jira_connected: true,
+        team_jira_site_host: 'acme.atlassian.net',
+      },
     })
 
     renderCard()
 
     expect(screen.getByText('Not connected')).toBeInTheDocument()
     expect(await screen.findByPlaceholderText('Jira API token')).toBeInTheDocument()
+    expect(screen.getByText(/acme\.atlassian\.net/i)).toBeInTheDocument()
     expect(screen.queryByText(/Join a team first/i)).not.toBeInTheDocument()
+  })
+
+  it('shows admin-not-connected message when team Jira is not ready', () => {
+    useAuthStore.setState({
+      user: {
+        id: '1',
+        email: 'dev@test.com',
+        workspace_id: 'ws-1',
+        jira_connected: false,
+        team_jira_connected: false,
+      },
+    })
+
+    renderCard()
+
+    expect(screen.getByText(/admin has not connected team Jira yet/i)).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Jira API token')).not.toBeInTheDocument()
   })
 
   it('shows connected state with disconnect when jira_connected is true', () => {

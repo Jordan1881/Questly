@@ -3,6 +3,7 @@ import { apiFetch } from '../lib/api'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import NoWorkspacePrompt from '../components/NoWorkspacePrompt'
+import TeamJiraBanner from '../components/TeamJiraBanner'
 import DifficultyBadge from '../components/DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from '../components/icons'
 import { useAuthStore } from '../stores/authStore'
@@ -153,6 +154,8 @@ export default function Dashboard() {
       <main className="px-12 py-9">
 
         <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Welcome back, {displayName}</h1>
+
+        {hasWorkspace && <TeamJiraBanner user={user} />}
 
         {!hasWorkspace ? (
           <NoWorkspacePrompt showJiraHint />

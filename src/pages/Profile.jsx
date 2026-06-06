@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { StarIcon } from '../components/icons'
 import JiraIntegrationCard from '../components/JiraIntegrationCard'
+import TeamJiraBanner from '../components/TeamJiraBanner'
 import MyRewards from '../components/MyRewards'
 import ProfileAvatar from '../components/ProfileAvatar'
 import { SkeletonList } from '../components/Skeleton'
@@ -417,6 +418,8 @@ export default function Profile() {
 
           {/* ── Developer-only: XP History + Account Details ── */}
           {!isAdmin && (
+            <>
+            <TeamJiraBanner user={authUser} />
             <div className="flex gap-6 items-start">
               <div className={`flex-1 min-w-0 ${CARD} p-6`}>
                 <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
@@ -532,6 +535,7 @@ export default function Profile() {
                 </div>
               </div>
             </div>
+            </>
           )}
 
           {/* ── My Rewards Card (developer only) ── */}
