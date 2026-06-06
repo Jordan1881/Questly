@@ -17,7 +17,6 @@ import { SkeletonCard, SkeletonList } from '../components/Skeleton'
 
 // ── Tailwind class constants ────────────────────────────────
 const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
-const BTN_GHOST = 'flex-1 h-12 rounded-[8px] border border-[#e5e7eb] bg-white flex items-center justify-center gap-2 text-[14px] text-[#374151] cursor-pointer hover:bg-[#f9fafb] transition-colors duration-200'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -25,24 +24,6 @@ const CheckCircleIcon = () => (
   <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
     <circle cx="10" cy="10" r="9" stroke="#10b981" strokeWidth="1.5" />
     <path d="M6.5 10.5l2.5 2.5 4.5-5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
-
-const PlusIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
-    <path d="M8 3v10M3 8h10" stroke="white" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-)
-
-const PlayIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
-    <path d="M5 3l8 5-8 5V3z" fill="#374151" />
-  </svg>
-)
-
-const TrainIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
-    <path d="M8 1.5l1.5 3.5 3.5.5-2.5 2.5.5 3.5L8 9.5 5.5 11l.5-3.5L3.5 5l3.5-.5z" fill="#374151" />
   </svg>
 )
 
@@ -212,21 +193,6 @@ export default function Dashboard() {
                   percent={stats.total > 0 ? Math.round((stats.highPriorityOpen / stats.total) * 100) : 0}
                   color="#facc15"
                 />
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3">
-              <button
-                className="w-full h-12 rounded-[8px] flex items-center justify-center gap-2 text-[15px] font-medium text-white cursor-pointer hover:opacity-90 transition-opacity duration-200"
-                style={{ background: 'linear-gradient(to bottom, #942fcd, #ca9af4)', boxShadow: '0px 4px 12px rgba(148,47,205,0.3)' }}
-              >
-                <PlusIcon />
-                Feed with Code
-              </button>
-              <div className="flex gap-3">
-                <button className={BTN_GHOST}><PlayIcon />Play</button>
-                <button className={BTN_GHOST}><TrainIcon />Train</button>
               </div>
             </div>
 
