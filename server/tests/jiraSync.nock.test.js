@@ -30,6 +30,7 @@ beforeEach(async () => {
   await db('task_assignments').del()
   await db('tasks').del()
   await db('join_requests').del()
+  await db('sprints').del()
   await db('users').del()
   await db('workspaces').del()
 })
