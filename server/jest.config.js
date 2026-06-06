@@ -12,7 +12,33 @@ module.exports = {
     '!knexfile.js',
     '!coverage/**',
   ],
-  coverageReporters: ['text', 'json', 'html'],
+  coverageReporters: ['text', 'json', 'html', 'json-summary'],
+  coverageThreshold: {
+    global: {
+      branches: 55,
+      functions: 65,
+      lines: 70,
+      statements: 70,
+    },
+    './controllers/auth.js': {
+      branches: 65,
+      functions: 85,
+      lines: 80,
+      statements: 80,
+    },
+    './services/taskRewards.js': {
+      branches: 60,
+      functions: 85,
+      lines: 85,
+      statements: 85,
+    },
+    './services/rewardPurchase.js': {
+      branches: 70,
+      functions: 85,
+      lines: 75,
+      statements: 75,
+    },
+  },
   passWithNoTests: true,
   maxWorkers: 1,
 }

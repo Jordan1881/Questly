@@ -79,6 +79,13 @@ jobs:
           PORT: 3001
           FRONTEND_URL: http://localhost:5173
 
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: server/coverage/
+          retention-days: 14
+
   # ── 2. Frontend tests ───────────────────────────────────────────────────────
   frontend-tests:
     name: Frontend Tests
@@ -97,6 +104,13 @@ jobs:
 
       - name: Run frontend tests with coverage
         run: npm run test:coverage
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/
+          retention-days: 14
 
   # ── 3. E2E tests ────────────────────────────────────────────────────────────
   e2e-tests:

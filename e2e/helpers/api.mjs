@@ -67,3 +67,40 @@ export async function seedTask(body) {
 export async function seedReward(body) {
   return api('/api/e2e/seed/reward', { method: 'POST', body })
 }
+
+export async function reconcileAssignments(taskId, developerIds) {
+  return api('/api/e2e/seed/reconcile-assignments', {
+    method: 'POST',
+    body: { taskId, developerIds },
+  })
+}
+
+export async function createSprint(token, workspaceId, body) {
+  const { sprint } = await api(`/api/workspaces/${workspaceId}/sprints`, {
+    method: 'POST',
+    token,
+    body,
+  })
+  return sprint
+}
+
+export async function closeSprint(token, sprintId) {
+  const { sprint } = await api(`/api/sprints/${sprintId}/close`, {
+    method: 'POST',
+    token,
+  })
+  return sprint
+}
+
+/** Clear persisted auth and sign in via the login form. */
+export async function signInViaUi(page, { email, password, skipJira = false }) {
+  await page.goto('/login')
+  await page.evaluate(() => localStorage.clear())
+  await page.reload()
+  await page.getByPlaceholder('Enter email or user name').fill(email)
+  await page.getByPlaceholder('Password').fill(password)
+  await page.getByRole('button', { name: /sign in/i }).click()
+  if (skipJira) {
+    await page.getByRole('button', { name: /skip for now/i }).click({ timeout: 15000 })
+  }
+}
