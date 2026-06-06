@@ -20,6 +20,16 @@ async function findById(id) {
   return db(TABLE).where({ id }).first()
 }
 
+async function pruneStaleJiraTasks(workspace_id, activeJiraIssueIds = []) {
+  if (!workspace_id || !activeJiraIssueIds.length) return 0
+
+  return db(TABLE)
+    .where({ workspace_id })
+    .whereNotNull('jira_issue_id')
+    .whereNotIn('jira_issue_id', activeJiraIssueIds)
+    .del()
+}
+
 async function listByWorkspace(workspace_id, filters = {}) {
   let query = db(TABLE).where({ workspace_id })
 
@@ -42,4 +52,5 @@ module.exports = {
   upsertByJiraIssue,
   findById,
   listByWorkspace,
+  pruneStaleJiraTasks,
 }
