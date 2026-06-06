@@ -87,6 +87,39 @@ export const useAuthStore = create(
         useXpStore.getState().syncFromUser(null)
       },
 
+      startJiraOAuth: async (returnTo = '/dashboard') => {
+        const { token } = get()
+        set({ isLoading: true, error: null })
+        try {
+          const params = new URLSearchParams({ return_to: returnTo })
+          const res = await fetch(`${API_BASE}/api/auth/jira/oauth/start?${params}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const body = await res.json().catch(() => ({}))
+          if (!res.ok) throw new Error(body.error ?? `Request failed: ${res.status}`)
+          window.location.assign(body.authorize_url)
+          return { ok: true }
+        } catch (err) {
+          set({ isLoading: false, error: err.message })
+          return { ok: false, error: err.message }
+        }
+      },
+
+      fetchJiraOAuthStatus: async () => {
+        const { token } = get()
+        if (!token) return { available: false }
+        try {
+          const res = await fetch(`${API_BASE}/api/auth/jira/oauth/status`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const body = await res.json().catch(() => ({}))
+          if (!res.ok) return { available: false }
+          return body
+        } catch {
+          return { available: false }
+        }
+      },
+
       connectJira: async (accessToken) => {
         const { token } = get()
         set({ isLoading: true, error: null })

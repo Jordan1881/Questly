@@ -59,6 +59,9 @@ Add these in **Cursor → Cloud Agent → Secrets** for the Questly repo (names 
 | `JIRA_DEVELOPER_API_TOKEN` | Developer API token |
 | `JIRA_DEVELOPER_ACCOUNT_ID` or `JIRA_ACCOUNT_ID` | Jira accountId for assignee mapping |
 | `JIRA_STORY_POINTS_FIELD_ID` | Optional — see below |
+| `ATLASSIAN_CLIENT_ID` | OAuth 3LO app — [Developer Console](https://developer.atlassian.com/console/myapps/) |
+| `ATLASSIAN_CLIENT_SECRET` | Same OAuth app (Settings page) |
+| `ATLASSIAN_OAUTH_CALLBACK_URL` | Must match Console callback, e.g. `https://questly-production-f5ba.up.railway.app/api/auth/jira/oauth/callback` |
 
 **Optional override: `JIRA_STORY_POINTS_FIELD_ID`**
 

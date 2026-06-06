@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
 import JiraButton from '../design-system/components/JiraButton'
 import { useAuthStore } from '../stores/authStore'
+
+const ATLASSIAN_TOKEN_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens'
 
 const CheckIcon = () => (
   <svg viewBox="0 0 14 14" fill="none" className="w-[14px] h-[14px]">
@@ -16,12 +19,35 @@ const features = [
 ]
 
 export default function JiraAuth({ onClose, onConnect, onSkip }) {
+  const location = useLocation()
+  const startJiraOAuth = useAuthStore((s) => s.startJiraOAuth)
+  const fetchJiraOAuthStatus = useAuthStore((s) => s.fetchJiraOAuthStatus)
   const connectJira = useAuthStore((s) => s.connectJira)
   const isLoading = useAuthStore((s) => s.isLoading)
+  const [oauthAvailable, setOauthAvailable] = useState(false)
+  const [showManual, setShowManual] = useState(false)
   const [accessToken, setAccessToken] = useState('')
   const [error, setError] = useState(null)
 
-  const handleConnect = async () => {
+  useEffect(() => {
+    fetchJiraOAuthStatus().then((status) => {
+      setOauthAvailable(Boolean(status.available))
+      if (!status.available) setShowManual(true)
+    })
+  }, [fetchJiraOAuthStatus])
+
+  const handleOAuthConnect = async () => {
+    setError(null)
+    const returnTo = ['/signup', '/login'].includes(location.pathname)
+      ? '/dashboard'
+      : (location.pathname || '/dashboard')
+    const result = await startJiraOAuth(returnTo)
+    if (!result.ok) {
+      setError(result.error || 'Failed to start Jira connection.')
+    }
+  }
+
+  const handleManualConnect = async () => {
     if (!accessToken.trim()) {
       setError('Enter your Jira API token to connect.')
       return
@@ -102,35 +128,70 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
             ))}
           </div>
 
-          <div className="w-[400px] flex flex-col gap-2">
-            <label
-              htmlFor="jira-access-token"
-              className="text-[14px] font-medium text-[#374151]"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              Jira API token
-            </label>
-            <input
-              id="jira-access-token"
-              type="password"
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-              placeholder="Paste your Atlassian API token"
-              className="w-full px-4 py-3 rounded-[10px] border border-[#e5e7eb] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30 focus:border-[#942fcd]"
-            />
-            <p className="text-[12px] text-[#9ca3af]">
-              Use the same email as your Questly account. Your token is stored securely.
-            </p>
-          </div>
-
           {error && (
             <p className="text-[13px] text-[#ef4444] -mt-4">{error}</p>
           )}
 
           <div className="flex flex-col items-center gap-3 w-[400px]">
-            <JiraButton onClick={handleConnect} disabled={isLoading}>
-              {isLoading ? 'Connecting…' : 'Connect with Jira'}
-            </JiraButton>
+            {oauthAvailable && (
+              <JiraButton onClick={handleOAuthConnect} disabled={isLoading}>
+                {isLoading ? 'Redirecting…' : 'Connect with Jira'}
+              </JiraButton>
+            )}
+
+            {oauthAvailable && !showManual && (
+              <button
+                type="button"
+                onClick={() => setShowManual(true)}
+                className="text-[13px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+              >
+                Use API token instead
+              </button>
+            )}
+
+            {showManual && (
+              <div className="w-full flex flex-col gap-2">
+                {oauthAvailable && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManual(false)}
+                    className="self-start text-[12px] text-[#6b7280] hover:text-[#374151] cursor-pointer mb-1"
+                  >
+                    Back to OAuth
+                  </button>
+                )}
+                <label
+                  htmlFor="jira-access-token"
+                  className="text-[14px] font-medium text-[#374151]"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
+                >
+                  Jira API token
+                </label>
+                <input
+                  id="jira-access-token"
+                  type="password"
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  placeholder="Paste your Atlassian API token"
+                  className="w-full px-4 py-3 rounded-[10px] border border-[#e5e7eb] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30 focus:border-[#942fcd]"
+                />
+                <p className="text-[12px] text-[#9ca3af]">
+                  <a
+                    href={ATLASSIAN_TOKEN_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#942fcd] hover:underline"
+                  >
+                    Create an API token at Atlassian
+                  </a>
+                  . Use the same email as your Questly account.
+                </p>
+                <JiraButton onClick={handleManualConnect} disabled={isLoading}>
+                  {isLoading ? 'Connecting…' : 'Connect with token'}
+                </JiraButton>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={onSkip || onClose}
@@ -146,7 +207,9 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
           className="text-[14px] text-[#9ca3af] text-center max-w-[611px] leading-[1.6]"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
-          Questly uses your personal API token for read-only access to your Jira tasks.
+          {oauthAvailable
+            ? 'Questly uses secure Atlassian OAuth for read-only access to your Jira tasks.'
+            : 'Questly uses your personal API token for read-only access to your Jira tasks.'}
         </p>
 
       </div>
