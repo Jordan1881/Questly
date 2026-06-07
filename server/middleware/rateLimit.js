@@ -1,7 +1,7 @@
 const rateLimit = require('express-rate-limit')
 
 function skipInTest(limiter) {
-  if (process.env.NODE_ENV === 'test') {
+  if (process.env.NODE_ENV === 'test' || process.env.E2E_SEED_ENABLED === 'true') {
     return (_req, _res, next) => next()
   }
   return limiter

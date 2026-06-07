@@ -84,14 +84,39 @@ describe('apiFetch', () => {
     })
   })
 
-  it('logs out with sessionExpired and throws ApiError on 401', async () => {
-    useAuthStore.setState({ token: 'bad-token', isLoggedIn: true, user: { id: 'u1' } })
+  it('throws ApiError without logging out when skipSessionExpiry is set on 401', async () => {
+    useAuthStore.setState({ token: null, isLoggedIn: false, sessionExpired: false })
 
     fetch.mockResolvedValue({
       ok: false,
       status: 401,
-      json: async () => ({ error: 'Unauthorized' }),
+      json: async () => ({ error: 'Invalid credentials' }),
     })
+
+    await expect(
+      apiFetch('/api/auth/login', { method: 'POST', skipSessionExpiry: true }),
+    ).rejects.toMatchObject({
+      message: 'Invalid credentials',
+      status: 401,
+    })
+    expect(useAuthStore.getState().sessionExpired).toBe(false)
+    expect(useAuthStore.getState().isLoggedIn).toBe(false)
+  })
+
+  it('logs out with sessionExpired and throws ApiError on 401', async () => {
+    useAuthStore.setState({ token: 'bad-token', isLoggedIn: true, user: { id: 'u1' } })
+
+    fetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: 'Unauthorized' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
 
     await expect(apiFetch('/api/test')).rejects.toMatchObject({
       message: 'Session expired — please sign in again',

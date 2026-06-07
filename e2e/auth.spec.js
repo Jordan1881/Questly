@@ -30,7 +30,7 @@ test('sign-in shows error banner on wrong credentials', async ({ page }) => {
   await page.getByPlaceholder('Enter your email').fill('nobody@nowhere.com')
   await page.getByPlaceholder('Password').fill('wrongpassword')
   await page.getByRole('button', { name: /sign in/i }).click()
-  await expect(page.getByText('Invalid credentials')).toBeVisible({ timeout: 8000 })
+  await expect(page.locator('form').getByText('Invalid credentials')).toBeVisible({ timeout: 8000 })
 })
 
 // ── Password mismatch validation ──────────────────────────────────────────────
@@ -96,5 +96,5 @@ test('sign-up shows error when email is already registered', async ({ page }) =>
   await expect(page.getByText('Connect your Jira account')).toBeVisible({ timeout: 8000 })
 
   await fillSignup(duplicateEmail, `dup2_${ts}`)
-  await expect(page.getByText('Email already registered')).toBeVisible({ timeout: 8000 })
+  await expect(page.locator('form').getByText('Email already registered')).toBeVisible({ timeout: 8000 })
 })
