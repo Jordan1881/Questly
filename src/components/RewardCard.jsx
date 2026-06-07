@@ -16,41 +16,41 @@ export default function RewardCard({
   else if (!canAfford) helperText = 'Not enough XP'
 
   return (
-    <div
-      className="bg-white border border-[#e5e7eb] rounded-[12px] p-6 flex flex-col gap-4 transition-all duration-200"
-      style={{ boxShadow: '0px 1px 3px 0px rgba(0,0,0,0.10)' }}
-    >
+    <div className="ds-card ds-card-pad flex flex-col gap-4 transition-all duration-200">
       <div
-        className="w-14 h-14 rounded-[12px] flex items-center justify-center shrink-0 overflow-hidden"
+        className="w-14 h-14 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0 overflow-hidden shadow-[var(--shadow-primary-sm)]"
         style={{
-          background: imageUrl ? '#f3f4f6' : 'linear-gradient(to bottom, #942fcd, #ca9af4)',
-          boxShadow: '0px 4px 12px rgba(148,47,205,0.2)',
+          background: imageUrl ? 'var(--color-gray-100)' : undefined,
         }}
       >
         {imageUrl ? (
           <img src={imageUrl} alt="" className="w-full h-full object-cover" />
         ) : (
-          <StarIcon />
+          <div className="w-full h-full flex items-center justify-center ds-brand-gradient">
+            <StarIcon color="white" size={24} />
+          </div>
         )}
       </div>
 
       {allExpired && (
-        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-[6px] w-fit bg-[#fee2e2] text-[#dc2626]">
+        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-[var(--radius-md)] w-fit bg-[color:var(--color-error-100)] text-[color:var(--color-error-600)]">
           Expired
         </span>
       )}
 
       <div className="flex-1">
-        <h3 className="text-[15px] font-semibold text-[#1f2937] leading-snug mb-1.5">{title}</h3>
-        <p className="text-[13px] text-[#6b7280] leading-[1.6]">{description}</p>
+        <h3 className="text-[length:var(--text-body-lg)] font-semibold text-[color:var(--color-gray-800)] leading-snug mb-1.5">
+          {title}
+        </h3>
+        <p className="ds-body-sm leading-[1.6]">{description}</p>
       </div>
 
-      <div className="flex items-center justify-between text-[13px]">
+      <div className="flex items-center justify-between text-[length:var(--text-body-sm)]">
         <div className="flex items-center gap-1.5">
-          <span className="text-[20px] font-bold text-[#942fcd]">{xpCost}</span>
-          <span className="font-medium text-[#6b7280]">XP</span>
+          <span className="text-[length:var(--text-h5)] font-bold text-[color:var(--color-brand)]">{xpCost}</span>
+          <span className="font-medium text-[color:var(--color-gray-500)]">XP</span>
         </div>
-        <span className="text-[#6b7280]">{stockCount} left</span>
+        <span className="text-[color:var(--color-gray-500)]">{stockCount} left</span>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -59,17 +59,18 @@ export default function RewardCard({
           onClick={() => !buyDisabled && onBuy?.(reward)}
           disabled={buyDisabled}
           title={helperText || undefined}
-          className="h-[42px] flex items-center justify-center rounded-[8px] text-[14px] font-medium text-white transition-all duration-200"
-          style={
+          className={`h-[42px] flex items-center justify-center rounded-[var(--radius-md)] text-[length:var(--text-body)] font-medium transition-all duration-200 ${
             buyDisabled
-              ? { background: '#e5e7eb', color: '#9ca3af', cursor: 'not-allowed' }
-              : { background: '#942fcd', boxShadow: '0px 2px 6px rgba(148,47,205,0.3)', cursor: 'pointer' }
-          }
+              ? 'bg-[color:var(--color-gray-200)] text-[color:var(--color-gray-400)] cursor-not-allowed'
+              : 'text-white cursor-pointer ds-brand-gradient shadow-[var(--shadow-primary-sm)]'
+          }`}
         >
           Buy
         </button>
         {helperText && (
-          <p className="text-[12px] font-medium text-[#ef4444] text-center">{helperText}</p>
+          <p className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-error-500)] text-center">
+            {helperText}
+          </p>
         )}
       </div>
     </div>

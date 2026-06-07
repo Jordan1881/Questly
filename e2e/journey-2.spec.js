@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { setupApprovedDeveloper, seedTask, seedReward } from './helpers/api.mjs'
+import { setupApprovedDeveloper, seedTask, seedReward, taskCardByTitle } from './helpers/api.mjs'
 
 const ts = Date.now()
 const PASSWORD = 'Password123!'
@@ -44,7 +44,7 @@ test('Journey 2 — earn XP, purchase reward, coupon in My Rewards', async ({ pa
 
   await page.goto('/tasks')
   await expect(page.getByText('Earn XP Task')).toBeVisible({ timeout: 15000 })
-  const taskCard = page.locator('text=Earn XP Task').locator('xpath=ancestor::div[contains(@class,"rounded")]').first()
+  const taskCard = taskCardByTitle(page, 'Earn XP Task')
   await taskCard.getByRole('button', { name: /mark complete/i }).click()
 
   await page.goto('/rewards')

@@ -14,23 +14,31 @@ import SprintStatusWidget from '../components/SprintStatusWidget'
 import { useXP } from '../hooks/useXP'
 import XPHistory from '../components/XPHistory'
 import { SkeletonCard, SkeletonList } from '../components/Skeleton'
-
-// ── Tailwind class constants ────────────────────────────────
-const CARD     = 'bg-white rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1)]'
+import MetricStatCard from '../design-system/components/MetricStatCard'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
 const CheckCircleIcon = () => (
   <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
-    <circle cx="10" cy="10" r="9" stroke="#10b981" strokeWidth="1.5" />
-    <path d="M6.5 10.5l2.5 2.5 4.5-5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="10" cy="10" r="9" stroke="var(--color-success-500)" strokeWidth="1.5" />
+    <path
+      d="M6.5 10.5l2.5 2.5 4.5-5"
+      stroke="var(--color-success-500)"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 )
 
-const LightningBoltIcon = ({ size = 24 }) => (
+const LightningBoltIcon = ({ size = 20 }) => (
   <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-    <path d="M13 2L4 13.5h7l-1 8.5 10-13H13L14 2z" fill="white" />
+    <path d="M13 2L4 13.5h7l-1 8.5 10-13H13L14 2z" fill="var(--color-warning-500)" />
   </svg>
+)
+
+const QuestCountIcon = ({ count = 0 }) => (
+  <span className="text-[length:var(--text-h6)] font-bold text-[color:var(--color-brand)]">{count}</span>
 )
 
 // ── Sub-components ──────────────────────────────────────────
@@ -38,10 +46,10 @@ const LightningBoltIcon = ({ size = 24 }) => (
 const StatBar = ({ label, value, percent, color }) => (
   <div className="flex flex-col gap-2">
     <div className="flex items-center justify-between">
-      <span className="text-[14px] text-[#4b5563]">{label}</span>
-      <span className="text-[14px] font-medium text-[#1f2937]">{value}</span>
+      <span className="ds-body">{label}</span>
+      <span className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-800)]">{value}</span>
     </div>
-    <div className="h-2 rounded-full bg-[#e5e7eb] overflow-hidden">
+    <div className="h-2 rounded-full bg-[color:var(--color-gray-200)] overflow-hidden">
       <div className="h-full rounded-full" style={{ width: `${percent}%`, background: color }} />
     </div>
   </div>
@@ -120,7 +128,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9fafb]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="ds-page">
 
       <Sidebar
         isOpen={showSidebar}
@@ -131,10 +139,9 @@ export default function Dashboard() {
         onOpenSidebar={() => setShowSidebar(true)}
       />
 
-      {/* ── Main content ── */}
-      <main className="px-12 py-9">
+      <main className="ds-page-main">
 
-        <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Welcome back, {displayName}</h1>
+        <h1 className="ds-page-title mb-6">Welcome back, {displayName}</h1>
 
         {hasWorkspace && <TeamJiraBanner user={user} />}
 
@@ -146,52 +153,51 @@ export default function Dashboard() {
           {/* ── Left column ── */}
           <div className="w-[314px] flex flex-col gap-6 shrink-0">
 
-            {/* XP Progress Card */}
             {isInitialLoading ? (
               <SkeletonCard />
             ) : (
-              <div className={`${CARD} p-5`}>
+              <div className="ds-card ds-card-pad-sm">
                 <XPProgressBar xp={lifetimeXP} />
               </div>
             )}
 
-            {/* Active Sprint Card */}
             {isInitialLoading ? (
               <SkeletonCard />
             ) : (
-              <div className={`${CARD} p-5`}>
-                <p className="text-[14px] font-semibold text-[#1f2937] mb-4">Active Sprint</p>
+              <div className="ds-card ds-card-pad-sm">
+                <p className="text-[length:var(--text-body)] font-semibold text-[color:var(--color-gray-800)] mb-4">
+                  Active Sprint
+                </p>
                 <SprintStatusWidget sprint={activeSprint} />
               </div>
             )}
 
-            {/* User Stats Card */}
-            <div className={`${CARD} p-6`}>
-              <h3 className="text-[16px] font-medium text-[#374151] mb-6">User Stats</h3>
+            <div className="ds-card ds-card-pad">
+              <h3 className="ds-subsection-title mb-6">User Stats</h3>
               <div className="flex flex-col gap-5">
                 <StatBar
                   label="Tasks Completed"
                   value={`${stats.completed}/${stats.total}`}
                   percent={stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}
-                  color="#60a5fa"
+                  color="var(--color-primary-400)"
                 />
                 <StatBar
                   label="Current Streak"
                   value={`${streakDays} day${streakDays === 1 ? '' : 's'}`}
                   percent={Math.min(100, streakDays * 10)}
-                  color="#c084fc"
+                  color="var(--color-primary-300)"
                 />
                 <StatBar
                   label="Completion Rate"
                   value={`${stats.completionRate}%`}
                   percent={stats.completionRate}
-                  color="#4ade80"
+                  color="var(--color-success-400)"
                 />
                 <StatBar
                   label="Open High Priority"
                   value={String(stats.highPriorityOpen)}
                   percent={stats.total > 0 ? Math.round((stats.highPriorityOpen / stats.total) * 100) : 0}
-                  color="#facc15"
+                  color="var(--color-warning-400)"
                 />
               </div>
             </div>
@@ -201,82 +207,61 @@ export default function Dashboard() {
           {/* ── Right column ── */}
           <div className="flex-1 flex flex-col gap-6">
 
-            {/* Questly Progress Card */}
-            <div className={`${CARD} p-6`}>
+            <div className="ds-card ds-card-pad">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-[18px] font-semibold text-[#1f2937]">Questly Progress</h2>
-                  <p className="text-[13px] text-[#6b7280] mt-1">Task completion rate</p>
+                  <h2 className="ds-section-title">Questly Progress</h2>
+                  <p className="ds-body-sm mt-1">Task completion rate</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span className="text-[20px] font-semibold text-[#1f2937]">
+                  <span className="text-[length:var(--text-h5)] font-semibold text-[color:var(--color-gray-800)]">
                     {hasWorkspace ? 'Connected' : 'Not connected'}
                   </span>
                 </div>
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-medium text-[#4b5563]">Overall Progress</span>
-                  <span className="text-[16px] font-semibold text-[#1f2937]">{stats.completionRate}%</span>
+                  <span className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-600)]">
+                    Overall Progress
+                  </span>
+                  <span className="text-[length:var(--text-h6)] font-semibold text-[color:var(--color-gray-800)]">
+                    {stats.completionRate}%
+                  </span>
                 </div>
-                <div className="h-3 rounded-full bg-[#e5e7eb] overflow-hidden">
+                <div className="h-3 rounded-full bg-[color:var(--color-gray-200)] overflow-hidden">
                   <div
-                    className="h-full rounded-full"
-                    style={{ width: `${stats.completionRate}%`, background: 'linear-gradient(to bottom, #6366f1, #a855f7)' }}
+                    className="h-full rounded-full ds-progress-gradient"
+                    style={{ width: `${stats.completionRate}%` }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Stats row */}
             <div className="grid grid-cols-2 gap-6">
-
-              {/* Tasking Streak */}
-              <div className={`${CARD} p-6`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
-                    style={{ background: 'linear-gradient(to bottom, #fbbf24, #f59e0b)' }}
-                  >
-                    <LightningBoltIcon size={24} />
-                  </div>
-                  <span className="text-[16px] font-medium text-[#374151]">Tasking Streak</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[40px] font-bold text-[#1f2937] leading-tight">{streakDays}</span>
-                  <span className="text-[16px] text-[#6b7280]">days</span>
-                </div>
-              </div>
-
-              {/* Assigned tasks */}
-              <div className={`${CARD} p-6`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0"
-                    style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
-                  >
-                    <span className="text-white text-[18px] font-bold">{stats.total}</span>
-                  </div>
-                  <span className="text-[16px] font-medium text-[#374151]">Active Quests</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[40px] font-bold text-[#1f2937] leading-tight">{stats.completed}</span>
-                  <span className="text-[16px] text-[#6b7280]">completed</span>
-                </div>
-              </div>
-
+              <MetricStatCard
+                value={streakDays}
+                suffix="days"
+                label="Tasking Streak"
+                tone="warning"
+                icon={<LightningBoltIcon />}
+              />
+              <MetricStatCard
+                value={stats.completed}
+                suffix={`/ ${stats.total}`}
+                label="Active Quests completed"
+                icon={<QuestCountIcon count={stats.total} />}
+              />
             </div>
 
-            {/* High Priority Tasks */}
-            <div className={`${CARD} p-6`}>
-              <h2 className="text-[18px] font-medium text-[#374151] mb-6">High Priority Tasks</h2>
+            <div className="ds-card ds-card-pad">
+              <h2 className="ds-subsection-title mb-6">High Priority Tasks</h2>
 
               {isInitialLoading && <SkeletonList count={3} />}
 
               {!isInitialLoading && priorityTasks.length === 0 && (
-                <div className="rounded-[8px] bg-[#f9fafb] border border-[#e5e7eb] px-5 py-8 text-center">
-                  <p className="text-[14px] text-[#6b7280]">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-5 py-8 text-center">
+                  <p className="ds-body-sm">
                     {stats.total === 0 && !tasksLoading
                       ? 'No tasks yet. Ask your admin to sync Jira tasks.'
                       : 'No high-priority tasks right now.'}
@@ -286,15 +271,19 @@ export default function Dashboard() {
 
               <div className="flex flex-col gap-4">
                 {priorityTasks.map(task => (
-                  <div key={task.id} className="border border-[#e5e7eb] rounded-[8px] px-5 py-5">
+                  <div
+                    key={task.id}
+                    className="border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-5 py-5"
+                  >
                     <div className="flex items-start justify-between">
 
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {/* Completion checkbox */}
                         <button
                           onClick={() => toggleTask(task.id)}
                           className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 cursor-pointer transition-colors duration-200"
-                          style={{ background: task.done ? '#00c950' : '#e5e7eb' }}
+                          style={{
+                            background: task.done ? 'var(--color-success-500)' : 'var(--color-gray-200)',
+                          }}
                         >
                           {task.done && <CheckmarkIcon />}
                         </button>
@@ -302,18 +291,25 @@ export default function Dashboard() {
                         <div className="flex flex-col gap-2 min-w-0">
                           <div className="flex items-center gap-3 flex-wrap">
                             <DifficultyBadge level={task.difficulty} />
-                            <span className={`text-[16px] font-medium ${task.done ? 'line-through text-[#9ca3af]' : 'text-[#1f2937]'}`}>
+                            <span
+                              className={`text-[length:var(--text-h6)] font-medium ${
+                                task.done
+                                  ? 'line-through text-[color:var(--color-text-subtle)]'
+                                  : 'text-[color:var(--color-gray-800)]'
+                              }`}
+                            >
                               {task.title}
                             </span>
                           </div>
-                          <span className="text-[13px] text-[#6b7280]">Due {task.due}</span>
+                          <span className="ds-body-sm">Due {task.due}</span>
                         </div>
                       </div>
 
-                      {/* XP reward */}
                       <div className="flex items-center gap-1.5 shrink-0 ml-4">
-                        <StarIcon color="#942fcd" size={16} />
-                        <span className="text-[18px] font-semibold text-[#942fcd]">+{task.xp}XP</span>
+                        <StarIcon color="var(--color-brand)" size={16} />
+                        <span className="text-[length:var(--text-h4)] font-semibold text-[color:var(--color-brand)]">
+                          +{task.xp}XP
+                        </span>
                       </div>
 
                     </div>
@@ -321,21 +317,22 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* XP info banner */}
-              <div className="mt-6 border-t border-[#e5e7eb] pt-6">
-                <div className="bg-[#f9fafb] rounded-[8px] p-4">
-                  <p className="text-[13px] font-medium text-[#374151] mb-2">💡 How XP Works</p>
-                  <p className="text-[12px] text-[#6b7280] leading-relaxed">
-                    Complete tasks to earn XP based on difficulty. Easy = 20XP, Medium = 40XP, Hard = 70XP. Accumulate 1000 XP to level up and unlock new rewards.
+              <div className="mt-6 border-t border-[color:var(--color-border)] pt-6">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] p-4">
+                  <p className="text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-gray-700)] mb-2">
+                    💡 How XP Works
+                  </p>
+                  <p className="ds-caption leading-relaxed">
+                    Complete tasks to earn XP based on difficulty. Easy = 20XP, Medium = 40XP, Hard = 70XP.
+                    Accumulate 1000 XP to level up and unlock new rewards.
                   </p>
                 </div>
               </div>
 
             </div>
 
-            {/* XP History */}
-            <div className={`${CARD} p-6`}>
-              <h2 className="text-[18px] font-medium text-[#374151] mb-6">XP History</h2>
+            <div className="ds-card ds-card-pad">
+              <h2 className="ds-subsection-title mb-6">XP History</h2>
               <XPHistory
                 transactions={xpHistory}
                 isLoading={historyLoading}

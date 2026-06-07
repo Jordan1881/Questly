@@ -10,14 +10,14 @@
      COLORS — Primary (Purple)
   ---------------------------------------------------------- */
   --color-primary-50:  #FAF5FF;
-  --color-primary-100: #F3F4F6;
-  --color-primary-200: #E2CCF9;
-  --color-primary-300: #D4B5F5;
-  --color-primary-400: #CA9AF4;
-  --color-primary-500: #B565E4;
-  --color-primary-600: #942FCD;   /* ← main brand color */
-  --color-primary-700: #8527B8;
-  --color-primary-800: #7B23A8;
+  --color-primary-100: #E2CCF9;
+  --color-primary-200: #D4B5F5;
+  --color-primary-300: #CA9AF4;
+  --color-primary-400: #B565E4;
+  --color-primary-500: #942FCD;   /* ← main brand color (Figma Primary 500) */
+  --color-primary-600: #8527B8;
+  --color-primary-700: #7B23A8;
+  --color-primary-800: #641D8A;
   --color-primary-900: #4D166A;
 
   /* ----------------------------------------------------------
@@ -30,9 +30,9 @@
   --color-secondary-400: #2DD4BF;
   --color-secondary-500: #14B8A6;
   --color-secondary-600: #0D9488;
-  --color-secondary-700: #115E59;
+  --color-secondary-700: #0F766E;
   --color-secondary-800: #134E4A;
-  --color-secondary-900: #0F766E;
+  --color-secondary-900: #115E59;
 
   /* ----------------------------------------------------------
      COLORS — Success (Green)
@@ -87,13 +87,14 @@
   /* ----------------------------------------------------------
      SEMANTIC COLOR ALIASES
   ---------------------------------------------------------- */
-  --color-brand:            var(--color-primary-600);
-  --color-brand-hover:      var(--color-primary-700);
+  --color-brand:            var(--color-primary-500);
+  --color-brand-hover:      var(--color-primary-600);
   --color-brand-light:      var(--color-primary-400);
 
   --color-bg:               #FFFFFF;
   --color-bg-subtle:        var(--color-gray-50);
   --color-bg-muted:         var(--color-gray-100);
+  --color-bg-brand-subtle:  #F5EEFD;
 
   --color-text:             var(--color-gray-900);
   --color-text-muted:       var(--color-gray-500);
@@ -101,6 +102,8 @@
 
   --color-border:           var(--color-gray-200);
   --color-border-strong:    var(--color-gray-300);
+  --color-border-subtle:    rgba(0, 0, 0, 0.10);
+  --color-border-brand:     rgba(148, 47, 205, 0.20);
 
   /* ----------------------------------------------------------
      TYPOGRAPHY — Font Families
@@ -113,7 +116,7 @@
   ---------------------------------------------------------- */
   --text-h1:      48px;
   --text-h2:      36px;
-  --text-h3:      28px;
+  --text-h3:      30px;
   --text-h4:      24px;
   --text-h5:      20px;
   --text-h6:      16px;
@@ -137,7 +140,7 @@
   ---------------------------------------------------------- */
   --leading-h1:      56px;
   --leading-h2:      44px;
-  --leading-h3:      36px;
+  --leading-h3:      38px;
   --leading-h4:      32px;
   --leading-h5:      28px;
   --leading-h6:      24px;
@@ -163,6 +166,7 @@
   --radius-sm:   4px;
   --radius-md:   8px;
   --radius-lg:   12px;
+  --radius-card: 14px;
   --radius-full: 9999px;
 
   /* ----------------------------------------------------------
@@ -185,5 +189,5 @@
   --input-width:     256px;
 
   --card-padding:    24px;
-  --card-radius:     var(--radius-md);
+  --card-radius:     var(--radius-card);
 }
