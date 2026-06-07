@@ -8,6 +8,11 @@ const { notFound, errorHandler } = require('./middleware/errorHandler')
 function createApp() {
   const app = express()
 
+  if (process.env.NODE_ENV === 'production') {
+    const proxyHops = Number(process.env.TRUST_PROXY_HOPS)
+    app.set('trust proxy', Number.isFinite(proxyHops) && proxyHops > 0 ? proxyHops : 1)
+  }
+
   app.use(helmet())
   app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }))
   app.use(morgan('dev'))
