@@ -27,7 +27,6 @@ beforeEach(async () => {
 })
 
 afterAll(async () => {
-  nock.restore()
   await db.destroy()
 })
 
