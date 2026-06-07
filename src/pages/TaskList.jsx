@@ -147,7 +147,6 @@ export default function TaskList() {
   const tasks = useTaskStore((s) => s.tasks)
   const isLoading = useTaskStore((s) => s.isLoading)
   const error = useTaskStore((s) => s.error)
-  const lastSyncedAt = useTaskStore((s) => s.lastSyncedAt)
   const fetchTasks = useTaskStore((s) => s.fetchTasks)
   const toggleTaskCompletion = useTaskStore((s) => s.toggleTaskCompletion)
   const [showSidebar, setShowSidebar] = useState(false)
@@ -157,13 +156,11 @@ export default function TaskList() {
   const hasWorkspace = Boolean(user?.workspace_id)
   const jiraConnected = Boolean(user?.jira_connected)
   const syncLabel = isLoading
-    ? 'Syncing tasks…'
+    ? 'Loading tasks…'
     : error
-    ? 'Sync unavailable'
-    : lastSyncedAt
-    ? `Last synced ${new Date(lastSyncedAt).toLocaleTimeString()}`
+    ? 'Tasks unavailable'
     : jiraConnected
-    ? 'Ready to sync'
+    ? 'Synced from Jira'
     : 'Jira not connected'
 
   useEffect(() => {
