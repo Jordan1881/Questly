@@ -20,5 +20,8 @@ process.env.JIRA_ADMIN_API_TOKEN = 'test-token'
 
 // Block real outbound HTTP in tests; allow local Postgres/API only.
 const nock = require('nock')
+if (!nock.isActive()) {
+  nock.activate()
+}
 nock.disableNetConnect()
 nock.enableNetConnect(/^(127\.0\.0\.1|localhost)(:\d+)?$/)
