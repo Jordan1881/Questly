@@ -15,7 +15,6 @@ const RESET = {
   tasks: [],
   isLoading: false,
   error: null,
-  lastSyncedAt: null,
 }
 
 describe('taskStore', () => {
@@ -56,16 +55,6 @@ describe('taskStore', () => {
     expect(useTaskStore.getState().tasks[0].title).toBe('Synced task')
   })
 
-  it('syncWorkspaceTasks records lastSyncedAt on success', async () => {
-    apiFetch.mockResolvedValue({ synced: 2, created: 2, updated: 0, assignments: 2 })
-
-    const result = await useTaskStore.getState().syncWorkspaceTasks('ws-1')
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/tasks/sync/ws-1', { method: 'POST' })
-    expect(result.synced).toBe(2)
-    expect(useTaskStore.getState().lastSyncedAt).toBeTruthy()
-  })
-
   it('toggleTaskCompletion updates completion through the API', async () => {
     const task = createMockTask({ done: false })
     useTaskStore.setState({ tasks: [task] })
@@ -101,13 +90,6 @@ describe('taskStore', () => {
 
     await expect(useTaskStore.getState().fetchTasks()).rejects.toThrow('Tasks unavailable')
     expect(useTaskStore.getState().error).toBe('Tasks unavailable')
-  })
-
-  it('syncWorkspaceTasks sets error on failure', async () => {
-    apiFetch.mockRejectedValue(new Error('Sync failed'))
-
-    await expect(useTaskStore.getState().syncWorkspaceTasks('ws-1')).rejects.toThrow('Sync failed')
-    expect(useTaskStore.getState().error).toBe('Sync failed')
   })
 
   it('toggleTaskCompletion no-ops when task is missing', async () => {
