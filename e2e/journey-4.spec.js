@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { setupApprovedDeveloper, seedTask, signInViaUi } from './helpers/api.mjs'
+import { setupApprovedDeveloper, seedTask, signInViaUi, taskCardByTitle } from './helpers/api.mjs'
 
 const ts = Date.now()
 const PASSWORD = 'Password123!'
@@ -37,7 +37,7 @@ test('Journey 4 — admin creates sprint, closes sprint, developer sprint XP res
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 })
 
   await page.goto('/tasks')
-  const taskCard = page.locator('text=Sprint XP Task').locator('xpath=ancestor::div[contains(@class,"rounded")]').first()
+  const taskCard = taskCardByTitle(page, 'Sprint XP Task')
   await taskCard.getByRole('button', { name: /mark complete/i }).click()
   await expect(taskCard.getByRole('button', { name: /mark incomplete/i })).toBeVisible({ timeout: 10000 })
 

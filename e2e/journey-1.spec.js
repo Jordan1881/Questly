@@ -7,6 +7,7 @@ import {
   approveJoinRequest,
   seedTask,
   seedWorkspaceJira,
+  taskCardByTitle,
 } from './helpers/api.mjs'
 
 const ts = Date.now()
@@ -62,7 +63,7 @@ test('Journey 1 — join workspace, team Jira banner, complete task, XP on dashb
   await page.goto('/tasks')
   await expect(page.getByText('E2E Journey Task')).toBeVisible({ timeout: 10000 })
 
-  const taskCard = page.locator('text=E2E Journey Task').locator('xpath=ancestor::div[contains(@class,"rounded")]').first()
+  const taskCard = taskCardByTitle(page, 'E2E Journey Task')
   await taskCard.getByRole('button', { name: /mark complete/i }).click()
 
   await page.goto('/dashboard')
