@@ -72,9 +72,7 @@ export async function apiFetch(path, options = {}) {
       // non-JSON error body
     }
     if (skipSessionExpiry) {
-      const error = new ApiError(resolveErrorMessage(401, body), 401)
-      notifyApiError(error)
-      throw error
+      throw new ApiError(resolveErrorMessage(401, body), 401)
     }
     await logout({ sessionExpired: true })
     const sessionError = new ApiError('Session expired — please sign in again', 401)
@@ -90,7 +88,7 @@ export async function apiFetch(path, options = {}) {
       // non-JSON error body
     }
     const error = new ApiError(resolveErrorMessage(res.status, body), res.status)
-    notifyApiError(error)
+    if (!skipSessionExpiry) notifyApiError(error)
     throw error
   }
 
