@@ -128,12 +128,14 @@ export async function closeSprint(token, sprintId) {
   return sprint
 }
 
+export const SIGN_IN_EMAIL_PLACEHOLDER = 'Enter your email'
+
 /** Clear persisted auth and sign in via the login form. */
 export async function signInViaUi(page, { email, password, skipJira = false }) {
   await page.goto('/login')
   await page.evaluate(() => localStorage.clear())
   await page.reload()
-  await page.getByPlaceholder('Enter email or user name').fill(email)
+  await page.getByPlaceholder(SIGN_IN_EMAIL_PLACEHOLDER).fill(email)
   await page.getByPlaceholder('Password').fill(password)
   await page.getByRole('button', { name: /sign in/i }).click()
   if (skipJira) {

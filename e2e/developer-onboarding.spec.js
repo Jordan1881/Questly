@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { register, createWorkspace, seedWorkspaceJira } from './helpers/api.mjs'
+import { register, createWorkspace, seedWorkspaceJira, SIGN_IN_EMAIL_PLACEHOLDER } from './helpers/api.mjs'
 
 const PASSWORD = 'Password123!'
 
@@ -14,7 +14,7 @@ function uniqueEmails(label) {
 
 async function signInDeveloper(page, { email, password = PASSWORD }) {
   await page.goto('/login')
-  await page.getByPlaceholder('Enter email or user name').fill(email)
+  await page.getByPlaceholder(SIGN_IN_EMAIL_PLACEHOLDER).fill(email)
   await page.getByPlaceholder('Password').fill(password)
   await page.getByRole('button', { name: /sign in/i }).click()
   await page.getByRole('button', { name: /skip for now/i }).click({ timeout: 15000 })

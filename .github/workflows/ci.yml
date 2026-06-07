@@ -80,7 +80,7 @@ jobs:
           FRONTEND_URL: http://localhost:5173
 
       - name: Upload backend coverage
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: backend-coverage
           path: server/coverage/
@@ -106,7 +106,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload frontend coverage
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage
           path: coverage/
@@ -198,7 +198,7 @@ jobs:
 
       - name: Upload traces on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-traces
           path: playwright-report/
