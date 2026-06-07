@@ -28,6 +28,10 @@
     padding: var(--card-padding);
   }
 
+  .ds-card-pad-lg {
+    padding: var(--space-lg);
+  }
+
   .ds-page-title {
     font-size: var(--text-h3);
     line-height: var(--leading-h3);

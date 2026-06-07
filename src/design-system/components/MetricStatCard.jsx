@@ -28,9 +28,11 @@ export default function MetricStatCard({
     <div
       className={`${toneClass} border-2 flex flex-col items-center gap-3 px-1 py-6 rounded-[40px] shadow-[0px_4px_2px_rgba(0,0,0,0.25)] ${className}`}
     >
-      <div className={`${iconWrapClass} w-10 h-10 rounded-full flex items-center justify-center shrink-0`}>
-        {icon ?? <StarIcon color="var(--color-brand)" size={20} />}
-      </div>
+      {icon !== false && (
+        <div className={`${iconWrapClass} w-10 h-10 rounded-full flex items-center justify-center shrink-0`}>
+          {icon ?? <StarIcon color="var(--color-brand)" size={20} />}
+        </div>
+      )}
       <div className="flex flex-col items-center gap-1">
         <div className="flex items-baseline gap-1">
           <span className={`text-[32px] font-bold leading-[38px] ${valueClass}`}>{value}</span>
