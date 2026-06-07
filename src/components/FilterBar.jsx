@@ -22,49 +22,52 @@ export function filterTasks(tasks, { status = 'all', difficulty = 'all' } = {}) 
   })
 }
 
+const baseBtnClass =
+  'h-[41px] px-5 rounded-[var(--radius-md)] text-[length:var(--text-body)] cursor-pointer transition-all duration-200'
+
 export default function FilterBar({ statusFilter, difficultyFilter, onStatusChange, onDifficultyChange }) {
-  const activeStyle = {
-    background: '#942fcd',
-    color: 'white',
-    border: 'none',
-    boxShadow: '0px 2px 6px rgba(148,47,205,0.2)',
-  }
-
-  const inactiveStyle = {
-    background: 'white',
-    color: '#6b7280',
-    border: '1px solid #e5e7eb',
-  }
-
   return (
     <div className="flex items-center gap-3 mb-6 flex-wrap">
-      {STATUS_FILTERS.map((f) => (
-        <button
-          key={f.id}
-          type="button"
-          onClick={() => onStatusChange(f.id)}
-          className="h-[41px] px-5 rounded-[8px] text-[14px] cursor-pointer transition-all duration-200"
-          style={statusFilter === f.id ? activeStyle : inactiveStyle}
-        >
-          {f.label}
-        </button>
-      ))}
-      <div className="w-px h-6 bg-[#e5e7eb]" />
-      {DIFFICULTY_FILTERS.filter((f) => f.id !== 'all').map((f) => (
-        <button
-          key={f.id}
-          type="button"
-          onClick={() => onDifficultyChange(difficultyFilter === f.id ? 'all' : f.id)}
-          className="h-[41px] px-5 rounded-[8px] text-[14px] cursor-pointer transition-all duration-200"
-          style={
-            difficultyFilter === f.id
-              ? activeStyle
-              : { background: 'white', color: f.color, border: `1px solid ${f.border}` }
-          }
-        >
-          {f.label}
-        </button>
-      ))}
+      {STATUS_FILTERS.map((f) => {
+        const active = statusFilter === f.id
+        return (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => onStatusChange(f.id)}
+            className={`${baseBtnClass} ${
+              active
+                ? 'bg-[color:var(--color-brand)] text-white border-0 shadow-[var(--shadow-primary-sm)]'
+                : 'bg-[color:var(--color-bg)] text-[color:var(--color-text-muted)] border border-[color:var(--color-border-subtle)]'
+            }`}
+          >
+            {f.label}
+          </button>
+        )
+      })}
+      <div className="w-px h-6 bg-[color:var(--color-border)]" />
+      {DIFFICULTY_FILTERS.filter((f) => f.id !== 'all').map((f) => {
+        const active = difficultyFilter === f.id
+        return (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => onDifficultyChange(difficultyFilter === f.id ? 'all' : f.id)}
+            className={`${baseBtnClass} ${
+              active
+                ? 'bg-[color:var(--color-brand)] text-white border-0 shadow-[var(--shadow-primary-sm)]'
+                : 'bg-[color:var(--color-bg)] border'
+            }`}
+            style={
+              active
+                ? undefined
+                : { color: f.color, borderColor: f.border }
+            }
+          >
+            {f.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
