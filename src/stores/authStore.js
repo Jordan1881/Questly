@@ -1,17 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { apiFetch, ApiError } from '../lib/api'
 import { useXpStore } from './xpStore'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
-
-async function authFetch(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-  })
-  const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(body.error ?? `Request failed: ${res.status}`)
-  return body
+function authErrorMessage(err) {
+  return err instanceof ApiError || err instanceof Error ? err.message : 'Request failed'
 }
 
 export const useAuthStore = create(
@@ -31,18 +24,10 @@ export const useAuthStore = create(
       clearSessionExpired: () => set({ sessionExpired: false }),
 
       fetchMe: async () => {
-        const { token, logout } = get()
+        const { token } = get()
         if (!token) return null
         try {
-          const res = await fetch(`${API_BASE}/api/auth/me`, {
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          })
-          if (res.status === 401) {
-            logout({ sessionExpired: true })
-            return null
-          }
-          if (!res.ok) return null
-          const { user } = await res.json()
+          const { user } = await apiFetch('/api/auth/me')
           set({ user, userRole: user.role })
           useXpStore.getState().syncFromUser(user)
           return user
@@ -54,42 +39,42 @@ export const useAuthStore = create(
       login: async (credentials) => {
         set({ isLoading: true, error: null })
         try {
-          const { user, token } = await authFetch('/api/auth/login', {
+          const { user, token } = await apiFetch('/api/auth/login', {
             method: 'POST',
             body: JSON.stringify(credentials),
+            skipSessionExpiry: true,
           })
           set({ user, token, userRole: user.role, isLoggedIn: true, isLoading: false, error: null })
           useXpStore.getState().syncFromUser(user)
           return { ok: true }
         } catch (err) {
-          set({ isLoading: false, error: err.message })
-          return { ok: false, error: err.message }
+          set({ isLoading: false, error: authErrorMessage(err) })
+          return { ok: false, error: authErrorMessage(err) }
         }
       },
 
       register: async (formData) => {
         set({ isLoading: true, error: null })
         try {
-          const { user, token } = await authFetch('/api/auth/register', {
+          const { user, token } = await apiFetch('/api/auth/register', {
             method: 'POST',
             body: JSON.stringify(formData),
+            skipSessionExpiry: true,
           })
           set({ user, token, userRole: user.role, isLoggedIn: true, isLoading: false, error: null })
           useXpStore.getState().syncFromUser(user)
           return { ok: true }
         } catch (err) {
-          set({ isLoading: false, error: err.message })
-          return { ok: false, error: err.message }
+          set({ isLoading: false, error: authErrorMessage(err) })
+          return { ok: false, error: authErrorMessage(err) }
         }
       },
 
       logout: async ({ sessionExpired = false } = {}) => {
-        const { token } = get()
-        if (token) {
-          authFetch('/api/auth/logout', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => {})
+        try {
+          await apiFetch('/api/auth/logout', { method: 'POST' })
+        } catch {
+          // Best-effort server logout; local session is always cleared.
         }
         set({
           user: null,
@@ -104,20 +89,15 @@ export const useAuthStore = create(
       },
 
       startJiraOAuth: async (returnTo = '/dashboard') => {
-        const { token } = get()
         set({ isLoading: true, error: null })
         try {
           const params = new URLSearchParams({ return_to: returnTo })
-          const res = await fetch(`${API_BASE}/api/auth/jira/oauth/start?${params}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          const body = await res.json().catch(() => ({}))
-          if (!res.ok) throw new Error(body.error ?? `Request failed: ${res.status}`)
+          const body = await apiFetch(`/api/auth/jira/oauth/start?${params}`)
           window.location.assign(body.authorize_url)
           return { ok: true }
         } catch (err) {
-          set({ isLoading: false, error: err.message })
-          return { ok: false, error: err.message }
+          set({ isLoading: false, error: authErrorMessage(err) })
+          return { ok: false, error: authErrorMessage(err) }
         }
       },
 
@@ -125,47 +105,38 @@ export const useAuthStore = create(
         const { token } = get()
         if (!token) return { available: false }
         try {
-          const res = await fetch(`${API_BASE}/api/auth/jira/oauth/status`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          const body = await res.json().catch(() => ({}))
-          if (!res.ok) return { available: false }
-          return body
+          return await apiFetch('/api/auth/jira/oauth/status')
         } catch {
           return { available: false }
         }
       },
 
       connectJira: async (accessToken) => {
-        const { token } = get()
         set({ isLoading: true, error: null })
         try {
-          const { user } = await authFetch('/api/auth/me/jira/connect', {
+          const { user } = await apiFetch('/api/auth/me/jira/connect', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
             body: JSON.stringify({ access_token: accessToken }),
           })
           set({ user, isLoading: false })
           return { ok: true, user }
         } catch (err) {
-          set({ isLoading: false, error: err.message })
-          return { ok: false, error: err.message }
+          set({ isLoading: false, error: authErrorMessage(err) })
+          return { ok: false, error: authErrorMessage(err) }
         }
       },
 
       disconnectJira: async () => {
-        const { token } = get()
         set({ isLoading: true, error: null })
         try {
-          const { user } = await authFetch('/api/auth/me/jira/disconnect', {
+          const { user } = await apiFetch('/api/auth/me/jira/disconnect', {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
           })
           set({ user, isLoading: false })
           return { ok: true, user }
         } catch (err) {
-          set({ isLoading: false, error: err.message })
-          return { ok: false, error: err.message }
+          set({ isLoading: false, error: authErrorMessage(err) })
+          return { ok: false, error: authErrorMessage(err) }
         }
       },
     }),

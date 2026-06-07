@@ -13,7 +13,6 @@ export const useTaskStore = create((set, get) => ({
   tasks: [],
   isLoading: false,
   error: null,
-  lastSyncedAt: null,
 
   setTasks: (tasks) => set({ tasks }),
   updateTask: (id, patch) =>
@@ -27,18 +26,6 @@ export const useTaskStore = create((set, get) => ({
       const { tasks } = await apiFetch('/api/tasks')
       set({ tasks, isLoading: false })
       return tasks
-    } catch (err) {
-      set({ isLoading: false, error: err.message })
-      throw err
-    }
-  },
-
-  syncWorkspaceTasks: async (workspaceId) => {
-    set({ isLoading: true, error: null })
-    try {
-      const result = await apiFetch(`/api/tasks/sync/${workspaceId}`, { method: 'POST' })
-      set({ lastSyncedAt: new Date().toISOString(), isLoading: false })
-      return result
     } catch (err) {
       set({ isLoading: false, error: err.message })
       throw err
