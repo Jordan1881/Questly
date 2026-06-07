@@ -26,7 +26,7 @@ test('Journey 5 — assignee sync adds task; remove assignee drops uncompleted a
   })
 
   await page.goto('/login')
-  await page.getByPlaceholder('Enter email or user name').fill(DEV_EMAIL)
+  await page.getByPlaceholder('Enter your email').fill(DEV_EMAIL)
   await page.getByPlaceholder('Password').fill(PASSWORD)
   await page.getByRole('button', { name: /sign in/i }).click()
   await page.getByRole('button', { name: /skip for now/i }).click({ timeout: 15000 })
