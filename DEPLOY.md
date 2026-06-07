@@ -183,6 +183,81 @@ Vite bakes `VITE_*` at build time — a redeploy is required after changing this
 
 ---
 
+## 5. Security (recommended)
+
+Questly uses layered defenses: edge protection (Cloudflare), app middleware (helmet, CORS, rate limits), and dependency scanning (Dependabot + CI audit).
+
+### Step 1 — Cloudflare Free (frontend + API)
+
+Use Cloudflare in front of **both** the Vercel frontend and the Railway API so traffic is filtered before it reaches your app.
+
+**If you use a custom domain (recommended):**
+
+1. Add your domain to [Cloudflare](https://dash.cloudflare.com) and point nameservers to Cloudflare.
+2. Create DNS records with the **proxy enabled** (orange cloud):
+   - `www` or `@` → CNAME to `cname.vercel-dns.com` (Vercel custom domain docs)
+   - `api` → CNAME to your Railway public hostname (or Railway custom domain target)
+3. In Cloudflare **SSL/TLS** → set mode to **Full (strict)**.
+4. In **Security → Bots** → enable **Bot Fight Mode**.
+5. Optional **Security → WAF → Firewall rules**:
+   - Rate-limit or challenge repeated `POST` to `/api/auth/login` and `/api/auth/register` from the same IP.
+
+**Vercel:** add the same custom domain in Vercel project settings (Vercel will verify via Cloudflare DNS).
+
+**Railway:** add custom domain on the Questly API service; update env vars if URLs change:
+
+| Variable | Example |
+|----------|---------|
+| `FRONTEND_URL` | `https://www.yourdomain.com` |
+| `VITE_API_URL` (Vercel) | `https://api.yourdomain.com` |
+| `API_PUBLIC_URL` | `https://api.yourdomain.com` |
+| OAuth callback URLs | `https://api.yourdomain.com/api/auth/jira/oauth/callback` (and workspace callback) |
+
+**Rate limiting behind Cloudflare:** set on the Railway Questly service:
+
+```text
+TRUST_PROXY_HOPS=2
+```
+
+(`1` = Railway only, `2` = Cloudflare + Railway — needed for correct client IPs in rate limits.)
+
+**Without a custom domain:** you can still proxy a subdomain you control; the default `*.vercel.app` / `*.up.railway.app` hostnames are harder to put fully behind Cloudflare. Custom domain is the cleanest production setup.
+
+### Step 2 — Auth rate limits (built in)
+
+The API throttles abuse-prone routes:
+
+| Route | Default limit |
+|-------|----------------|
+| `POST /api/auth/login` | 10 requests / 15 min / IP |
+| `POST /api/auth/register` | 5 requests / hour / IP |
+| `POST /api/auth/me/jira/connect` | 10 requests / 15 min / IP |
+
+Override via env: `RATE_LIMIT_LOGIN_MAX`, `RATE_LIMIT_REGISTER_MAX`, `RATE_LIMIT_JIRA_CONNECT_MAX`.
+
+### Step 3 — App hardening (already in codebase)
+
+| Control | Where |
+|---------|--------|
+| Security headers | `helmet()` in `server/app.js` |
+| CORS | Only `FRONTEND_URL` origin in production |
+| SQL injection | Knex parameterized queries (no string-concat SQL) |
+| JWT | `JWT_SECRET` required in production |
+
+### Step 4 — Supply chain
+
+- **Dependabot** (`.github/dependabot.yml`) — weekly npm update PRs for frontend and `server/`.
+- **CI audit** — `npm audit --audit-level=high` on every push/PR (`--omit=dev` for frontend prod deps; full audit for `server/`). Fails on high/critical issues in scanned trees.
+
+Locally:
+
+```bash
+npm audit
+npm audit --prefix server
+```
+
+---
+
 ## Architecture
 
 ```

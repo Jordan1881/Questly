@@ -40,6 +40,10 @@ jobs:
         run: npm ci
         working-directory: server
 
+      - name: Audit backend dependencies
+        run: npm audit --audit-level=high
+        working-directory: server
+
       - name: Create test database
         run: psql -h localhost -U postgres -c "CREATE DATABASE questly_test;"
         env:
@@ -101,6 +105,9 @@ jobs:
 
       - name: Install frontend deps
         run: npm ci
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high --omit=dev
 
       - name: Run frontend tests with coverage
         run: npm run test:coverage
