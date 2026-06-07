@@ -11,7 +11,7 @@ export default function TeamJiraBanner({ user }) {
 
   if (!teamJiraReady) {
     return (
-      <div className="mb-6 rounded-[10px] border border-[#fde68a] bg-[#fffbeb] px-4 py-3 text-[13px] text-[#92400e]">
+      <div className="mb-6 rounded-[10px] border border-[color:var(--color-warning-200)] bg-[color:var(--color-warning-50)] px-4 py-3 text-[length:var(--text-body-sm)] text-[color:var(--color-warning-700)]">
         Your admin has not connected team Jira yet. You will be able to link your Jira account
         after they connect Jira in Admin.
       </div>
@@ -21,9 +21,9 @@ export default function TeamJiraBanner({ user }) {
   const hostLabel = teamHost || siteUrl || 'your team Jira site'
 
   return (
-    <div className="mb-6 rounded-[10px] border border-[#e9d5ff] bg-[#f5eefd] px-4 py-3 text-[13px] text-[#5b21b6]">
+    <div className="mb-6 rounded-[10px] border border-[color:var(--color-border-brand)] bg-[color:var(--color-bg-brand-subtle)] px-4 py-3 text-[length:var(--text-body-sm)] text-[color:var(--color-primary-900)]">
       Your team uses <strong>{hostLabel}</strong> —{' '}
-      <Link to="/profile" className="font-semibold text-[#942fcd] hover:underline">
+      <Link to="/profile" className="font-semibold text-[color:var(--color-brand)] hover:underline">
         connect your Jira account on Profile
       </Link>{' '}
       to receive assigned tasks.

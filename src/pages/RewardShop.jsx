@@ -10,8 +10,6 @@ import { useRewardStore } from '../stores/rewardStore'
 import { useToastStore } from '../stores/toastStore'
 import { SkeletonRewardGrid } from '../components/Skeleton'
 
-const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
-
 export default function RewardShop() {
   const user = useAuthStore((s) => s.user)
   const userXp = useXpStore((s) => s.userXP)
@@ -51,7 +49,7 @@ export default function RewardShop() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9fafb]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="ds-page">
       {selectedReward && (
         <PurchaseConfirm
           reward={selectedReward}
@@ -65,48 +63,49 @@ export default function RewardShop() {
       <Sidebar isOpen={showSidebar} onClose={() => setShowSidebar(false)} />
       <PageHeader onOpenSidebar={() => setShowSidebar(true)} />
 
-      <main className="px-12 py-9">
+      <main className="ds-page-main">
         <div className="flex flex-col gap-6 max-w-6xl">
           <div>
-            <h1 className="text-[32px] font-semibold text-[#1f2937] leading-tight">Reward Shop</h1>
-            <p className="text-[15px] text-[#6b7280] mt-1">Spend sprint XP on workspace rewards</p>
+            <h1 className="ds-page-title">Reward Shop</h1>
+            <p className="ds-body mt-1">Spend sprint XP on workspace rewards</p>
           </div>
 
-          <div className={`${CARD} p-8 flex items-center justify-between`}>
+          <div className="ds-card ds-card-pad-lg flex items-center justify-between">
             <div>
-              <p className="text-[14px] font-medium text-[#6b7280] mb-2">Your sprint XP</p>
-              <span className="text-[48px] font-bold leading-none text-[#942fcd]">{userXp}</span>
+              <p className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-500)] mb-2">
+                Your sprint XP
+              </p>
+              <span className="text-[length:var(--text-h2)] font-bold leading-none text-[color:var(--color-brand)]">
+                {userXp}
+              </span>
             </div>
-            <div
-              className="w-16 h-16 rounded-[12px] flex items-center justify-center"
-              style={{ background: 'linear-gradient(to bottom, #942fcd, #ca9af4)' }}
-            >
-              <StarIcon />
+            <div className="w-16 h-16 rounded-[var(--radius-lg)] flex items-center justify-center ds-brand-gradient shadow-[var(--shadow-primary-sm)]">
+              <StarIcon color="white" size={28} />
             </div>
           </div>
 
           {error && (
-            <div className="flex items-center justify-between rounded-[8px] border border-[#fecaca] bg-[#fef2f2] px-4 py-3">
-              <p className="text-[14px] text-[#b91c1c]">{error}</p>
+            <div className="flex items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--color-error-200)] bg-[color:var(--color-error-50)] px-4 py-3">
+              <p className="ds-body text-[color:var(--color-error-700)]">{error}</p>
               <button
                 type="button"
                 onClick={handleRetry}
-                className="text-[13px] font-medium text-[#942fcd] hover:underline cursor-pointer"
+                className="text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-brand)] hover:underline cursor-pointer"
               >
                 Retry
               </button>
             </div>
           )}
           {!workspaceId && (
-            <p className="text-[14px] text-[#6b7280]">Join a workspace to browse rewards.</p>
+            <p className="ds-body">Join a workspace to browse rewards.</p>
           )}
 
           {isLoading && <SkeletonRewardGrid count={4} />}
 
           {!isLoading && workspaceId && rewards.length === 0 && (
-            <div className={`${CARD} p-10 text-center`}>
-              <p className="text-[16px] font-medium text-[#374151]">No rewards available yet</p>
-              <p className="text-[14px] text-[#6b7280] mt-2">
+            <div className="ds-card ds-card-pad py-10 text-center">
+              <p className="ds-subsection-title">No rewards available yet</p>
+              <p className="ds-body mt-2">
                 Your admin can add rewards from the Admin panel.
               </p>
             </div>

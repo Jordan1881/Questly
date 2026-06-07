@@ -130,6 +130,14 @@ export async function closeSprint(token, sprintId) {
 
 export const SIGN_IN_EMAIL_PLACEHOLDER = 'Enter your email'
 
+/** Locate a TaskCard root by task title (matches ds-card wrapper from design-system). */
+export function taskCardByTitle(page, title) {
+  return page
+    .getByRole('heading', { name: title, exact: true })
+    .locator('xpath=ancestor::div[contains(@class,"ds-card")]')
+    .first()
+}
+
 /** Clear persisted auth and sign in via the login form. */
 export async function signInViaUi(page, { email, password, skipJira = false }) {
   await page.goto('/login')
