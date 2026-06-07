@@ -50,7 +50,7 @@ test('Journey 1 — join workspace, team Jira banner, complete task, XP on dashb
   })
 
   await page.goto('/login')
-  await page.getByPlaceholder('Enter email or user name').fill(DEV_EMAIL)
+  await page.getByPlaceholder('Enter your email').fill(DEV_EMAIL)
   await page.getByPlaceholder('Password').fill(PASSWORD)
   await page.getByRole('button', { name: /sign in/i }).click()
   await page.getByRole('button', { name: /skip for now/i }).click({ timeout: 15000 })
