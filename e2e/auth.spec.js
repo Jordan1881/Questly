@@ -27,7 +27,7 @@ test('sign-up page renders role toggle and form fields', async ({ page }) => {
 
 test('sign-in shows error banner on wrong credentials', async ({ page }) => {
   await page.goto('/login')
-  await page.getByPlaceholder('Enter email or user name').fill('nobody@nowhere.com')
+  await page.getByPlaceholder('Enter your email').fill('nobody@nowhere.com')
   await page.getByPlaceholder('Password').fill('wrongpassword')
   await page.getByRole('button', { name: /sign in/i }).click()
   await expect(page.getByText('Invalid credentials')).toBeVisible({ timeout: 8000 })
