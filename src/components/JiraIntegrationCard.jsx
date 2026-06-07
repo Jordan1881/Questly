@@ -81,19 +81,19 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
   const statusLabel = isConnected ? 'Connected' : hasWorkspace ? 'Not connected' : 'Awaiting team'
 
   return (
-    <div className="p-4 bg-[#f8faff] rounded-[10px] border border-[#dbeafe] mb-4">
+    <div className="p-4 bg-[color:var(--color-bg-brand-subtle)] rounded-[10px] border border-[color:var(--color-border-brand)] mb-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <img src={jiraLogo} alt="Jira" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-          <span className="text-[13px] font-medium text-[#1f2937]">Jira Integration</span>
+          <span className="text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-gray-800)]">Jira Integration</span>
         </div>
         <span
-          className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-[6px] ${
+          className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-[var(--radius-md)] ${
             isConnected
-              ? 'bg-[#d1fae5] text-[#059669]'
+              ? 'bg-[color:var(--color-success-100)] text-[color:var(--color-success-600)]'
               : hasWorkspace
-                ? 'bg-[#f3f4f6] text-[#6b7280]'
-                : 'bg-[#fef3c7] text-[#d97706]'
+                ? 'bg-[color:var(--color-gray-100)] text-[color:var(--color-gray-500)]'
+                : 'bg-[color:var(--color-warning-100)] text-[color:var(--color-warning-600)]'
           }`}
         >
           {isConnected && <CheckIcon />}
@@ -104,7 +104,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
       {message && (
         <p
           className={`text-[11px] mb-2 ${
-            message.type === 'success' ? 'text-[#059669]' : 'text-[#ef4444]'
+            message.type === 'success' ? 'text-[color:var(--color-success-600)]' : 'text-[color:var(--color-error-500)]'
           }`}
         >
           {message.text}
@@ -113,14 +113,14 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
 
       {showConnectForm && !hasWorkspace && (
         <div className="flex flex-col gap-2 mt-2">
-          <p className="text-[12px] text-[#6b7280] leading-relaxed">{NO_WORKSPACE_COPY}</p>
-          <p className="text-[11px] text-[#9ca3af]">
+          <p className="text-[length:var(--text-caption)] text-[color:var(--color-gray-500)] leading-relaxed">{NO_WORKSPACE_COPY}</p>
+          <p className="text-[11px] text-[color:var(--color-gray-400)]">
             Jira links your Atlassian identity to assigned tasks. You can set it up on Profile after
             your admin approves you.
           </p>
           <Link
             to="/workspace/join"
-            className="self-start text-[12px] font-semibold text-[#942fcd] hover:underline"
+            className="self-start text-[length:var(--text-caption)] font-semibold text-[color:var(--color-brand)] hover:underline"
           >
             Join a workspace
           </Link>
@@ -128,7 +128,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
       )}
 
       {showConnectForm && hasWorkspace && !teamJiraReady && !isConnected && (
-        <p className="text-[12px] text-[#6b7280] mt-2 leading-relaxed">
+        <p className="text-[length:var(--text-caption)] text-[color:var(--color-gray-500)] mt-2 leading-relaxed">
           Your admin has not connected team Jira yet. You can link your personal Jira account
           after they set up Jira sync in Admin.
         </p>
@@ -136,7 +136,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
 
       {showConnectForm && hasWorkspace && teamJiraReady && !isConnected && (
         <div className="flex flex-col gap-2 mt-2">
-          <p className="text-[11px] text-[#6b7280]">
+          <p className="text-[11px] text-[color:var(--color-gray-500)]">
             Connect your Jira account to receive tasks assigned to you in Questly.
             {teamHost ? (
               <>
@@ -151,8 +151,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
               type="button"
               onClick={handleOAuthConnect}
               disabled={isLoading}
-              className="self-start px-3 py-1.5 rounded-[6px] text-[12px] font-semibold text-white cursor-pointer disabled:opacity-60"
-              style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+              className="self-start px-3 py-1.5 rounded-[var(--radius-md)] text-[length:var(--text-caption)] font-semibold text-white cursor-pointer disabled:opacity-60 ds-brand-gradient"
             >
               {isLoading ? 'Redirecting…' : 'Connect with Jira'}
             </button>
@@ -162,7 +161,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
             <button
               type="button"
               onClick={() => setShowManual(true)}
-              className="self-start text-[11px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+              className="self-start text-[11px] text-[color:var(--color-gray-500)] hover:text-[color:var(--color-gray-700)] cursor-pointer"
             >
               Advanced: use API token
             </button>
@@ -174,7 +173,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
                 <button
                   type="button"
                   onClick={() => setShowManual(false)}
-                  className="self-start text-[11px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+                  className="self-start text-[11px] text-[color:var(--color-gray-500)] hover:text-[color:var(--color-gray-700)] cursor-pointer"
                 >
                   Back to OAuth
                 </button>
@@ -184,21 +183,20 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
                 value={accessToken}
                 onChange={(e) => setAccessToken(e.target.value)}
                 placeholder="Jira API token"
-                className="w-full px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[12px] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30"
+                className="w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-caption)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand)]/30"
               />
               <a
                 href={ATLASSIAN_TOKEN_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] text-[#942fcd] hover:underline"
+                className="text-[11px] text-[color:var(--color-brand)] hover:underline"
               >
                 Create an API token at Atlassian
               </a>
               <button
                 type="submit"
                 disabled={isLoading || !accessToken.trim()}
-                className="self-start px-3 py-1.5 rounded-[6px] text-[12px] font-semibold text-white cursor-pointer disabled:opacity-60"
-                style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+                className="self-start px-3 py-1.5 rounded-[var(--radius-md)] text-[length:var(--text-caption)] font-semibold text-white cursor-pointer disabled:opacity-60 ds-brand-gradient"
               >
                 {isLoading ? 'Connecting…' : 'Connect with token'}
               </button>
@@ -212,14 +210,14 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
           type="button"
           onClick={handleDisconnect}
           disabled={isLoading}
-          className="mt-2 text-[11px] font-semibold text-[#ef4444] cursor-pointer disabled:opacity-60"
+          className="mt-2 text-[11px] font-semibold text-[color:var(--color-error-500)] cursor-pointer disabled:opacity-60"
         >
           Disconnect Jira
         </button>
       )}
 
       {!showConnectForm && (
-        <p className="text-[11px] text-[#9ca3af]">
+        <p className="text-[11px] text-[color:var(--color-gray-400)]">
           Manage team Jira sync in the Admin panel.
         </p>
       )}
