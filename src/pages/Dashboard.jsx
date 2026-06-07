@@ -14,6 +14,7 @@ import SprintStatusWidget from '../components/SprintStatusWidget'
 import { useXP } from '../hooks/useXP'
 import XPHistory from '../components/XPHistory'
 import { SkeletonCard, SkeletonList } from '../components/Skeleton'
+import MetricStatCard from '../design-system/components/MetricStatCard'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -30,10 +31,14 @@ const CheckCircleIcon = () => (
   </svg>
 )
 
-const LightningBoltIcon = ({ size = 24 }) => (
+const LightningBoltIcon = ({ size = 20 }) => (
   <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-    <path d="M13 2L4 13.5h7l-1 8.5 10-13H13L14 2z" fill="white" />
+    <path d="M13 2L4 13.5h7l-1 8.5 10-13H13L14 2z" fill="var(--color-warning-500)" />
   </svg>
+)
+
+const QuestCountIcon = ({ count = 0 }) => (
+  <span className="text-[length:var(--text-h6)] font-bold text-[color:var(--color-brand)]">{count}</span>
 )
 
 // ── Sub-components ──────────────────────────────────────────
@@ -234,37 +239,19 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-
-              <div className="ds-card ds-card-pad">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 ds-warning-gradient">
-                    <LightningBoltIcon size={24} />
-                  </div>
-                  <span className="ds-subsection-title">Tasking Streak</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[40px] font-bold text-[color:var(--color-gray-800)] leading-tight">
-                    {streakDays}
-                  </span>
-                  <span className="text-[length:var(--text-h6)] text-[color:var(--color-text-muted)]">days</span>
-                </div>
-              </div>
-
-              <div className="ds-card ds-card-pad">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 ds-brand-gradient">
-                    <span className="text-white text-[18px] font-bold">{stats.total}</span>
-                  </div>
-                  <span className="ds-subsection-title">Active Quests</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[40px] font-bold text-[color:var(--color-gray-800)] leading-tight">
-                    {stats.completed}
-                  </span>
-                  <span className="text-[length:var(--text-h6)] text-[color:var(--color-text-muted)]">completed</span>
-                </div>
-              </div>
-
+              <MetricStatCard
+                value={streakDays}
+                suffix="days"
+                label="Tasking Streak"
+                tone="warning"
+                icon={<LightningBoltIcon />}
+              />
+              <MetricStatCard
+                value={stats.completed}
+                suffix={`/ ${stats.total}`}
+                label="Active Quests completed"
+                icon={<QuestCountIcon count={stats.total} />}
+              />
             </div>
 
             <div className="ds-card ds-card-pad">
