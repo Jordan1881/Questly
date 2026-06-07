@@ -34,7 +34,7 @@ beforeEach(async () => {
 })
 
 afterAll(async () => {
-  nock.restore()
+  nock.cleanAll()
   await db.destroy()
 })
 
