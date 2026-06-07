@@ -73,6 +73,7 @@ describe('authStore', () => {
     expect(result.ok).toBe(false)
     expect(useAuthStore.getState().isLoggedIn).toBe(false)
     expect(useAuthStore.getState().error).toBeTruthy()
+    expect(useAuthStore.getState().sessionExpired).toBe(false)
   })
 
   // ── register ─────────────────────────────────────────────────────────────────
