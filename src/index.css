@@ -2,6 +2,84 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Nabla&family=Poppins:wght@400;500;600;700&display=swap');
 @import './design-system/tokens.css';
 
+@layer components {
+  .ds-page {
+    min-height: 100vh;
+    background: var(--color-bg-subtle);
+    font-family: var(--font-heading);
+  }
+
+  .ds-page-main {
+    padding: var(--space-lg) var(--space-2xl);
+  }
+
+  .ds-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .ds-card-pad-sm {
+    padding: var(--space-sm);
+  }
+
+  .ds-card-pad {
+    padding: var(--card-padding);
+  }
+
+  .ds-page-title {
+    font-size: var(--text-h3);
+    line-height: var(--leading-h3);
+    font-weight: var(--weight-semibold);
+    color: var(--color-gray-800);
+  }
+
+  .ds-section-title {
+    font-size: var(--text-h5);
+    line-height: var(--leading-h5);
+    font-weight: var(--weight-semibold);
+    color: var(--color-gray-800);
+  }
+
+  .ds-subsection-title {
+    font-size: var(--text-h6);
+    line-height: var(--leading-h6);
+    font-weight: var(--weight-medium);
+    color: var(--color-gray-700);
+  }
+
+  .ds-body {
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    color: var(--color-gray-600);
+  }
+
+  .ds-body-sm {
+    font-size: var(--text-body-sm);
+    line-height: var(--leading-body-sm);
+    color: var(--color-text-muted);
+  }
+
+  .ds-caption {
+    font-size: var(--text-caption);
+    line-height: var(--leading-caption);
+    color: var(--color-text-muted);
+  }
+
+  .ds-brand-gradient {
+    background: linear-gradient(to bottom, var(--color-primary-600), var(--color-primary-500));
+  }
+
+  .ds-progress-gradient {
+    background: linear-gradient(to bottom, var(--color-primary-600), var(--color-primary-400));
+  }
+
+  .ds-warning-gradient {
+    background: linear-gradient(to bottom, var(--color-warning-400), var(--color-warning-500));
+  }
+}
+
 @keyframes heroFadeUp {
   from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
