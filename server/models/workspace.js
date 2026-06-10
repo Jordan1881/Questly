@@ -4,7 +4,7 @@ const { encryptToken, decryptWorkspaceTokens } = require('../lib/jiraTokenCrypto
 
 const TABLE = 'workspaces'
 const CODE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-const PATCHABLE_FIELDS = ['name', 'jira_project_key', 'jira_site_url']
+const PATCHABLE_FIELDS = ['name', 'jira_project_key', 'jira_site_url', 'require_xp_approval']
 
 function randomCode(length = 8) {
   let code = ''

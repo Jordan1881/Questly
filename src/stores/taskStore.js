@@ -38,7 +38,16 @@ export const useTaskStore = create((set, get) => ({
 
     const completed = !task.done
     set((s) => ({
-      tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: completed } : t)),
+      tasks: s.tasks.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              done: completed,
+              xpPending: completed ? t.xpPending : false,
+              xpPendingAmount: completed ? t.xpPendingAmount : null,
+            }
+          : t,
+      ),
     }))
 
     const prevLifetime = useAuthStore.getState().user?.lifetime_xp ?? 0
@@ -56,7 +65,11 @@ export const useTaskStore = create((set, get) => ({
         const currentUser = useAuthStore.getState().user
         useAuthStore.setState({ user: { ...currentUser, ...user } })
 
-        if (completed && reward?.xpDelta > 0) {
+        if (completed && reward?.pending) {
+          useToastStore.getState().showSuccess(`+${reward.pendingXp} XP pending approval`)
+        } else if (reward?.pendingCancelled) {
+          useToastStore.getState().showSuccess('XP approval request cancelled')
+        } else if (completed && reward?.xpDelta > 0) {
           useToastStore.getState().showSuccess(`+${reward.xpDelta} XP`)
           const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
           const oldLevel = levelFromLifetime(prevLifetime)
@@ -68,7 +81,7 @@ export const useTaskStore = create((set, get) => ({
       return { task: updated, user, reward }
     } catch (err) {
       set((s) => ({
-        tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: task.done } : t)),
+        tasks: s.tasks.map((t) => (t.id === id ? task : t)),
         error: err.message,
       }))
       throw err

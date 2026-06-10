@@ -6,6 +6,7 @@ export const useWorkspaceStore = create((set) => ({
   joinRequest: null,
   members: [],
   pendingJoinRequests: [],
+  pendingXpApprovals: [],
   lastJiraSyncAt: null,
   lastJiraSyncResult: null,
   isLoading: false,
@@ -89,6 +90,47 @@ export const useWorkspaceStore = create((set) => ({
       set({ isLoading: false, error: err.message })
       throw err
     }
+  },
+
+  updateWorkspaceSettings: async (workspaceId, patch) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { workspace } = await apiFetch(`/api/workspaces/${workspaceId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      })
+      set({ workspace, isLoading: false })
+      return workspace
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
+
+  fetchPendingXpApprovals: async (workspaceId) => {
+    set({ isLoading: true, error: null })
+    try {
+      const { xp_approval_requests } = await apiFetch(`/api/workspaces/${workspaceId}/xp-approvals`)
+      set({ pendingXpApprovals: xp_approval_requests, isLoading: false })
+      return xp_approval_requests
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
+
+  reviewXpApproval: async (workspaceId, requestId, status) => {
+    const { xp_approval_request } = await apiFetch(
+      `/api/workspaces/${workspaceId}/xp-approvals/${requestId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      },
+    )
+    set((state) => ({
+      pendingXpApprovals: state.pendingXpApprovals.filter((r) => r.id !== requestId),
+    }))
+    return xp_approval_request
   },
 
   reviewJoinRequest: async (workspaceId, requestId, status) => {

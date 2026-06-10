@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { useAuthStore } from '../stores/authStore'
 import JoinRequestsTab from '../components/JoinRequestsTab'
+import XpApprovalsTab from '../components/XpApprovalsTab'
 import WorkspaceInviteCode from '../components/WorkspaceInviteCode'
 import JiraSyncTab from '../components/JiraSyncTab'
 import SprintManagementTab from '../components/SprintManagementTab'
@@ -233,14 +234,31 @@ function TeamTab({ developers }) {
 // ── XP Settings Tab ───────────────────────────────────────
 
 function XPSettingsTab() {
+  const workspace = useWorkspaceStore((s) => s.workspace)
+  const fetchMine = useWorkspaceStore((s) => s.fetchMine)
+  const updateWorkspaceSettings = useWorkspaceStore((s) => s.updateWorkspaceSettings)
+  const isLoading = useWorkspaceStore((s) => s.isLoading)
   const [settings, setSettings] = useState({ easy: 50, medium: 100, hard: 200, rate: 10 })
+  const [requireXpApproval, setRequireXpApproval] = useState(false)
   const [toast, setToast] = useState(false)
+
+  useEffect(() => {
+    fetchMine()
+      .then((ws) => setRequireXpApproval(Boolean(ws?.require_xp_approval)))
+      .catch(() => {})
+  }, [fetchMine])
 
   const update = (key, val) => setSettings(s => ({ ...s, [key]: Number(val) || 0 }))
 
-  const save = () => {
-    setToast(true)
-    setTimeout(() => setToast(false), 3000)
+  const save = async () => {
+    if (!workspace?.id) return
+    try {
+      await updateWorkspaceSettings(workspace.id, { require_xp_approval: requireXpApproval })
+      setToast(true)
+      setTimeout(() => setToast(false), 3000)
+    } catch {
+      // error surfaced via store
+    }
   }
 
   const INPUT = 'w-24 h-10 border border-[#e5e7eb] rounded-[8px] px-3 text-[14px] font-medium text-[#1f2937] text-right focus:outline-none focus:border-[#942fcd] transition-colors'
@@ -253,15 +271,34 @@ function XPSettingsTab() {
           style={{ background: '#d1fae5', border: '1px solid #a7f3d0', animation: 'fadeInDown 0.3s ease' }}
         >
           <CheckIcon />
-          XP settings saved successfully!
+          XP verification settings saved!
         </div>
       )}
+
+      <div className={`${CARD} p-6 flex flex-col gap-6 mb-6`}>
+        <div>
+          <h3 className="text-[15px] font-semibold text-[#1f2937] mb-1">XP verification</h3>
+          <p className="text-[13px] text-[#6b7280]">
+            When enabled, developers submit completed tasks for your approval before XP and coins are awarded.
+          </p>
+        </div>
+
+        <label className="flex items-center justify-between gap-4 cursor-pointer">
+          <span className="text-[14px] font-medium text-[#374151]">Require admin approval for task XP</span>
+          <input
+            type="checkbox"
+            checked={requireXpApproval}
+            onChange={(e) => setRequireXpApproval(e.target.checked)}
+            className="w-5 h-5 accent-[#942fcd] cursor-pointer"
+          />
+        </label>
+      </div>
 
       <div className={`${CARD} p-6 flex flex-col gap-6`}>
 
         <div>
           <h3 className="text-[15px] font-semibold text-[#1f2937] mb-1">Task XP Rewards</h3>
-          <p className="text-[13px] text-[#6b7280]">Set the XP earned when completing tasks of each difficulty</p>
+          <p className="text-[13px] text-[#6b7280]">XP values come from Jira story points during sync (display only)</p>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -293,37 +330,20 @@ function XPSettingsTab() {
 
         <div className="pt-4 border-t border-[#f3f4f6]">
           <h3 className="text-[15px] font-semibold text-[#1f2937] mb-1">XP → Coins Conversion</h3>
-          <p className="text-[13px] text-[#6b7280] mb-4">Coins are automatically awarded alongside XP at this rate</p>
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[13px] text-[#374151]">Every</span>
-            <input
-              type="number"
-              value={100}
-              readOnly
-              className="w-20 h-10 border border-[#e5e7eb] rounded-[8px] px-3 text-[14px] font-medium text-[#6b7280] text-right bg-[#f9fafb]"
-            />
-            <span className="text-[13px] text-[#374151]">XP earned =</span>
-            <input
-              type="number"
-              value={settings.rate}
-              onChange={e => update('rate', e.target.value)}
-              className={INPUT}
-              min={0}
-            />
-            <span className="text-[13px] text-[#6b7280]">Coins</span>
-          </div>
-          <p className="text-[12px] text-[#9ca3af] mt-2">
-            Current rate: 1 XP = {(settings.rate / 100).toFixed(2)} Coins
+          <p className="text-[13px] text-[#6b7280] mb-2">
+            Coins are awarded with approved XP at <strong>10 XP = 1 Coin</strong> (e.g. 170 XP → 17 Coins).
           </p>
         </div>
 
         <button
+          type="button"
           onClick={save}
-          className="flex items-center justify-center gap-2 w-full h-11 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity"
+          disabled={isLoading}
+          className="flex items-center justify-center gap-2 w-full h-11 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60"
           style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)', boxShadow: '0px 4px 12px rgba(148,47,205,0.3)' }}
         >
           <SaveIcon />
-          Save Changes
+          {isLoading ? 'Saving…' : 'Save Verification Setting'}
         </button>
 
       </div>
@@ -400,17 +420,26 @@ export default function Admin() {
   const fetchMine = useWorkspaceStore((s) => s.fetchMine)
   const fetchMembers = useWorkspaceStore((s) => s.fetchMembers)
   const pendingJoinRequests = useWorkspaceStore((s) => s.pendingJoinRequests)
+  const pendingXpApprovals = useWorkspaceStore((s) => s.pendingXpApprovals)
+  const fetchPendingXpApprovals = useWorkspaceStore((s) => s.fetchPendingXpApprovals)
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeTab, setActiveTab] = useState('team')
   const [membersLoading, setMembersLoading] = useState(true)
 
   const developers = members.map(mapMemberToDeveloper)
   const totalJoinPending = pendingJoinRequests.length
+  const totalXpPending = pendingXpApprovals.length
 
   const loadMembers = () => {
     setMembersLoading(true)
     fetchMine()
-      .then((ws) => (ws?.id ? fetchMembers(ws.id) : []))
+      .then((ws) => {
+        if (!ws?.id) return []
+        return Promise.all([
+          fetchMembers(ws.id),
+          fetchPendingXpApprovals(ws.id),
+        ])
+      })
       .catch(() => {})
       .finally(() => setMembersLoading(false))
   }
@@ -428,6 +457,7 @@ export default function Admin() {
     { id: 'jira',    label: 'Jira'           },
     { id: 'sprints', label: 'Sprints'        },
     { id: 'joins',   label: 'Join Requests'  },
+    { id: 'xp-approvals', label: 'XP Approvals' },
     { id: 'rewards', label: 'Rewards'        },
     { id: 'xp',      label: 'XP Settings'    },
     { id: 'users',   label: 'Users'          },
@@ -473,6 +503,14 @@ export default function Admin() {
                   {totalJoinPending}
                 </span>
               )}
+              {id === 'xp-approvals' && totalXpPending > 0 && (
+                <span
+                  className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ color: '#942fcd', background: 'rgba(148,47,205,0.1)' }}
+                >
+                  {totalXpPending}
+                </span>
+              )}
               {activeTab === id && (
                 <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full bg-[#942fcd]" />
               )}
@@ -487,6 +525,7 @@ export default function Admin() {
         {activeTab === 'jira' && <JiraSyncTab />}
         {activeTab === 'sprints' && <SprintManagementTab />}
         {activeTab === 'joins' && <JoinRequestsTab />}
+        {activeTab === 'xp-approvals' && <XpApprovalsTab />}
         {activeTab === 'rewards' && <RewardManagementTab />}
         {activeTab === 'xp' && <XPSettingsTab />}
         {activeTab === 'users' && (
