@@ -344,6 +344,7 @@ export default function JiraSyncTab() {
               { label: 'Issues synced', value: lastJiraSyncResult.synced },
               { label: 'Created', value: lastJiraSyncResult.created },
               { label: 'Updated', value: lastJiraSyncResult.updated },
+              { label: 'Removed', value: lastJiraSyncResult.pruned },
               { label: 'Assignments', value: lastJiraSyncResult.assignments },
             ].map(({ label, value }) => (
               <div
