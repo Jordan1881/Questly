@@ -180,4 +180,99 @@ describe('authStore', () => {
     expect(isLoading).toBe(false)
     expect(error).toBeNull()
   })
+
+  it('logout sets sessionExpired when requested', async () => {
+    mockFetch({ message: 'Logged out' })
+    useAuthStore.setState({ token: 'jwt', isLoggedIn: true })
+
+    await useAuthStore.getState().logout({ sessionExpired: true })
+
+    expect(useAuthStore.getState().sessionExpired).toBe(true)
+  })
+
+  it('logout clears local state even when server logout fails', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
+    useAuthStore.setState({ token: 'jwt', isLoggedIn: true, user: { id: '1' } })
+
+    await useAuthStore.getState().logout()
+
+    expect(useAuthStore.getState().token).toBeNull()
+    expect(useAuthStore.getState().isLoggedIn).toBe(false)
+  })
+
+  it('clearSessionExpired resets flag', () => {
+    useAuthStore.setState({ sessionExpired: true })
+    useAuthStore.getState().clearSessionExpired()
+    expect(useAuthStore.getState().sessionExpired).toBe(false)
+  })
+
+  it('fetchMe returns null when no token', async () => {
+    const user = await useAuthStore.getState().fetchMe()
+    expect(user).toBeNull()
+  })
+
+  it('fetchMe stores user when token is present', async () => {
+    const fakeUser = { id: '1', role: 'developer', current_sprint_xp: 40, coin_balance: 4 }
+    useAuthStore.setState({ token: 'jwt' })
+    mockFetch({ user: fakeUser })
+
+    const user = await useAuthStore.getState().fetchMe()
+
+    expect(user).toEqual(fakeUser)
+    expect(useAuthStore.getState().user).toEqual(fakeUser)
+  })
+
+  it('fetchMe returns null on server error', async () => {
+    useAuthStore.setState({ token: 'jwt' })
+    mockFetch({ error: 'Server error' }, false, 500)
+
+    const user = await useAuthStore.getState().fetchMe()
+
+    expect(user).toBeNull()
+  })
+
+  it('startJiraOAuth redirects to authorize URL on success', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { assign })
+    useAuthStore.setState({ token: 'jwt' })
+    mockFetch({ authorize_url: 'https://auth.atlassian.com/authorize' })
+
+    const result = await useAuthStore.getState().startJiraOAuth('/admin')
+
+    expect(result.ok).toBe(true)
+    expect(assign).toHaveBeenCalledWith('https://auth.atlassian.com/authorize')
+  })
+
+  it('startJiraOAuth returns ok:false on error', async () => {
+    useAuthStore.setState({ token: 'jwt' })
+    mockFetch({ error: 'OAuth unavailable' }, false, 503)
+
+    const result = await useAuthStore.getState().startJiraOAuth()
+
+    expect(result.ok).toBe(false)
+    expect(useAuthStore.getState().error).toBe('OAuth unavailable')
+  })
+
+  it('fetchJiraOAuthStatus returns unavailable when no token', async () => {
+    const status = await useAuthStore.getState().fetchJiraOAuthStatus()
+    expect(status).toEqual({ available: false })
+  })
+
+  it('fetchJiraOAuthStatus returns status when token present', async () => {
+    useAuthStore.setState({ token: 'jwt' })
+    mockFetch({ available: true, connected: false })
+
+    const status = await useAuthStore.getState().fetchJiraOAuthStatus()
+
+    expect(status.available).toBe(true)
+  })
+
+  it('fetchJiraOAuthStatus returns unavailable on error', async () => {
+    useAuthStore.setState({ token: 'jwt' })
+    mockFetch({ error: 'Server error' }, false, 500)
+
+    const status = await useAuthStore.getState().fetchJiraOAuthStatus()
+
+    expect(status).toEqual({ available: false })
+  })
 })

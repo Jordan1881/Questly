@@ -2,7 +2,7 @@ const db = require('../config/db')
 const RewardCouponModel = require('./rewardCoupon')
 
 const TABLE = 'rewards'
-const PATCHABLE_FIELDS = ['title', 'description', 'xp_cost', 'image_url']
+const PATCHABLE_FIELDS = ['title', 'description', 'coin_cost', 'image_url']
 
 function formatReward(row, extras = {}) {
   if (!row) return null
@@ -12,7 +12,7 @@ function formatReward(row, extras = {}) {
     workspaceId: row.workspace_id,
     title: row.title,
     description: row.description,
-    xpCost: row.xp_cost,
+    coinCost: row.coin_cost,
     imageUrl: row.image_url,
     isAvailable: row.is_available,
     createdBy: row.created_by,
@@ -22,13 +22,13 @@ function formatReward(row, extras = {}) {
   }
 }
 
-async function create({ workspace_id, title, description = null, xp_cost, image_url = null, created_by }) {
+async function create({ workspace_id, title, description = null, coin_cost, image_url = null, created_by }) {
   const [reward] = await db(TABLE)
     .insert({
       workspace_id,
       title,
       description,
-      xp_cost,
+      coin_cost,
       image_url,
       created_by,
       is_available: true,
@@ -44,7 +44,7 @@ async function findById(id) {
 async function update(id, patch) {
   const updatePatch = {}
   PATCHABLE_FIELDS.forEach((field) => {
-    const camel = field === 'xp_cost' ? 'xpCost' : field === 'image_url' ? 'imageUrl' : field
+    const camel = field === 'coin_cost' ? 'coinCost' : field === 'image_url' ? 'imageUrl' : field
     if (patch[camel] !== undefined) updatePatch[field] = patch[camel]
     if (patch[field] !== undefined) updatePatch[field] = patch[field]
   })

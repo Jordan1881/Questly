@@ -29,7 +29,7 @@ test('Journey 2 — earn XP, purchase reward, coupon in My Rewards', async ({ pa
   await seedReward({
     workspaceId: workspace.id,
     title: 'E2E Gift Card',
-    xpCost: 40,
+    coinCost: 4,
     couponCode: COUPON_CODE,
     expiresAt: EXPIRES_AT,
     createdBy: adminUser.id,

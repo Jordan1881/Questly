@@ -52,7 +52,7 @@ async function createReward(workspaceId, adminToken, overrides = {}) {
     .send({
       title: 'Coffee voucher',
       description: 'Free coffee',
-      xpCost: 40,
+      coinCost: 4,
       imageUrl: 'https://example.com/coffee.png',
       ...overrides,
     })
@@ -67,25 +67,25 @@ describe('POST /api/workspaces/:id/rewards', () => {
     const res = await request(app)
       .post(`/api/workspaces/${workspace.id}/rewards`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Gift card', description: 'Nice', xpCost: 50 })
+      .send({ title: 'Gift card', description: 'Nice', coinCost: 5 })
 
     expect(res.status).toBe(201)
     expect(res.body.reward).toMatchObject({
       title: 'Gift card',
-      xpCost: 50,
+      coinCost: 5,
       stockCount: 0,
       isAvailable: true,
     })
   })
 
-  test('rejects invalid xpCost', async () => {
-    const { token } = await registerAndLogin('admin', 'badxp')
-    const workspace = await createWorkspace(token, 'badxp')
+  test('rejects invalid coinCost', async () => {
+    const { token } = await registerAndLogin('admin', 'badcoins')
+    const workspace = await createWorkspace(token, 'badcoins')
 
     const res = await request(app)
       .post(`/api/workspaces/${workspace.id}/rewards`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Bad', xpCost: 0 })
+      .send({ title: 'Bad', coinCost: 0 })
 
     expect(res.status).toBe(400)
   })
@@ -98,7 +98,7 @@ describe('POST /api/workspaces/:id/rewards', () => {
     const res = await request(app)
       .post(`/api/workspaces/${workspace.id}/rewards`)
       .set('Authorization', `Bearer ${devToken}`)
-      .send({ title: 'Nope', xpCost: 10 })
+      .send({ title: 'Nope', coinCost: 1 })
 
     expect(res.status).toBe(403)
   })
@@ -137,11 +137,11 @@ describe('PATCH /api/rewards/:id', () => {
     const res = await request(app)
       .patch(`/api/rewards/${reward.id}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Updated title', xpCost: 60 })
+      .send({ title: 'Updated title', coinCost: 6 })
 
     expect(res.status).toBe(200)
     expect(res.body.reward.title).toBe('Updated title')
-    expect(res.body.reward.xpCost).toBe(60)
+    expect(res.body.reward.coinCost).toBe(6)
   })
 })
 
@@ -194,10 +194,10 @@ describe('POST /api/rewards/:id/coupons', () => {
 })
 
 describe('POST /api/rewards/:id/purchase', () => {
-  test('purchase deducts XP and redeems coupon', async () => {
+  test('purchase deducts coins and redeems coupon without touching sprint XP', async () => {
     const { token: adminToken } = await registerAndLogin('admin', 'buy')
     const workspace = await createWorkspace(adminToken, 'buy')
-    const reward = await createReward(workspace.id, adminToken, { xpCost: 30 })
+    const reward = await createReward(workspace.id, adminToken, { coinCost: 3 })
 
     await request(app)
       .post(`/api/rewards/${reward.id}/coupons`)
@@ -205,7 +205,11 @@ describe('POST /api/rewards/:id/purchase', () => {
       .send({ couponCodes: ['BUY-1'] })
 
     const { token: devToken, user: devUser } = await registerAndLogin('developer', 'buydev')
-    await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id, current_sprint_xp: 100 })
+    await db('users').where({ id: devUser.id }).update({
+      workspace_id: workspace.id,
+      current_sprint_xp: 100,
+      coin_balance: 10,
+    })
 
     const res = await request(app)
       .post(`/api/rewards/${reward.id}/purchase`)
@@ -213,16 +217,17 @@ describe('POST /api/rewards/:id/purchase', () => {
 
     expect(res.status).toBe(201)
     expect(res.body.purchase.couponCode).toBe('BUY-1')
-    expect(res.body.balances.current_sprint_xp).toBe(70)
+    expect(res.body.balances.coin_balance).toBe(7)
+    expect(res.body.balances.current_sprint_xp).toBe(100)
 
     const tx = await db('xp_transactions').where({ user_id: devUser.id, reason: 'reward_purchased' }).first()
-    expect(tx.amount).toBe(-30)
+    expect(tx).toBeUndefined()
   })
 
-  test('purchase returns 400 when insufficient XP', async () => {
+  test('purchase returns 400 when insufficient coins', async () => {
     const { token: adminToken } = await registerAndLogin('admin', 'poor')
     const workspace = await createWorkspace(adminToken, 'poor')
-    const reward = await createReward(workspace.id, adminToken, { xpCost: 80 })
+    const reward = await createReward(workspace.id, adminToken, { coinCost: 8 })
 
     await request(app)
       .post(`/api/rewards/${reward.id}/coupons`)
@@ -230,20 +235,23 @@ describe('POST /api/rewards/:id/purchase', () => {
       .send({ couponCodes: ['POOR-1'] })
 
     const { token: devToken, user: devUser } = await registerAndLogin('developer', 'poordev')
-    await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id, current_sprint_xp: 10 })
+    await db('users').where({ id: devUser.id }).update({
+      workspace_id: workspace.id,
+      coin_balance: 1,
+    })
 
     const res = await request(app)
       .post(`/api/rewards/${reward.id}/purchase`)
       .set('Authorization', `Bearer ${devToken}`)
 
     expect(res.status).toBe(400)
-    expect(res.body.error).toMatch(/Insufficient/)
+    expect(res.body.error).toMatch(/Insufficient coins/i)
   })
 
   test('purchase returns 400 when coupons expired', async () => {
     const { token: adminToken } = await registerAndLogin('admin', 'expired')
     const workspace = await createWorkspace(adminToken, 'expired')
-    const reward = await createReward(workspace.id, adminToken, { xpCost: 20 })
+    const reward = await createReward(workspace.id, adminToken, { coinCost: 2 })
 
     const past = new Date('2020-01-01T00:00:00.000Z')
     expect(isExpired(past)).toBe(true)
@@ -254,7 +262,7 @@ describe('POST /api/rewards/:id/purchase', () => {
       .send({ couponCodes: ['OLD-1'], expiresAt: past.toISOString() })
 
     const { token: devToken, user: devUser } = await registerAndLogin('developer', 'expdev')
-    await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id, current_sprint_xp: 100 })
+    await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id, coin_balance: 100 })
 
     const res = await request(app)
       .post(`/api/rewards/${reward.id}/purchase`)

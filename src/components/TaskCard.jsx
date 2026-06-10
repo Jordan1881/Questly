@@ -58,7 +58,12 @@ export default function TaskCard({ task, onToggle }) {
           <div className="flex items-center gap-3 flex-wrap mb-2">
             <DifficultyBadge level={task.difficulty} />
             <JiraBadge id={task.jiraId} />
-            {isCompleted && (
+            {task.xpPending && (
+              <span className="flex items-center gap-1.5 bg-[color:var(--color-warning-50)] text-[color:var(--color-warning-600)] text-[length:var(--text-caption)] font-medium px-[10px] py-1 rounded-[var(--radius-md)]">
+                Pending approval
+              </span>
+            )}
+            {isCompleted && !task.xpPending && (
               <span className="flex items-center gap-1.5 bg-[color:var(--color-success-50)] text-[color:var(--color-success-500)] text-[length:var(--text-caption)] font-medium px-[10px] py-1 rounded-[var(--radius-md)]">
                 <CheckIcon />
                 Completed
@@ -97,13 +102,32 @@ export default function TaskCard({ task, onToggle }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 ml-2">
-          <StarIcon color={isCompleted ? 'var(--color-success-500)' : 'var(--color-brand)'} size={20} />
+        <div className="flex items-center gap-2 shrink-0 ml-2 text-right">
+          <StarIcon
+            color={
+              task.xpPending
+                ? 'var(--color-warning-500)'
+                : isCompleted
+                ? 'var(--color-success-500)'
+                : 'var(--color-brand)'
+            }
+            size={20}
+          />
           <span
-            className="text-[length:var(--text-h4)] font-bold"
-            style={{ color: isCompleted ? 'var(--color-success-500)' : 'var(--color-brand)' }}
+            className="text-[length:var(--text-h4)] font-bold leading-tight"
+            style={{
+              color: task.xpPending
+                ? 'var(--color-warning-600)'
+                : isCompleted
+                ? 'var(--color-success-500)'
+                : 'var(--color-brand)',
+            }}
           >
-            +{task.xp}XP
+            {task.xpPending ? (
+              <>+{task.xpPendingAmount ?? task.xp} XP pending approval</>
+            ) : (
+              <>+{task.xp}XP</>
+            )}
           </span>
         </div>
       </div>

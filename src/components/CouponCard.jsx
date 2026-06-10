@@ -55,7 +55,7 @@ export default function CouponCard({ purchase, onDelete, isDeleting = false }) {
       <p className="text-[12px] text-[#6b7280]">
         Expires: {formatExpiryDate(purchase.expiresAt)}
       </p>
-      <p className="text-[12px] text-[#9ca3af]">{purchase.xpSpent} XP spent</p>
+      <p className="text-[12px] text-[#9ca3af]">{purchase.coinsSpent} Coins spent</p>
 
       <button
         type="button"
