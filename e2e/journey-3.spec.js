@@ -34,7 +34,7 @@ test('Journey 3 — purchase reward, expiry warning, delete coupon', async ({ pa
   await seedReward({
     workspaceId: workspace.id,
     title: 'Expiring Gift Card',
-    xpCost: 40,
+    coinCost: 4,
     couponCode: COUPON_CODE,
     expiresAt: expiringSoonDate(),
     createdBy: adminUser.id,

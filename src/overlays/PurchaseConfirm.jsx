@@ -1,13 +1,13 @@
 export default function PurchaseConfirm({
   reward,
-  currentXp,
+  currentCoins,
   isLoading,
   onConfirm,
   onCancel,
 }) {
   if (!reward) return null
 
-  const remaining = currentXp - reward.xpCost
+  const remaining = currentCoins - reward.coinCost
 
   return (
     <div
@@ -26,16 +26,16 @@ export default function PurchaseConfirm({
             <span className="font-medium">{reward.title}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[color:var(--color-gray-500)]">XP cost</span>
-            <span className="font-semibold text-[color:var(--color-brand)]">{reward.xpCost} XP</span>
+            <span className="text-[color:var(--color-gray-500)]">Coin cost</span>
+            <span className="font-semibold text-[color:var(--color-brand)]">{reward.coinCost} Coins</span>
           </div>
           <div className="flex justify-between">
             <span className="text-[color:var(--color-gray-500)]">Your balance</span>
-            <span>{currentXp} XP</span>
+            <span>{currentCoins} Coins</span>
           </div>
           <div className="flex justify-between border-t border-[color:var(--color-border)] pt-2">
             <span className="text-[color:var(--color-gray-500)]">Remaining after purchase</span>
-            <span className="font-semibold">{remaining} XP</span>
+            <span className="font-semibold">{remaining} Coins</span>
           </div>
         </div>
 

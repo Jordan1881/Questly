@@ -10,14 +10,14 @@ const purchases = [
     rewardTitle: 'Coffee Card',
     couponCode: 'COFFEE-1111',
     expiresAt: soon,
-    xpSpent: 40,
+    coinsSpent: 40,
   },
   {
     id: 'p2',
     rewardTitle: 'Steam Card',
     couponCode: 'STEAM-2222',
     expiresAt: soon,
-    xpSpent: 70,
+    coinsSpent: 70,
   },
 ]
 

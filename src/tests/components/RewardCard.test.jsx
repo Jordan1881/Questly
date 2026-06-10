@@ -6,25 +6,25 @@ const reward = {
   id: 'r1',
   title: 'Gift Card',
   description: 'Nice reward',
-  xpCost: 50,
+  coinCost: 5,
   stockCount: 3,
   allExpired: false,
 }
 
 describe('RewardCard', () => {
-  it('disables buy and shows Not enough XP when balance is low', () => {
-    render(<RewardCard reward={reward} userXp={10} onBuy={vi.fn()} />)
+  it('disables buy and shows Not enough coins when balance is low', () => {
+    render(<RewardCard reward={reward} userCoins={1} onBuy={vi.fn()} />)
 
     const buyButton = screen.getByRole('button', { name: 'Buy' })
     expect(buyButton).toBeDisabled()
-    expect(screen.getByText('Not enough XP')).toBeInTheDocument()
+    expect(screen.getByText('Not enough coins')).toBeInTheDocument()
   })
 
   it('shows expired state when all coupons expired', () => {
     render(
       <RewardCard
         reward={{ ...reward, stockCount: 0, allExpired: true }}
-        userXp={100}
+        userCoins={100}
         onBuy={vi.fn()}
       />,
     )
@@ -35,7 +35,7 @@ describe('RewardCard', () => {
 
   it('does not call onBuy when disabled', () => {
     const onBuy = vi.fn()
-    render(<RewardCard reward={reward} userXp={10} onBuy={onBuy} />)
+    render(<RewardCard reward={reward} userCoins={1} onBuy={onBuy} />)
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }))
     expect(onBuy).not.toHaveBeenCalled()
   })

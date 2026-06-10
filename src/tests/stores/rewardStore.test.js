@@ -15,7 +15,7 @@ describe('rewardStore', () => {
 
   it('fetchRewards stores rewards from API', async () => {
     apiFetch.mockResolvedValue({
-      rewards: [{ id: 'r1', title: 'Coffee', xpCost: 40, stockCount: 2 }],
+      rewards: [{ id: 'r1', title: 'Coffee', coinCost: 40, stockCount: 2 }],
     })
 
     const rewards = await useRewardStore.getState().fetchRewards('ws-1')
@@ -26,11 +26,11 @@ describe('rewardStore', () => {
   })
 
   it('createReward prepends reward to list', async () => {
-    apiFetch.mockResolvedValue({ reward: { id: 'r2', title: 'Lunch', xpCost: 50 } })
+    apiFetch.mockResolvedValue({ reward: { id: 'r2', title: 'Lunch', coinCost: 50 } })
 
     const reward = await useRewardStore.getState().createReward('ws-1', {
       title: 'Lunch',
-      xpCost: 50,
+      coinCost: 50,
     })
 
     expect(reward.id).toBe('r2')

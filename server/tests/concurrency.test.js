@@ -103,7 +103,7 @@ describe('concurrent reward purchase', () => {
     const rewardRes = await request(app)
       .post(`/api/workspaces/${workspace.id}/rewards`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ title: 'Last coupon', description: 'x', xpCost: 10 })
+      .send({ title: 'Last coupon', description: 'x', coinCost: 1 })
     const rewardId = rewardRes.body.reward.id
 
     await request(app)
@@ -116,7 +116,7 @@ describe('concurrent reward purchase', () => {
       const dev = await registerAndLogin('developer', `race${i}`)
       await db('users')
         .where({ id: dev.user.id })
-        .update({ workspace_id: workspace.id, current_sprint_xp: 50 })
+        .update({ workspace_id: workspace.id, coin_balance: 50 })
       buyers.push(dev)
     }
 
