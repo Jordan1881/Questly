@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { useAuthStore } from '../stores/authStore'
 import JoinRequestsTab from '../components/JoinRequestsTab'
+import WorkspaceInviteCode from '../components/WorkspaceInviteCode'
 import JiraSyncTab from '../components/JiraSyncTab'
 import SprintManagementTab from '../components/SprintManagementTab'
 import RewardManagementTab from '../components/RewardManagementTab'
@@ -340,9 +341,9 @@ function UsersTab({ developers, isLoading }) {
 
   if (developers.length === 0) {
     return (
-      <div className={`${CARD} p-10 text-center`}>
+      <div className={`${CARD} p-10 text-center flex flex-col items-center gap-3`}>
         <p className="text-[15px] font-medium text-[#374151]">No team members yet</p>
-        <p className="text-[13px] text-[#6b7280] mt-2">Approved developers will appear here.</p>
+        <p className="text-[13px] text-[#6b7280]">Share your workspace code so developers can request to join.</p>
       </div>
     )
   }
@@ -394,6 +395,7 @@ function UsersTab({ developers, isLoading }) {
 export default function Admin() {
   useWorkspaceJiraOAuthCallback()
   const userRole = useAuthStore((s) => s.userRole)
+  const workspace = useWorkspaceStore((s) => s.workspace)
   const members = useWorkspaceStore((s) => s.members)
   const fetchMine = useWorkspaceStore((s) => s.fetchMine)
   const fetchMembers = useWorkspaceStore((s) => s.fetchMembers)
@@ -445,6 +447,12 @@ export default function Admin() {
 
       <main className="px-12 py-9">
         <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Admin Panel</h1>
+
+        {workspace?.code && (
+          <div className="mb-8">
+            <WorkspaceInviteCode code={workspace.code} workspaceName={workspace.name} />
+          </div>
+        )}
 
         {/* Sub-tab bar */}
         <div className="flex gap-0 border-b border-[#e5e7eb] mb-8">
