@@ -45,6 +45,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   jest.clearAllMocks()
   jiraClient.fetchProjectIssues.mockResolvedValue(MOCK_ISSUES)
+  await db('xp_approval_requests').del()
   await db('xp_transactions').del()
   await db('task_assignments').del()
   await db('tasks').del()

@@ -15,6 +15,7 @@ const {
   listPending,
   review,
 } = require('../controllers/joinRequest')
+const { listPending: listPendingXpApprovals, review: reviewXpApproval } = require('../controllers/xpApproval')
 const { listByWorkspace } = require('../controllers/tasks')
 const {
   createForWorkspace,
@@ -42,6 +43,8 @@ router.get('/:id/rewards', verifyToken, listRewards)
 router.get('/:id/join-requests', verifyToken, requireRole('admin'), listPending)
 router.post('/:id/join-requests', verifyToken, requireRole('developer'), submit)
 router.patch('/:id/join-requests/:requestId', verifyToken, requireRole('admin'), review)
+router.get('/:id/xp-approvals', verifyToken, requireRole('admin'), listPendingXpApprovals)
+router.patch('/:id/xp-approvals/:requestId', verifyToken, requireRole('admin'), reviewXpApproval)
 router.get('/:id/jira/oauth/start', verifyToken, requireRole('admin'), workspaceJiraOAuth.oauthStart)
 router.post('/:id/jira/connect', verifyToken, requireRole('admin'), connectJira)
 router.delete('/:id/jira/disconnect', verifyToken, requireRole('admin'), disconnectJira)

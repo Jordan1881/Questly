@@ -20,6 +20,11 @@ async function listForUser(user_id, workspace_id = null) {
   }
 
   return query
+    .leftJoin('xp_approval_requests as xr', function joinPendingApprovals() {
+      this.on('xr.task_id', 't.id')
+        .andOn('xr.user_id', 'ta.user_id')
+        .andOnVal('xr.status', 'pending')
+    })
     .select(
       't.id',
       't.workspace_id',
@@ -33,6 +38,8 @@ async function listForUser(user_id, workspace_id = null) {
       't.high_priority',
       't.status',
       'ta.completed_at',
+      'xr.id as pending_approval_id',
+      'xr.xp_amount as pending_xp_amount',
     )
     .orderBy('t.updated_at', 'desc')
 }
