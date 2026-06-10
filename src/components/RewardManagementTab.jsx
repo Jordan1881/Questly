@@ -7,7 +7,7 @@ const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3p
 const emptyForm = {
   title: '',
   description: '',
-  xpCost: '',
+  coinCost: '',
   imageUrl: '',
   couponCodes: '',
 }
@@ -16,7 +16,7 @@ function rewardToForm(reward) {
   return {
     title: reward.title ?? '',
     description: reward.description ?? '',
-    xpCost: String(reward.xpCost ?? ''),
+    coinCost: String(reward.coinCost ?? ''),
     imageUrl: reward.imageUrl ?? '',
     couponCodes: '',
   }
@@ -63,9 +63,9 @@ export default function RewardManagementTab() {
     e.preventDefault()
     if (!workspace?.id) return
 
-    const xpCost = Number(form.xpCost)
-    if (!form.title.trim() || !Number.isInteger(xpCost) || xpCost <= 0) {
-      setMessage({ type: 'error', text: 'Title and a positive XP cost are required.' })
+    const coinCost = Number(form.coinCost)
+    if (!form.title.trim() || !Number.isInteger(coinCost) || coinCost <= 0) {
+      setMessage({ type: 'error', text: 'Title and a positive coin cost are required.' })
       return
     }
 
@@ -75,7 +75,7 @@ export default function RewardManagementTab() {
       const payload = {
         title: form.title.trim(),
         description: form.description.trim() || null,
-        xpCost,
+        coinCost,
         imageUrl: form.imageUrl.trim() || null,
       }
 
@@ -143,12 +143,12 @@ export default function RewardManagementTab() {
           </label>
           <div className="grid grid-cols-2 gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] font-medium text-[#374151]">XP cost</span>
+              <span className="text-[13px] font-medium text-[#374151]">Coin cost</span>
               <input
                 type="number"
                 min="1"
-                value={form.xpCost}
-                onChange={(e) => setForm((f) => ({ ...f, xpCost: e.target.value }))}
+                value={form.coinCost}
+                onChange={(e) => setForm((f) => ({ ...f, coinCost: e.target.value }))}
                 className="px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px]"
               />
             </label>
@@ -219,7 +219,7 @@ export default function RewardManagementTab() {
               <div>
                 <p className="text-[14px] font-semibold text-[#1f2937]">{reward.title}</p>
                 <p className="text-[12px] text-[#6b7280]">
-                  {reward.xpCost} XP · {reward.stockCount ?? 0} in stock
+                  {reward.coinCost} Coins · {reward.stockCount ?? 0} in stock
                 </p>
               </div>
               <div className="flex items-center gap-4 shrink-0">

@@ -12,7 +12,7 @@ import { SkeletonRewardGrid } from '../components/Skeleton'
 
 export default function RewardShop() {
   const user = useAuthStore((s) => s.user)
-  const userXp = useXpStore((s) => s.userXP)
+  const userCoins = useXpStore((s) => s.userCoins)
   const rewards = useRewardStore((s) => s.rewards)
   const isLoading = useRewardStore((s) => s.isLoading)
   const isPurchasing = useRewardStore((s) => s.isPurchasing)
@@ -53,7 +53,7 @@ export default function RewardShop() {
       {selectedReward && (
         <PurchaseConfirm
           reward={selectedReward}
-          currentXp={userXp}
+          currentCoins={userCoins}
           isLoading={isPurchasing}
           onConfirm={handleConfirmPurchase}
           onCancel={() => setSelectedReward(null)}
@@ -67,16 +67,16 @@ export default function RewardShop() {
         <div className="flex flex-col gap-6 max-w-6xl">
           <div>
             <h1 className="ds-page-title">Reward Shop</h1>
-            <p className="ds-body mt-1">Spend sprint XP on workspace rewards</p>
+            <p className="ds-body mt-1">Spend coins on workspace rewards. Coins are earned automatically from XP (10 XP = 1 Coin).</p>
           </div>
 
           <div className="ds-card ds-card-pad-lg flex items-center justify-between">
             <div>
               <p className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-500)] mb-2">
-                Your sprint XP
+                Your coins
               </p>
               <span className="text-[length:var(--text-h2)] font-bold leading-none text-[color:var(--color-brand)]">
-                {userXp}
+                {userCoins}
               </span>
             </div>
             <div className="w-16 h-16 rounded-[var(--radius-lg)] flex items-center justify-center ds-brand-gradient shadow-[var(--shadow-primary-sm)]">
@@ -117,7 +117,7 @@ export default function RewardShop() {
                 <RewardCard
                   key={reward.id}
                   reward={reward}
-                  userXp={userXp}
+                  userCoins={userCoins}
                   onBuy={setSelectedReward}
                 />
               ))}

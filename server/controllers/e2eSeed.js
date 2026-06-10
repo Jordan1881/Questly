@@ -43,7 +43,7 @@ async function seedTask(req, res, next) {
 
 async function seedReward(req, res, next) {
   try {
-    const { workspaceId, title, xpCost, couponCode, expiresAt, createdBy } = req.body
+    const { workspaceId, title, coinCost, xpCost, couponCode, expiresAt, createdBy } = req.body
 
     if (!workspaceId || !title || !couponCode) {
       return res.status(400).json({ error: 'workspaceId, title, and couponCode are required' })
@@ -60,7 +60,7 @@ async function seedReward(req, res, next) {
         workspace_id: workspaceId,
         title,
         description: 'E2E seeded reward',
-        xp_cost: xpCost ?? 40,
+        coin_cost: coinCost ?? (xpCost != null ? Math.max(1, Math.floor(Number(xpCost) / 10)) : 4),
         is_available: true,
         created_by: createdById,
       })

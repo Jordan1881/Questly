@@ -7,7 +7,7 @@ const purchase = {
   rewardTitle: 'Coffee Card',
   couponCode: 'COFFEE-9999',
   expiresAt: new Date(Date.now() + 5 * 86_400_000).toISOString(),
-  xpSpent: 40,
+  coinsSpent: 4,
 }
 
 describe('CouponCard', () => {

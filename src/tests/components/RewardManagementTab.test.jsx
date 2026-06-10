@@ -8,7 +8,7 @@ const rewards = [
     id: 'r1',
     title: 'Nike 20% Off',
     description: 'Shoe discount',
-    xpCost: 40,
+    coinCost: 40,
     imageUrl: 'https://example.com/nike.png',
     stockCount: 2,
   },
@@ -17,7 +17,7 @@ const rewards = [
 const fetchMine = vi.fn().mockResolvedValue({ id: 'ws-1' })
 const fetchRewards = vi.fn().mockResolvedValue(rewards)
 const createReward = vi.fn()
-const updateReward = vi.fn().mockResolvedValue({ id: 'r1', title: 'Nike 25% Off', xpCost: 50 })
+const updateReward = vi.fn().mockResolvedValue({ id: 'r1', title: 'Nike 25% Off', coinCost: 50 })
 const uploadCoupons = vi.fn()
 const deleteReward = vi.fn()
 
@@ -83,7 +83,7 @@ describe('RewardManagementTab', () => {
       expect(updateReward).toHaveBeenCalledWith('r1', {
         title: 'Nike 25% Off',
         description: 'Shoe discount',
-        xpCost: 50,
+        coinCost: 50,
         imageUrl: 'https://example.com/nike.png',
       })
     })

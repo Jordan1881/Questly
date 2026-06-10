@@ -24,7 +24,7 @@ export const createMockReward = (overrides = {}) => ({
   id: crypto.randomUUID(),
   title: 'Mock Reward',
   description: 'A test reward',
-  xpCost: 500,
+  coinCost: 50,
   isAvailable: true,
   ...overrides,
 })
