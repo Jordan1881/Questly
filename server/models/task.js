@@ -21,13 +21,15 @@ async function findById(id) {
 }
 
 async function pruneStaleJiraTasks(workspace_id, activeJiraIssueIds = []) {
-  if (!workspace_id || !activeJiraIssueIds.length) return 0
+  if (!workspace_id) return 0
 
-  return db(TABLE)
-    .where({ workspace_id })
-    .whereNotNull('jira_issue_id')
-    .whereNotIn('jira_issue_id', activeJiraIssueIds)
-    .del()
+  let query = db(TABLE).where({ workspace_id }).whereNotNull('jira_issue_id')
+
+  if (activeJiraIssueIds.length > 0) {
+    query = query.whereNotIn('jira_issue_id', activeJiraIssueIds)
+  }
+
+  return query.del()
 }
 
 async function listByWorkspace(workspace_id, filters = {}) {
