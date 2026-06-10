@@ -227,6 +227,26 @@ describe('POST /api/tasks/sync/:workspaceId', () => {
     expect(tasks[0].jira_issue_key).toBe('SCRUM-1')
   })
 
+  test('re-sync prunes all tasks when Jira project has no issues', async () => {
+    const { adminToken, workspace } = await createWorkspaceWithDeveloper('prune-empty')
+
+    await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    jiraClient.fetchProjectIssues.mockResolvedValue([])
+
+    const res = await request(app)
+      .post(`/api/tasks/sync/${workspace.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ synced: 0, pruned: 2 })
+
+    const tasks = await db('tasks').where({ workspace_id: workspace.id })
+    expect(tasks).toHaveLength(0)
+  })
+
   test('re-sync updates existing tasks instead of duplicating them', async () => {
     const { adminToken, workspace } = await createWorkspaceWithDeveloper('upsert')
 
