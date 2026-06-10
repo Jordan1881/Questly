@@ -68,7 +68,9 @@ export default function JoinRequestsTab() {
             <CheckIcon />
           </div>
           <p className="text-[15px] font-semibold text-[#1f2937]">All caught up!</p>
-          <p className="text-[13px] text-[#9ca3af]">No pending join requests right now.</p>
+          <p className="text-[13px] text-[#9ca3af]">
+            No pending join requests right now. Share your workspace code so developers can request access.
+          </p>
         </div>
       ) : (
         <div className={`${CARD} overflow-hidden`}>
