@@ -66,6 +66,13 @@ async function update(req, res, next) {
       return res.status(400).json({ error: 'name cannot be empty' })
     }
 
+    if (
+      Object.prototype.hasOwnProperty.call(req.body, 'require_xp_approval') &&
+      typeof req.body.require_xp_approval !== 'boolean'
+    ) {
+      return res.status(400).json({ error: 'require_xp_approval must be a boolean' })
+    }
+
     const updated = await WorkspaceModel.update(req.params.id, req.body)
     if (!updated) {
       return res.status(400).json({

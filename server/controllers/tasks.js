@@ -2,6 +2,7 @@ const db = require('../config/db')
 const WorkspaceModel = require('../models/workspace')
 const TaskAssignmentModel = require('../models/taskAssignment')
 const TaskModel = require('../models/task')
+const XpApprovalRequestModel = require('../models/xpApprovalRequest')
 const jiraSync = require('../services/jiraSync')
 const taskRewards = require('../services/taskRewards')
 const { applyStreakUpdate } = require('../services/streak')
@@ -14,6 +15,7 @@ function formatDueDate(value) {
 }
 
 function formatTask(row) {
+  const xpPending = Boolean(row.pending_approval_id)
   const done = Boolean(row.completed_at) || row.status === 'done'
 
   return {
@@ -26,6 +28,8 @@ function formatTask(row) {
     due: formatDueDate(row.due_date) || 'No due date',
     highPriority: row.high_priority,
     done,
+    xpPending,
+    xpPendingAmount: xpPending ? row.pending_xp_amount : null,
     status: row.status,
   }
 }
@@ -148,12 +152,75 @@ async function updateCompletion(req, res, next) {
     }
 
     const wasCompleted = Boolean(assignment.completed_at)
+    const pendingApproval = await XpApprovalRequestModel.findPendingByTaskAndUser(
+      task.id,
+      req.user.id,
+    )
 
     if (completed && wasCompleted) {
       return res.status(409).json({ error: 'Task is already completed' })
     }
 
+    const workspace = await WorkspaceModel.findById(task.workspace_id)
+    const requiresApproval = Boolean(workspace?.require_xp_approval)
+
     const result = await db.transaction(async (trx) => {
+      if (completed && !wasCompleted && requiresApproval) {
+        const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, true, trx)
+        await XpApprovalRequestModel.createPending(
+          {
+            workspace_id: task.workspace_id,
+            task_id: task.id,
+            user_id: req.user.id,
+            xp_amount: task.xp_reward ?? 0,
+          },
+          trx,
+        )
+
+        const balances = await taskRewards.getUserBalances(req.user.id, trx)
+        const profile = await trx('users')
+          .where({ id: req.user.id })
+          .select('current_sprint_xp', 'lifetime_xp', 'coin_balance', 'streak_days')
+          .first()
+
+        return {
+          updated,
+          reward: {
+            xpDelta: 0,
+            coinsDelta: 0,
+            pending: true,
+            pendingXp: task.xp_reward ?? 0,
+          },
+          pendingApproval: {
+            id: null,
+            xp_amount: task.xp_reward ?? 0,
+          },
+          user: {
+            ...balances,
+            streak_days: profile?.streak_days ?? 0,
+          },
+        }
+      }
+
+      if (!completed && wasCompleted && pendingApproval) {
+        await XpApprovalRequestModel.cancelPending(task.id, req.user.id, trx)
+        const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, false, trx)
+        const balances = await taskRewards.getUserBalances(req.user.id, trx)
+        const profile = await trx('users')
+          .where({ id: req.user.id })
+          .select('current_sprint_xp', 'lifetime_xp', 'coin_balance', 'streak_days')
+          .first()
+
+        return {
+          updated,
+          reward: { xpDelta: 0, coinsDelta: 0, pendingCancelled: true },
+          user: {
+            ...balances,
+            streak_days: profile?.streak_days ?? 0,
+          },
+        }
+      }
+
       const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, completed, trx)
       const reward = await taskRewards.applyCompletionChange(trx, {
         userId: req.user.id,
@@ -182,9 +249,15 @@ async function updateCompletion(req, res, next) {
       }
     })
 
+    const pendingAfter = completed && requiresApproval && !wasCompleted
+      ? await XpApprovalRequestModel.findPendingByTaskAndUser(task.id, req.user.id)
+      : null
+
     const row = {
       ...task,
       completed_at: result.updated.completed_at,
+      pending_approval_id: pendingAfter?.id ?? null,
+      pending_xp_amount: pendingAfter?.xp_amount ?? null,
     }
 
     res.json({

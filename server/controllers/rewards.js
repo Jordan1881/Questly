@@ -32,21 +32,21 @@ async function createForWorkspace(req, res, next) {
     if (!workspace) return res.status(404).json({ error: 'Workspace not found' })
     if (!isWorkspaceAdmin(req.user, workspace)) return res.status(403).json({ error: 'Forbidden' })
 
-    const { title, description, xpCost, imageUrl } = req.body
+    const { title, description, coinCost, imageUrl } = req.body
     if (!title || !String(title).trim()) {
       return res.status(400).json({ error: 'title is required' })
     }
 
-    const xp_cost = Number(xpCost ?? req.body.xp_cost)
-    if (!Number.isInteger(xp_cost) || xp_cost <= 0) {
-      return res.status(400).json({ error: 'xpCost must be a positive integer' })
+    const coin_cost = Number(coinCost ?? req.body.coin_cost)
+    if (!Number.isInteger(coin_cost) || coin_cost <= 0) {
+      return res.status(400).json({ error: 'coinCost must be a positive integer' })
     }
 
     const reward = await RewardModel.create({
       workspace_id: workspace.id,
       title: String(title).trim(),
       description: description ?? null,
-      xp_cost,
+      coin_cost,
       image_url: imageUrl ?? req.body.image_url ?? null,
       created_by: req.user.id,
     })
@@ -81,10 +81,10 @@ async function updateReward(req, res, next) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
-    if (req.body.xpCost !== undefined || req.body.xp_cost !== undefined) {
-      const xp_cost = Number(req.body.xpCost ?? req.body.xp_cost)
-      if (!Number.isInteger(xp_cost) || xp_cost <= 0) {
-        return res.status(400).json({ error: 'xpCost must be a positive integer' })
+    if (req.body.coinCost !== undefined || req.body.coin_cost !== undefined) {
+      const coin_cost = Number(req.body.coinCost ?? req.body.coin_cost)
+      if (!Number.isInteger(coin_cost) || coin_cost <= 0) {
+        return res.status(400).json({ error: 'coinCost must be a positive integer' })
       }
     }
 

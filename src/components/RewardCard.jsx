@@ -2,18 +2,18 @@ import { StarIcon } from './icons.jsx'
 
 export default function RewardCard({
   reward,
-  userXp = 0,
+  userCoins = 0,
   onBuy,
   disabled = false,
 }) {
-  const { title, description, xpCost, stockCount = 0, allExpired = false, imageUrl } = reward
-  const canAfford = userXp >= xpCost
+  const { title, description, coinCost, stockCount = 0, allExpired = false, imageUrl } = reward
+  const canAfford = userCoins >= coinCost
   const hasStock = stockCount > 0
   const buyDisabled = disabled || !canAfford || !hasStock || allExpired
 
   let helperText = null
   if (!hasStock || allExpired) helperText = 'Out of stock'
-  else if (!canAfford) helperText = 'Not enough XP'
+  else if (!canAfford) helperText = 'Not enough coins'
 
   return (
     <div className="ds-card ds-card-pad flex flex-col gap-4 transition-all duration-200">
@@ -47,8 +47,8 @@ export default function RewardCard({
 
       <div className="flex items-center justify-between text-[length:var(--text-body-sm)]">
         <div className="flex items-center gap-1.5">
-          <span className="text-[length:var(--text-h5)] font-bold text-[color:var(--color-brand)]">{xpCost}</span>
-          <span className="font-medium text-[color:var(--color-gray-500)]">XP</span>
+          <span className="text-[length:var(--text-h5)] font-bold text-[color:var(--color-brand)]">{coinCost}</span>
+          <span className="font-medium text-[color:var(--color-gray-500)]">Coins</span>
         </div>
         <span className="text-[color:var(--color-gray-500)]">{stockCount} left</span>
       </div>

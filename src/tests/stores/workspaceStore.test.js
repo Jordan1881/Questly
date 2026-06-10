@@ -11,6 +11,7 @@ const RESET = {
   joinRequest: null,
   members: [],
   pendingJoinRequests: [],
+  pendingXpApprovals: [],
   lastJiraSyncAt: null,
   lastJiraSyncResult: null,
   isLoading: false,
@@ -168,5 +169,106 @@ describe('workspaceStore', () => {
     apiFetch.mockRejectedValue(new Error('Forbidden'))
     await expect(useWorkspaceStore.getState().disconnectJira('ws-1')).rejects.toThrow('Forbidden')
     expect(useWorkspaceStore.getState().error).toBe('Forbidden')
+  })
+
+  it('fetchMine sets error and clears workspace on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Not found'))
+    await expect(useWorkspaceStore.getState().fetchMine()).rejects.toThrow('Not found')
+    expect(useWorkspaceStore.getState().workspace).toBeNull()
+    expect(useWorkspaceStore.getState().error).toBe('Not found')
+  })
+
+  it('lookupByCode sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Invalid code'))
+    await expect(useWorkspaceStore.getState().lookupByCode('BAD')).rejects.toThrow('Invalid code')
+    expect(useWorkspaceStore.getState().error).toBe('Invalid code')
+  })
+
+  it('submitJoinRequest sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Already requested'))
+    await expect(useWorkspaceStore.getState().submitJoinRequest('ws-1')).rejects.toThrow('Already requested')
+    expect(useWorkspaceStore.getState().error).toBe('Already requested')
+  })
+
+  it('fetchMyJoinRequest sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Server error'))
+    await expect(useWorkspaceStore.getState().fetchMyJoinRequest()).rejects.toThrow('Server error')
+    expect(useWorkspaceStore.getState().error).toBe('Server error')
+  })
+
+  it('fetchPendingJoinRequests sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Forbidden'))
+    await expect(useWorkspaceStore.getState().fetchPendingJoinRequests('ws-1')).rejects.toThrow('Forbidden')
+    expect(useWorkspaceStore.getState().error).toBe('Forbidden')
+  })
+
+  it('updateWorkspaceSettings stores updated workspace', async () => {
+    apiFetch.mockResolvedValue({ workspace: { id: 'ws-1', require_xp_approval: true } })
+    const workspace = await useWorkspaceStore.getState().updateWorkspaceSettings('ws-1', {
+      require_xp_approval: true,
+    })
+    expect(workspace.require_xp_approval).toBe(true)
+    expect(useWorkspaceStore.getState().workspace.require_xp_approval).toBe(true)
+  })
+
+  it('updateWorkspaceSettings sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Forbidden'))
+    await expect(
+      useWorkspaceStore.getState().updateWorkspaceSettings('ws-1', { name: 'X' }),
+    ).rejects.toThrow('Forbidden')
+    expect(useWorkspaceStore.getState().error).toBe('Forbidden')
+  })
+
+  it('fetchPendingXpApprovals stores pending list', async () => {
+    apiFetch.mockResolvedValue({ xp_approval_requests: [{ id: 'xp-1' }] })
+    const list = await useWorkspaceStore.getState().fetchPendingXpApprovals('ws-1')
+    expect(list).toHaveLength(1)
+    expect(useWorkspaceStore.getState().pendingXpApprovals[0].id).toBe('xp-1')
+  })
+
+  it('fetchPendingXpApprovals sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Forbidden'))
+    await expect(useWorkspaceStore.getState().fetchPendingXpApprovals('ws-1')).rejects.toThrow('Forbidden')
+    expect(useWorkspaceStore.getState().error).toBe('Forbidden')
+  })
+
+  it('reviewXpApproval removes request from pending list', async () => {
+    useWorkspaceStore.setState({ pendingXpApprovals: [{ id: 'xp-1' }] })
+    apiFetch.mockResolvedValue({ xp_approval_request: { id: 'xp-1', status: 'approved' } })
+    const result = await useWorkspaceStore.getState().reviewXpApproval('ws-1', 'xp-1', 'approved')
+    expect(result.status).toBe('approved')
+    expect(useWorkspaceStore.getState().pendingXpApprovals).toHaveLength(0)
+  })
+
+  it('syncJiraTasks sets error on failure', async () => {
+    apiFetch.mockRejectedValue(new Error('Jira not connected'))
+    await expect(useWorkspaceStore.getState().syncJiraTasks('ws-1')).rejects.toThrow('Jira not connected')
+    expect(useWorkspaceStore.getState().error).toBe('Jira not connected')
+  })
+
+  it('fetchWorkspaceJiraOAuthStatus returns status on success', async () => {
+    apiFetch.mockResolvedValue({ available: true })
+    const status = await useWorkspaceStore.getState().fetchWorkspaceJiraOAuthStatus()
+    expect(status.available).toBe(true)
+  })
+
+  it('fetchWorkspaceJiraOAuthStatus returns unavailable on error', async () => {
+    apiFetch.mockRejectedValue(new Error('Network error'))
+    const status = await useWorkspaceStore.getState().fetchWorkspaceJiraOAuthStatus()
+    expect(status).toEqual({ available: false })
+  })
+
+  it('startWorkspaceJiraOAuth redirects to authorize URL', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { assign })
+    apiFetch.mockResolvedValue({ authorize_url: 'https://auth.atlassian.com/authorize' })
+
+    const result = await useWorkspaceStore.getState().startWorkspaceJiraOAuth('ws-1', {
+      jira_site_url: 'https://acme.atlassian.net',
+      jira_project_key: 'QUEST',
+    })
+
+    expect(result.ok).toBe(true)
+    expect(assign).toHaveBeenCalledWith('https://auth.atlassian.com/authorize')
   })
 })

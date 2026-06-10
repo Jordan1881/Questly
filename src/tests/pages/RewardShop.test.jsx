@@ -8,7 +8,7 @@ const rewards = [
     id: 'r1',
     title: 'Gift Card',
     description: 'Nice reward',
-    xpCost: 50,
+    coinCost: 5,
     stockCount: 3,
     allExpired: false,
   },
@@ -16,7 +16,7 @@ const rewards = [
     id: 'r2',
     title: 'Expired Promo',
     description: 'Old reward',
-    xpCost: 20,
+    coinCost: 2,
     stockCount: 0,
     allExpired: true,
   },
@@ -32,7 +32,7 @@ vi.mock('../../stores/authStore', () => ({
 }))
 
 vi.mock('../../stores/xpStore', () => ({
-  useXpStore: (selector) => selector({ userXP: 10 }),
+  useXpStore: (selector) => selector({ userCoins: 1 }),
 }))
 
 vi.mock('../../stores/rewardStore', () => ({
@@ -52,7 +52,7 @@ describe('RewardShop page', () => {
     vi.clearAllMocks()
   })
 
-  it('disables buy and shows Not enough XP when sprint balance is low', () => {
+  it('disables buy and shows Not enough coins when balance is low', () => {
     render(
       <MemoryRouter>
         <RewardShop />
@@ -61,7 +61,7 @@ describe('RewardShop page', () => {
 
     const buyButtons = screen.getAllByRole('button', { name: 'Buy' })
     expect(buyButtons[0]).toBeDisabled()
-    expect(screen.getByText('Not enough XP')).toBeInTheDocument()
+    expect(screen.getByText('Not enough coins')).toBeInTheDocument()
   })
 
   it('shows expired badge when all coupons for a reward are expired', () => {

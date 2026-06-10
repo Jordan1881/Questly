@@ -40,7 +40,7 @@ async function seedPurchase(devLogin, adminToken, workspaceId) {
   const rewardRes = await request(app)
     .post(`/api/workspaces/${workspaceId}/rewards`)
     .set('Authorization', `Bearer ${adminToken}`)
-    .send({ title: 'Gift Card', description: 'Nice', xpCost: 20 })
+    .send({ title: 'Gift Card', description: 'Nice', coinCost: 2 })
 
   const reward = rewardRes.body.reward
 
@@ -49,7 +49,7 @@ async function seedPurchase(devLogin, adminToken, workspaceId) {
     .set('Authorization', `Bearer ${adminToken}`)
     .send({ couponCodes: ['SAVE-ME-1234'] })
 
-  await db('users').where({ id: devLogin.user.id }).update({ workspace_id: workspaceId, current_sprint_xp: 100 })
+  await db('users').where({ id: devLogin.user.id }).update({ workspace_id: workspaceId, coin_balance: 100 })
 
   const purchaseRes = await request(app)
     .post(`/api/rewards/${reward.id}/purchase`)
@@ -82,7 +82,7 @@ describe('GET /api/users/me/purchases', () => {
       id: purchase.id,
       rewardTitle: 'Gift Card',
       couponCode: 'SAVE-ME-1234',
-      xpSpent: 20,
+      coinsSpent: 2,
     })
   })
 })

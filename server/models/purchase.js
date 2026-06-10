@@ -12,7 +12,7 @@ function formatPurchase(row) {
     rewardImageUrl: row.reward_image_url || null,
     couponCode: row.coupon_code || null,
     expiresAt: row.expires_at || null,
-    xpSpent: row.xp_spent,
+    coinsSpent: row.coins_spent,
     purchasedAt: row.purchased_at,
   }
 }
@@ -27,7 +27,7 @@ async function listForUser(userId) {
     .select(
       'p.id',
       'p.reward_id',
-      'p.xp_spent',
+      'p.coins_spent',
       'p.purchased_at',
       'r.title as reward_title',
       'r.image_url as reward_image_url',
