@@ -96,3 +96,60 @@ export async function apiFetch(path, options = {}) {
 
   return res.json()
 }
+
+export async function apiUpload(path, formData, options = {}) {
+  const { skipSessionExpiry = false } = options
+  const { useAuthStore } = await import('../stores/authStore')
+  const { token, logout } = useAuthStore.getState()
+
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  }
+
+  let res
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      body: formData,
+      headers,
+    })
+  } catch {
+    const networkError = new ApiError(
+      'Network error — check your connection and try again',
+      0,
+    )
+    notifyApiError(networkError)
+    throw networkError
+  }
+
+  if (res.status === 401) {
+    let body = null
+    try {
+      body = await res.json()
+    } catch {
+      // non-JSON error body
+    }
+    if (skipSessionExpiry) {
+      throw new ApiError(resolveErrorMessage(401, body), 401)
+    }
+    await logout({ sessionExpired: true })
+    const sessionError = new ApiError('Session expired — please sign in again', 401)
+    notifyApiError(sessionError)
+    throw sessionError
+  }
+
+  if (!res.ok) {
+    let body = null
+    try {
+      body = await res.json()
+    } catch {
+      // non-JSON error body
+    }
+    const error = new ApiError(resolveErrorMessage(res.status, body), res.status)
+    if (!skipSessionExpiry) notifyApiError(error)
+    throw error
+  }
+
+  return res.json()
+}

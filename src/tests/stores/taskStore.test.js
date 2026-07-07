@@ -110,4 +110,24 @@ describe('taskStore', () => {
 
     expect(useLevelUpStore.getState().level).toBe(2)
   })
+
+  it('skips level-up overlay when notifications are disabled', async () => {
+    const task = createMockTask({ done: false })
+    useTaskStore.setState({ tasks: [task] })
+    apiFetch.mockResolvedValue({
+      task: { ...task, done: true },
+      reward: { xpDelta: 1000, coinsDelta: 100 },
+      user: {
+        lifetime_xp: 1000,
+        current_sprint_xp: 1000,
+        coin_balance: 100,
+        streak_days: 1,
+        preferences: { levelUpNotifications: false },
+      },
+    })
+
+    await useTaskStore.getState().toggleTaskCompletion(task.id)
+
+    expect(useLevelUpStore.getState().level).toBeNull()
+  })
 })

@@ -1,4 +1,5 @@
 const express = require('express')
+const path = require('path')
 const cors = require('cors')
 const helmet = require('helmet')
 const morgan = require('morgan')
@@ -17,6 +18,7 @@ function createApp() {
   app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }))
   app.use(morgan('dev'))
   app.use(express.json())
+  app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')))
 
   app.use('/api', routes)
 

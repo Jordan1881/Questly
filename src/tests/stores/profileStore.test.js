@@ -38,12 +38,22 @@ describe('profileStore', () => {
   })
 
   it('updateProfile stores returned profile', async () => {
-    apiFetch.mockResolvedValue({ profile: { username: 'newdev', avatarUrl: null } })
+    apiFetch.mockResolvedValue({ profile: { username: 'newdev', avatarUrl: null, email: 'a@b.com', age: 25 } })
 
     const profile = await useProfileStore.getState().updateProfile({ username: 'newdev' })
 
     expect(profile.username).toBe('newdev')
     expect(useProfileStore.getState().profile.username).toBe('newdev')
+  })
+
+  it('updatePreferences stores returned preferences', async () => {
+    apiFetch.mockResolvedValue({
+      profile: { username: 'dev', preferences: { levelUpNotifications: false } },
+    })
+
+    await useProfileStore.getState().updatePreferences({ levelUpNotifications: false })
+
+    expect(useProfileStore.getState().profile.preferences.levelUpNotifications).toBe(false)
   })
 
   it('fetchProfile sets error on failure', async () => {

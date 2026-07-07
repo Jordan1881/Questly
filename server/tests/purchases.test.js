@@ -175,6 +175,34 @@ describe('PATCH /api/users/me', () => {
     expect(res.body.profile.username).toBe('newname')
   })
 
+  test('updates age and preferences', async () => {
+    const dev = await registerAndLogin('developer', 'profilefields')
+
+    const res = await request(app)
+      .patch('/api/users/me')
+      .set('Authorization', `Bearer ${dev.token}`)
+      .send({ age: 28, preferences: { levelUpNotifications: false } })
+
+    expect(res.status).toBe(200)
+    expect(res.body.profile.age).toBe(28)
+    expect(res.body.profile.preferences.levelUpNotifications).toBe(false)
+  })
+
+  test('updates email with current password', async () => {
+    const dev = await registerAndLogin('developer', 'emailchange')
+
+    const res = await request(app)
+      .patch('/api/users/me')
+      .set('Authorization', `Bearer ${dev.token}`)
+      .send({
+        email: 'newemail@test.com',
+        currentPassword: 'password123',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.profile.email).toBe('newemail@test.com')
+  })
+
   test('rejects duplicate username', async () => {
     await registerAndLogin('developer', 'taken')
     const dev2 = await registerAndLogin('developer', 'patchdup')
@@ -185,5 +213,24 @@ describe('PATCH /api/users/me', () => {
       .send({ username: 'devtaken' })
 
     expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/users/me/avatar', () => {
+  const tinyPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  )
+
+  test('uploads avatar image', async () => {
+    const dev = await registerAndLogin('developer', 'avatar')
+
+    const res = await request(app)
+      .post('/api/users/me/avatar')
+      .set('Authorization', `Bearer ${dev.token}`)
+      .attach('avatar', tinyPng, 'avatar.png')
+
+    expect(res.status).toBe(200)
+    expect(res.body.profile.avatarUrl).toMatch(/^\/api\/uploads\/avatars\//)
   })
 })
