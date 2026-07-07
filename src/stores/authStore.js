@@ -139,6 +139,21 @@ export const useAuthStore = create(
           return { ok: false, error: authErrorMessage(err) }
         }
       },
+
+      changePassword: async ({ currentPassword, newPassword }) => {
+        set({ isLoading: true, error: null })
+        try {
+          await apiFetch('/api/auth/change-password', {
+            method: 'POST',
+            body: JSON.stringify({ currentPassword, newPassword }),
+          })
+          set({ isLoading: false })
+          return { ok: true }
+        } catch (err) {
+          set({ isLoading: false, error: authErrorMessage(err) })
+          throw err
+        }
+      },
     }),
     {
       name: 'questly-auth',

@@ -188,3 +188,38 @@ describe('POST /api/auth/logout', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('POST /api/auth/change-password', () => {
+  test('updates password with valid current password', async () => {
+    const token = await getValidToken()
+
+    const res = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'password123', newPassword: 'newpassword123' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('Password updated')
+
+    const loginOld = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'dev@test.com', password: 'password123' })
+    expect(loginOld.status).toBe(401)
+
+    const loginNew = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'dev@test.com', password: 'newpassword123' })
+    expect(loginNew.status).toBe(200)
+  })
+
+  test('rejects incorrect current password', async () => {
+    const token = await getValidToken()
+
+    const res = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'wrong-password', newPassword: 'newpassword123' })
+
+    expect(res.status).toBe(400)
+  })
+})
