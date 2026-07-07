@@ -115,6 +115,25 @@ describe('POST /api/auth/login', () => {
     expect(res.body.user.jira_refresh_token).toBeUndefined()
     expect(res.body.user.jira_account_id).toBeUndefined()
   })
+
+  test('includes jira_connected true when developer has linked Jira', async () => {
+    await db('users').where({ email: 'dev@test.com' }).update({
+      jira_access_token: 'secret-jira-token',
+      jira_account_id: 'jira-acct-1',
+    })
+
+    const res = await loginUser()
+
+    expect(res.status).toBe(200)
+    expect(res.body.user.jira_connected).toBe(true)
+  })
+
+  test('includes jira_connected false when developer has not linked Jira', async () => {
+    const res = await loginUser()
+
+    expect(res.status).toBe(200)
+    expect(res.body.user.jira_connected).toBe(false)
+  })
 })
 
 // ── GET /api/auth/me ──────────────────────────────────────────────────────────
