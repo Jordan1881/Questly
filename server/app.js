@@ -5,6 +5,7 @@ const helmet = require('helmet')
 const morgan = require('morgan')
 const routes = require('./routes/index')
 const { notFound, errorHandler } = require('./middleware/errorHandler')
+const avatarStorage = require('./lib/avatarStorage')
 
 function createApp() {
   const app = express()
@@ -18,7 +19,10 @@ function createApp() {
   app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }))
   app.use(morgan('dev'))
   app.use(express.json())
-  app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')))
+
+  if (avatarStorage.isLocalMode()) {
+    app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')))
+  }
 
   app.use('/api', routes)
 
