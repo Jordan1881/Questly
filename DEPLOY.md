@@ -75,17 +75,54 @@ Open **Questly → Variables** and set:
 
 Register **both** callback URLs in the Atlassian app **Authorization → Callback URL** list.
 
-### Avatar storage (Cloudflare R2 — required for profile photo uploads)
+### Avatar storage (AWS S3 — required for profile photo uploads)
 
-Profile avatars are stored in **object storage**, not on the Railway container disk. Use **Cloudflare R2** (S3-compatible, no egress fees).
+Profile avatars are stored in **Amazon S3**, not on the Railway container disk.
 
-**HITL — one-time setup in Cloudflare (you do this):**
+**HITL — one-time setup in AWS (you do this):**
 
-1. [Cloudflare Dashboard](https://dash.cloudflare.com) → **R2** → **Create bucket** (e.g. `questly-avatars`)
-2. **Manage R2 API tokens** → **Create API token** with **Object Read & Write** on that bucket
-3. Note the **Access Key ID**, **Secret Access Key**, and **Account ID**
-4. Bucket → **Settings** → enable **Public access** (R2.dev subdomain) **or** attach a custom domain (e.g. `avatars.yourdomain.com`)
-5. Copy the public base URL (e.g. `https://pub-xxxxxxxx.r2.dev` — **no trailing slash**)
+1. **S3** → **Create bucket** (e.g. `questly-avatars`, region e.g. `us-east-1`)
+2. **Block Public Access** — for simple setup, allow public reads on the `avatars/` prefix:
+   - Bucket → **Permissions** → **Block public access** → edit to allow bucket policy (or use CloudFront later for stricter setup)
+   - **Bucket policy** → add (replace `questly-avatars` with your bucket name):
+
+```json
+{
+  "Version": "2012-01-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadAvatars",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::questly-avatars/avatars/*"
+    }
+  ]
+}
+```
+
+3. **IAM** → **Users** → create user (e.g. `questly-avatar-uploader`) → attach inline policy:
+
+```json
+{
+  "Version": "2012-01-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::questly-avatars/avatars/*"
+    }
+  ]
+}
+```
+
+4. **Security credentials** → **Create access key** for that IAM user (programmatic access)
+
+5. **Public URL** — use the bucket virtual-hosted style URL (no trailing slash):
+
+`https://questly-avatars.s3.us-east-1.amazonaws.com`
+
+(Or a **CloudFront** distribution URL if you add CDN later — set that as `S3_PUBLIC_URL`.)
 
 **HITL — Railway variables (Questly API service):**
 
@@ -93,17 +130,18 @@ Profile avatars are stored in **object storage**, not on the Railway container d
 |----------|--------|
 | `AVATAR_STORAGE` | `s3` |
 | `S3_BUCKET` | `questly-avatars` |
-| `S3_REGION` | `auto` |
-| `S3_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
-| `S3_ACCESS_KEY_ID` | From step 2 |
-| `S3_SECRET_ACCESS_KEY` | From step 2 |
-| `S3_PUBLIC_URL` | Public bucket URL from step 4 |
+| `S3_REGION` | `us-east-1` (match your bucket) |
+| `S3_ACCESS_KEY_ID` | IAM access key |
+| `S3_SECRET_ACCESS_KEY` | IAM secret key |
+| `S3_PUBLIC_URL` | `https://questly-avatars.s3.us-east-1.amazonaws.com` |
 
-Redeploy the API after saving variables. Upload a profile photo in the app — the image URL should be `https://…/avatars/<userId>.png` (not `/api/uploads/...`).
+Do **not** set `S3_ENDPOINT` for native AWS S3.
+
+Redeploy the API after saving variables. Upload a profile photo — the saved URL should look like `https://questly-avatars.s3.us-east-1.amazonaws.com/avatars/<userId>.png`.
 
 **Local dev:** leave `AVATAR_STORAGE=local` (default). Files go to `server/uploads/` and are served from the API.
 
-**Note:** Avatars uploaded before R2 was enabled (old `/api/uploads/...` paths) will 404 until users re-upload.
+**Note:** Avatars uploaded before S3 was enabled (old `/api/uploads/...` paths) will 404 until users re-upload.
 
 ### Atlassian Distribution page (privacy, terms, sharing)
 
