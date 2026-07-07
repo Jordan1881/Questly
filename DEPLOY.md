@@ -88,7 +88,7 @@ Profile avatars are stored in **Amazon S3**, not on the Railway container disk.
 
 ```json
 {
-  "Version": "2012-01-17",
+  "Version": "2012-10-17",
   "Statement": [
     {
       "Sid": "PublicReadAvatars",
@@ -105,7 +105,7 @@ Profile avatars are stored in **Amazon S3**, not on the Railway container disk.
 
 ```json
 {
-  "Version": "2012-01-17",
+  "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
