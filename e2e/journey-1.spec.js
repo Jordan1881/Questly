@@ -58,7 +58,7 @@ test('Journey 1 — join workspace, team Jira banner, complete task, XP on dashb
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 })
 
   await expect(page.getByText('questly-e2e.atlassian.net')).toBeVisible({ timeout: 10000 })
-  await expect(page.getByText(/connect your Jira account on Profile/i)).toBeVisible()
+  await expect(page.getByText(/connect your Jira account in Settings/i)).toBeVisible()
 
   await page.goto('/tasks')
   await expect(page.getByText('E2E Journey Task')).toBeVisible({ timeout: 10000 })
