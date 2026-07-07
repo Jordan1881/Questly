@@ -45,7 +45,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
       return
     }
     setMessage(null)
-    const result = await startJiraOAuth(location.pathname || '/profile')
+    const result = await startJiraOAuth(location.pathname || '/settings')
     if (!result.ok) {
       setMessage({ type: 'error', text: result.error || 'Failed to start Jira connection.' })
     }
@@ -115,7 +115,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
         <div className="flex flex-col gap-2 mt-2">
           <p className="text-[length:var(--text-caption)] text-[color:var(--color-gray-500)] leading-relaxed">{NO_WORKSPACE_COPY}</p>
           <p className="text-[11px] text-[color:var(--color-gray-400)]">
-            Jira links your Atlassian identity to assigned tasks. You can set it up on Profile after
+            Jira links your Atlassian identity to assigned tasks. You can set it up in Settings after
             your admin approves you.
           </p>
           <Link

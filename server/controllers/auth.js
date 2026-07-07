@@ -7,8 +7,11 @@ const jiraClient = require('../services/jiraClient')
 const { developerJiraContext } = require('../lib/jiraSiteContext')
 const { formatDeveloperConnectError } = require('../lib/jiraConnectErrors')
 
+const { parsePreferences } = require('../lib/userPreferences')
+
 const SALT_ROUNDS = 12
 const INVALID_CREDENTIALS = 'Invalid credentials'
+const MIN_PASSWORD_LENGTH = 8
 
 function signToken(user) {
   return jwt.sign({ sub: user.id, role: user.role }, config.jwt.secret, {
@@ -74,6 +77,8 @@ async function me(req, res, next) {
       lifetime_xp,
       coin_balance,
       streak_days,
+      age,
+      preferences,
     } = req.user
 
     const jiraContext = await developerJiraContext(req.user)
@@ -90,6 +95,8 @@ async function me(req, res, next) {
         lifetime_xp,
         coin_balance,
         streak_days: streak_days ?? 0,
+        age: age ?? null,
+        preferences: parsePreferences(preferences),
         jira_connected: UserModel.isJiraConnected(internal),
         ...jiraContext,
       },
@@ -185,4 +192,30 @@ function logout(_req, res) {
   res.json({ message: 'Logged out' })
 }
 
-module.exports = { register, login, me, logout, connectJira, disconnectJira }
+async function changePassword(req, res, next) {
+  try {
+    const { currentPassword, newPassword } = req.body
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'currentPassword and newPassword are required' })
+    }
+
+    if (String(newPassword).length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ error: `newPassword must be at least ${MIN_PASSWORD_LENGTH} characters` })
+    }
+
+    const internal = await UserModel.findByIdInternal(req.user.id)
+    const valid = await bcrypt.compare(currentPassword, internal.password_hash)
+    if (!valid) {
+      return res.status(400).json({ error: 'current password is incorrect' })
+    }
+
+    const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS)
+    await UserModel.updatePassword(req.user.id, password_hash)
+
+    res.json({ message: 'Password updated' })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { register, login, me, logout, connectJira, disconnectJira, changePassword }

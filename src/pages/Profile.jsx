@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { StarIcon } from '../components/icons'
-import JiraIntegrationCard from '../components/JiraIntegrationCard'
+import EditProfileForm from '../components/EditProfileForm'
 import TeamJiraBanner from '../components/TeamJiraBanner'
 import MyRewards from '../components/MyRewards'
 import ProfileAvatar from '../components/ProfileAvatar'
@@ -188,7 +188,6 @@ export default function Profile() {
   const purchases = useProfileStore((s) => s.purchases)
   const profileLoading = useProfileStore((s) => s.isLoading)
   const fetchProfile = useProfileStore((s) => s.fetchProfile)
-  const updateProfile = useProfileStore((s) => s.updateProfile)
   const deletePurchase = useProfileStore((s) => s.deletePurchase)
   const members = useWorkspaceStore((s) => s.members)
   const pendingJoinRequests = useWorkspaceStore((s) => s.pendingJoinRequests)
@@ -198,10 +197,6 @@ export default function Profile() {
   const [showSidebar, setShowSidebar] = useState(false)
   const [xpTransactions, setXpTransactions] = useState([])
   const [xpHistoryLoading, setXpHistoryLoading] = useState(false)
-  const [editUsername, setEditUsername] = useState('')
-  const [editAvatarUrl, setEditAvatarUrl] = useState('')
-  const [saveMessage, setSaveMessage] = useState(null)
-  const [saving, setSaving] = useState(false)
 
   const isAdmin = userRole === 'admin'
   const displayProfile = profile ?? authUser
@@ -241,30 +236,6 @@ export default function Profile() {
     () => summarizeTeam(members, pendingJoinRequests.length),
     [members, pendingJoinRequests.length],
   )
-
-  useEffect(() => {
-    if (profile) {
-      setEditUsername(profile.username ?? '')
-      setEditAvatarUrl(profile.avatarUrl ?? '')
-    }
-  }, [profile])
-
-  const handleSaveProfile = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    setSaveMessage(null)
-    try {
-      await updateProfile({
-        username: editUsername.trim(),
-        avatarUrl: editAvatarUrl.trim() || null,
-      })
-      setSaveMessage({ type: 'success', text: 'Profile updated.' })
-    } catch (err) {
-      setSaveMessage({ type: 'error', text: err.message })
-    } finally {
-      setSaving(false)
-    }
-  }
 
   return (
     <div className="ds-page">
@@ -380,7 +351,9 @@ export default function Profile() {
 
           )}
 
-          {/* ── Developer-only: XP History + Account Details ── */}
+          <EditProfileForm variant={isAdmin ? 'admin' : 'developer'} />
+
+          {/* ── Developer-only: XP History + Account stats ── */}
           {!isAdmin && (
             <>
             <TeamJiraBanner user={authUser} />
@@ -405,38 +378,7 @@ export default function Profile() {
                 )}
               </div>
               <div className="w-[288px] shrink-0 ds-card ds-card-pad">
-                <h2 className="ds-subsection-title mb-5">Account Details</h2>
-                <form onSubmit={handleSaveProfile} className="flex flex-col gap-3 mb-5">
-                  <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-                    Username
-                    <input
-                      value={editUsername}
-                      onChange={(e) => setEditUsername(e.target.value)}
-                      className="mt-1 w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-body-sm)]"
-                    />
-                  </label>
-                  <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-                    Avatar URL
-                    <input
-                      value={editAvatarUrl}
-                      onChange={(e) => setEditAvatarUrl(e.target.value)}
-                      className="mt-1 w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-body-sm)]"
-                    />
-                  </label>
-                  {saveMessage && (
-                    <p className={`text-[length:var(--text-caption)] ${saveMessage.type === 'success' ? 'text-[color:var(--color-success-600)]' : 'text-[color:var(--color-error-500)]'}`}>
-                      {saveMessage.text}
-                    </p>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="self-start px-3 py-1.5 rounded-[var(--radius-md)] text-[length:var(--text-caption)] font-semibold text-white cursor-pointer disabled:opacity-60 ds-brand-gradient"
-                  >
-                    {saving ? 'Saving…' : 'Save profile'}
-                  </button>
-                </form>
-                <JiraIntegrationCard showConnectForm />
+                <h2 className="ds-subsection-title mb-5">Account stats</h2>
                 <div className="flex flex-col divide-y divide-[color:var(--color-gray-100)]">
                   {[
                     { label: 'Sprint XP', value: `${userXP.toLocaleString()} XP`, star: true },
@@ -483,8 +425,7 @@ export default function Profile() {
                 </div>
               </div>
               <div className="w-[288px] shrink-0 ds-card ds-card-pad">
-                <h2 className="ds-subsection-title mb-5">Account Details</h2>
-                <JiraIntegrationCard showConnectForm={false} />
+                <h2 className="ds-subsection-title mb-5">Team overview</h2>
                 <div className="flex flex-col divide-y divide-[color:var(--color-gray-100)]">
                   {[
                     { label: 'Role',        value: 'Admin / Manager' },

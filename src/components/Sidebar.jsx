@@ -71,6 +71,7 @@ const PAGE_PATHS = {
   tasklist:        '/tasks',
   rewardshop:      '/rewards',
   profile:         '/profile',
+  settings:        '/settings',
   admin:           '/admin',
   workspacecreate: '/workspace/create',
   workspacejoin:   '/workspace/join',
@@ -89,6 +90,7 @@ const ADMIN_NAV_LINKS = [
   { id: 'admin',           label: 'Admin',         Icon: SettingsIcon  },
   { id: 'rewardshop',      label: 'Reward Shop',   Icon: RewardShopIcon },
   { id: 'profile',         label: 'Profile',       Icon: ProfileIcon   },
+  { id: 'settings',        label: 'Settings',      Icon: SettingsIcon  },
 ]
 
 const DEV_NAV_LINKS_WITH_JOIN = [
