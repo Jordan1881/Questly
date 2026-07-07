@@ -273,4 +273,33 @@ describe('POST /api/rewards/:id/purchase', () => {
     const row = await db('rewards').where({ id: reward.id }).first()
     expect(row.is_available).toBe(false)
   })
+
+  test('purchase returns 404 when reward does not exist', async () => {
+    const { token: devToken } = await registerAndLogin('developer', 'missing')
+
+    const res = await request(app)
+      .post('/api/rewards/00000000-0000-4000-8000-000000000099/purchase')
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(res.status).toBe(404)
+    expect(res.body.error).toMatch(/not found/i)
+  })
+
+  test('purchase returns 400 when reward is unavailable', async () => {
+    const { token: adminToken } = await registerAndLogin('admin', 'unavail')
+    const workspace = await createWorkspace(adminToken, 'unavail')
+    const reward = await createReward(workspace.id, adminToken, { coinCost: 2 })
+
+    await db('rewards').where({ id: reward.id }).update({ is_available: false })
+
+    const { token: devToken, user: devUser } = await registerAndLogin('developer', 'unavaildev')
+    await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id, coin_balance: 100 })
+
+    const res = await request(app)
+      .post(`/api/rewards/${reward.id}/purchase`)
+      .set('Authorization', `Bearer ${devToken}`)
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toMatch(/not available/i)
+  })
 })

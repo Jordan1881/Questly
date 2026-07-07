@@ -52,6 +52,7 @@ describe('POST /api/auth/register', () => {
 
     expect(res.status).toBe(201)
     expect(res.body.user).toMatchObject({ email: 'dev@test.com', username: 'dev', role: 'developer' })
+    expect(res.body.user.jira_connected).toBe(false)
     expect(res.body.user.id).toBeDefined()
     expect(res.body.user.password_hash).toBeUndefined()
     expect(res.body.token).toBeDefined()
