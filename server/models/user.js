@@ -1,5 +1,6 @@
 const db = require('../config/db')
 const { encryptToken, decryptUserTokens } = require('../lib/jiraTokenCrypto')
+const { parsePreferences, mergePreferences } = require('../lib/userPreferences')
 
 const TABLE = 'users'
 const PUBLIC_FIELDS = [
@@ -14,6 +15,8 @@ const PUBLIC_FIELDS = [
   'coin_balance',
   'streak_days',
   'last_activity_date',
+  'age',
+  'preferences',
 ]
 
 function strip(user) {
@@ -145,6 +148,8 @@ function formatPublicProfile(user) {
     coinBalance: safe.coin_balance ?? 0,
     streakDays: safe.streak_days ?? 0,
     jiraConnected: isJiraConnected(user),
+    age: safe.age ?? null,
+    preferences: parsePreferences(safe.preferences),
   }
 }
 
@@ -154,19 +159,33 @@ async function findByUsername(username, excludeUserId = null) {
   return query.first()
 }
 
-async function updateProfile(user_id, { username, avatarUrl, avatar_url }) {
+async function updateProfile(
+  user_id,
+  { username, avatarUrl, avatar_url, email, age, preferences },
+) {
   const patch = {}
   const nextUsername = username
   const nextAvatar = avatarUrl ?? avatar_url
 
   if (nextUsername !== undefined) patch.username = nextUsername
   if (nextAvatar !== undefined) patch.avatar_url = nextAvatar
+  if (email !== undefined) patch.email = email
+  if (age !== undefined) patch.age = age
+  if (preferences !== undefined) {
+    const current = await db(TABLE).where({ id: user_id }).select('preferences').first()
+    patch.preferences = mergePreferences(current?.preferences, preferences)
+  }
 
   if (!Object.keys(patch).length) {
     return findByIdInternal(user_id)
   }
 
   const [user] = await db(TABLE).where({ id: user_id }).update(patch).returning('*')
+  return user
+}
+
+async function updatePassword(user_id, password_hash) {
+  const [user] = await db(TABLE).where({ id: user_id }).update({ password_hash }).returning('*')
   return user
 }
 
@@ -190,5 +209,6 @@ module.exports = {
   formatPublicProfile,
   findByUsername,
   updateProfile,
+  updatePassword,
   strip,
 }

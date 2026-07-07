@@ -6,6 +6,7 @@ import Dashboard from '../pages/Dashboard'
 import TaskList from '../pages/TaskList'
 import RewardShop from '../pages/RewardShop'
 import Profile from '../pages/Profile'
+import Settings from '../pages/Settings'
 import Admin from '../pages/Admin'
 import WorkspaceCreate from '../pages/WorkspaceCreate'
 import WorkspaceJoin from '../pages/WorkspaceJoin'
@@ -56,6 +57,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Profile />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/settings',
+    element: (
+      <ProtectedRoute>
+        <Settings />
       </ProtectedRoute>
     ),
   },
