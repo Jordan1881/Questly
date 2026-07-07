@@ -79,7 +79,21 @@ Register **both** callback URLs in the Atlassian app **Authorization → Callbac
 
 Profile avatars are stored in **Amazon S3**, not on the Railway container disk.
 
-**HITL — one-time setup in AWS (you do this):**
+**Automated setup (recommended):** from repo root, with AWS admin credentials in the shell:
+
+```bash
+export AWS_ACCESS_KEY_ID=AKIA...
+export AWS_SECRET_ACCESS_KEY=...
+export AWS_REGION=us-east-1
+# optional: export S3_BUCKET=your-globally-unique-name
+node scripts/setup-s3-avatars.cjs
+```
+
+The script creates the bucket, public-read policy on `avatars/*`, IAM uploader user + access key, and prints Railway variables. Re-run only if you need a new access key (it creates a new key each run).
+
+**HITL for Cloud Agent:** add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to **Cursor → Cloud Agent → Secrets** (temporary admin keys are fine; rotate after setup).
+
+**Manual setup** (if you prefer the console):
 
 1. **S3** → **Create bucket** (e.g. `questly-avatars`, region e.g. `us-east-1`)
 2. **Block Public Access** — for simple setup, allow public reads on the `avatars/` prefix:
@@ -88,7 +102,7 @@ Profile avatars are stored in **Amazon S3**, not on the Railway container disk.
 
 ```json
 {
-  "Version": "2012-01-17",
+  "Version": "2012-10-17",
   "Statement": [
     {
       "Sid": "PublicReadAvatars",
@@ -105,7 +119,7 @@ Profile avatars are stored in **Amazon S3**, not on the Railway container disk.
 
 ```json
 {
-  "Version": "2012-01-17",
+  "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
