@@ -25,6 +25,7 @@ function isS3Mode() {
 function assertS3Configured() {
   const missing = [
     ['S3_BUCKET', process.env.S3_BUCKET],
+    ['S3_REGION', process.env.S3_REGION],
     ['S3_ACCESS_KEY_ID', process.env.S3_ACCESS_KEY_ID],
     ['S3_SECRET_ACCESS_KEY', process.env.S3_SECRET_ACCESS_KEY],
     ['S3_PUBLIC_URL', process.env.S3_PUBLIC_URL],
@@ -68,16 +69,17 @@ function ensureLocalDir() {
 function getS3Client() {
   assertS3Configured()
   const config = {
-    region: process.env.S3_REGION || 'auto',
+    region: process.env.S3_REGION,
     credentials: {
       accessKeyId: process.env.S3_ACCESS_KEY_ID,
       secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
     },
   }
 
+  // Optional — only for S3-compatible providers (MinIO, R2). Omit for AWS S3.
   if (process.env.S3_ENDPOINT) {
     config.endpoint = process.env.S3_ENDPOINT
-    config.forcePathStyle = true
+    config.forcePathStyle = process.env.S3_FORCE_PATH_STYLE !== 'false'
   }
 
   return new S3Client(config)
