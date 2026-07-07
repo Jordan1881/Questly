@@ -16,6 +16,14 @@ function signToken(user) {
   })
 }
 
+function buildSessionUser(internal) {
+  const user = UserModel.strip(internal)
+  return {
+    ...user,
+    jira_connected: UserModel.isJiraConnected(internal),
+  }
+}
+
 async function register(req, res, next) {
   try {
     const { email, username, password, role } = req.body
@@ -32,7 +40,7 @@ async function register(req, res, next) {
     const user = await UserModel.create({ email, username, password_hash, role })
     const token = signToken(user)
 
-    res.status(201).json({ user, token })
+    res.status(201).json({ user: { ...user, jira_connected: false }, token })
   } catch (err) {
     next(err)
   }
@@ -51,10 +59,9 @@ async function login(req, res, next) {
       return res.status(401).json({ error: INVALID_CREDENTIALS })
     }
 
-    const user = UserModel.strip(row)
-    const token = signToken(user)
+    const token = signToken(row)
 
-    res.status(200).json({ user, token })
+    res.status(200).json({ user: buildSessionUser(row), token })
   } catch (err) {
     next(err)
   }

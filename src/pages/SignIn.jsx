@@ -31,7 +31,7 @@ const inputClass = `
 
 export default function SignIn() {
   const navigate = useNavigate()
-  const { login, isLoading, error, clearError, sessionExpired, clearSessionExpired } = useAuthStore()
+  const { login, fetchMe, isLoading, error, clearError, sessionExpired, clearSessionExpired } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,6 +43,7 @@ export default function SignIn() {
     clearSessionExpired()
     const result = await login({ email, password })
     if (result.ok) {
+      await fetchMe().catch(() => {})
       const role = useAuthStore.getState().userRole
       const jiraConnected = useAuthStore.getState().user?.jira_connected
       if (role === 'developer' && !jiraConnected) setShowJiraAuth(true)
