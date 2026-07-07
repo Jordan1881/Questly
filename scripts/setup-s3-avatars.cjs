@@ -110,12 +110,16 @@ async function configurePublicRead(s3, bucket) {
   console.log('Bucket policy applied (public read on avatars/*)')
 }
 
+function isIamUserMissing(err) {
+  return err.name === 'NoSuchEntity' || err.name === 'NoSuchEntityException'
+}
+
 async function ensureIamUploader(iam, bucket) {
   try {
     await iam.send(new GetUserCommand({ UserName: IAM_USER_NAME }))
     console.log(`IAM user exists: ${IAM_USER_NAME}`)
   } catch (err) {
-    if (err.name !== 'NoSuchEntity') throw err
+    if (!isIamUserMissing(err)) throw err
     await iam.send(new CreateUserCommand({ UserName: IAM_USER_NAME }))
     console.log(`Created IAM user: ${IAM_USER_NAME}`)
   }
