@@ -75,6 +75,36 @@ Open **Questly → Variables** and set:
 
 Register **both** callback URLs in the Atlassian app **Authorization → Callback URL** list.
 
+### Avatar storage (Cloudflare R2 — required for profile photo uploads)
+
+Profile avatars are stored in **object storage**, not on the Railway container disk. Use **Cloudflare R2** (S3-compatible, no egress fees).
+
+**HITL — one-time setup in Cloudflare (you do this):**
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com) → **R2** → **Create bucket** (e.g. `questly-avatars`)
+2. **Manage R2 API tokens** → **Create API token** with **Object Read & Write** on that bucket
+3. Note the **Access Key ID**, **Secret Access Key**, and **Account ID**
+4. Bucket → **Settings** → enable **Public access** (R2.dev subdomain) **or** attach a custom domain (e.g. `avatars.yourdomain.com`)
+5. Copy the public base URL (e.g. `https://pub-xxxxxxxx.r2.dev` — **no trailing slash**)
+
+**HITL — Railway variables (Questly API service):**
+
+| Variable | Value |
+|----------|--------|
+| `AVATAR_STORAGE` | `s3` |
+| `S3_BUCKET` | `questly-avatars` |
+| `S3_REGION` | `auto` |
+| `S3_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| `S3_ACCESS_KEY_ID` | From step 2 |
+| `S3_SECRET_ACCESS_KEY` | From step 2 |
+| `S3_PUBLIC_URL` | Public bucket URL from step 4 |
+
+Redeploy the API after saving variables. Upload a profile photo in the app — the image URL should be `https://…/avatars/<userId>.png` (not `/api/uploads/...`).
+
+**Local dev:** leave `AVATAR_STORAGE=local` (default). Files go to `server/uploads/` and are served from the API.
+
+**Note:** Avatars uploaded before R2 was enabled (old `/api/uploads/...` paths) will 404 until users re-upload.
+
 ### Atlassian Distribution page (privacy, terms, sharing)
 
 Use these public URLs in **Distribution → Vendor & security details**:

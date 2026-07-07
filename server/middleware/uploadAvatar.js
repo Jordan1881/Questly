@@ -1,22 +1,9 @@
-const path = require('path')
-const fs = require('fs')
 const multer = require('multer')
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'avatars')
 const MAX_BYTES = 2 * 1024 * 1024
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true })
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg'
-    cb(null, `${req.user.id}${ext}`)
-  },
-})
+const storage = multer.memoryStorage()
 
 function fileFilter(_req, file, cb) {
   if (!ALLOWED_MIME.has(file.mimetype)) {
@@ -45,6 +32,5 @@ function uploadAvatarMiddleware(req, res, next) {
 }
 
 module.exports = {
-  UPLOAD_DIR,
   uploadAvatarMiddleware,
 }
