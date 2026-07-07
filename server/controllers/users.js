@@ -1,4 +1,3 @@
-const path = require('path')
 const bcrypt = require('bcryptjs')
 const UserModel = require('../models/user')
 const PurchaseModel = require('../models/purchase')
@@ -7,6 +6,7 @@ const db = require('../config/db')
 const SprintModel = require('../models/sprint')
 const TaskAssignmentModel = require('../models/taskAssignment')
 const { mergePreferences } = require('../lib/userPreferences')
+const avatarStorage = require('../lib/avatarStorage')
 
 const SALT_ROUNDS = 12
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -183,13 +183,22 @@ async function uploadAvatar(req, res, next) {
       return res.status(400).json({ error: 'avatar file is required' })
     }
 
-    const avatarUrl = `/api/uploads/avatars/${path.basename(req.file.path)}`
+    const current = await UserModel.findByIdInternal(req.user.id)
+    const avatarUrl = await avatarStorage.uploadAvatar(req.user.id, req.file)
+
+    if (current?.avatar_url && current.avatar_url !== avatarUrl) {
+      await avatarStorage.deleteManagedAvatar(current.avatar_url)
+    }
+
     const updated = await UserModel.updateProfile(req.user.id, { avatarUrl })
     const profile = UserModel.formatPublicProfile(updated)
     profile.level = computeLevel(profile.lifetimeXp)
 
     res.json({ profile, avatarUrl })
   } catch (err) {
+    if (err.message?.startsWith('Avatar storage misconfigured')) {
+      return res.status(500).json({ error: err.message })
+    }
     next(err)
   }
 }
