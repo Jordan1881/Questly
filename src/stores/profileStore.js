@@ -1,7 +1,24 @@
 import { create } from 'zustand'
-import { apiFetch } from '../lib/api'
+import { apiFetch, apiUpload } from '../lib/api'
 import { useAuthStore } from './authStore'
 import { useToastStore } from './toastStore'
+import { parsePreferences } from '../lib/userPreferences'
+
+function syncAuthFromProfile(profile) {
+  if (!profile) return
+  useAuthStore.setState((s) => ({
+    user: s.user
+      ? {
+          ...s.user,
+          username: profile.username,
+          email: profile.email,
+          avatar_url: profile.avatarUrl,
+          age: profile.age ?? null,
+          preferences: parsePreferences(profile.preferences),
+        }
+      : s.user,
+  }))
+}
 
 export const useProfileStore = create((set, get) => ({
   profile: null,
@@ -18,6 +35,7 @@ export const useProfileStore = create((set, get) => ({
         purchases: data.purchases ?? [],
         isLoading: false,
       })
+      syncAuthFromProfile(data.profile)
       return data
     } catch (err) {
       set({ isLoading: false, error: err.message })
@@ -31,9 +49,26 @@ export const useProfileStore = create((set, get) => ({
       body: JSON.stringify(patch),
     })
     set({ profile })
-    useAuthStore.setState((s) => ({
-      user: s.user ? { ...s.user, username: profile.username, avatar_url: profile.avatarUrl } : s.user,
-    }))
+    syncAuthFromProfile(profile)
+    return profile
+  },
+
+  updatePreferences: async (preferences) => {
+    const { profile } = await apiFetch('/api/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ preferences }),
+    })
+    set({ profile })
+    syncAuthFromProfile(profile)
+    return profile
+  },
+
+  uploadAvatar: async (file) => {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    const { profile } = await apiUpload('/api/users/me/avatar', formData)
+    set({ profile })
+    syncAuthFromProfile(profile)
     return profile
   },
 
