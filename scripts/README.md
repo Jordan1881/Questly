@@ -10,6 +10,8 @@
 
 See [DEPLOY.md](../DEPLOY.md) for Railway one-time cleanup commands.
 
+| [setup-s3-avatars.cjs](./setup-s3-avatars.cjs) | **One-time** AWS S3 + IAM for profile avatars — needs `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` with S3+IAM admin rights. Prints Railway env vars. |
+
 ## Dev tooling (`dev/`)
 
 One-off GitHub backlog utilities — not used in CI or production:
