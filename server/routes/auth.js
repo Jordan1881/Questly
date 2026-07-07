@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { register, login, me, logout, connectJira, disconnectJira } = require('../controllers/auth')
+const { register, login, me, logout, connectJira, disconnectJira, changePassword } = require('../controllers/auth')
 const { oauthStatus, oauthStart, oauthCallback } = require('../controllers/jiraOAuth')
 const verifyToken = require('../middleware/verifyToken')
 const { loginLimiter, registerLimiter, jiraConnectLimiter } = require('../middleware/rateLimit')
@@ -15,5 +15,6 @@ router.get('/jira/oauth/callback', oauthCallback)
 router.post('/me/jira/connect', verifyToken, jiraConnectLimiter, connectJira)
 router.delete('/me/jira/disconnect', verifyToken, disconnectJira)
 router.post('/logout', verifyToken, logout)
+router.post('/change-password', verifyToken, changePassword)
 
 module.exports = router

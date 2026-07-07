@@ -26,9 +26,9 @@ describe('TeamJiraBanner', () => {
     })
 
     expect(screen.getByText(/acme\.atlassian\.net/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /connect your Jira account on Profile/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /connect your Jira account in Settings/i })).toHaveAttribute(
       'href',
-      '/profile',
+      '/settings',
     )
   })
 

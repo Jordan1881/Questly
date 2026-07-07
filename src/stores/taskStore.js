@@ -4,6 +4,7 @@ import { useXpStore } from './xpStore'
 import { useAuthStore } from './authStore'
 import { useToastStore } from './toastStore'
 import { useLevelUpStore } from './levelUpStore'
+import { isLevelUpNotificationsEnabled } from '../lib/userPreferences'
 
 function levelFromLifetime(lifetimeXp) {
   return Math.floor(Math.max(0, lifetimeXp ?? 0) / 1000) + 1
@@ -73,7 +74,7 @@ export const useTaskStore = create((set, get) => ({
           useToastStore.getState().showSuccess(`+${reward.xpDelta} XP`)
           const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
           const oldLevel = levelFromLifetime(prevLifetime)
-          if (newLevel > oldLevel) {
+          if (newLevel > oldLevel && isLevelUpNotificationsEnabled(user)) {
             useLevelUpStore.getState().show(newLevel)
           }
         }
