@@ -110,7 +110,8 @@ export default function SignUp() {
     })
     if (result.ok) {
       await fetchMe().catch(() => {})
-      if (selectedRole === 'developer') setShowJiraAuth(true)
+      const jiraConnected = useAuthStore.getState().user?.jira_connected
+      if (selectedRole === 'developer' && !jiraConnected) setShowJiraAuth(true)
       else navigate(await resolvePostAuthPath())
     }
   }
