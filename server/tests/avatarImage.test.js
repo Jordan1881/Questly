@@ -1,5 +1,5 @@
 const sharp = require('sharp')
-const { processAvatarImage, AVATAR_SIZE } = require('../lib/avatarImage')
+const { processAvatarImage, AVATAR_SIZE, MIN_SOURCE_PX } = require('../lib/avatarImage')
 
 describe('avatarImage', () => {
   test('produces a square WebP at the target size', async () => {
@@ -27,5 +27,28 @@ describe('avatarImage', () => {
     expect(meta.width).toBe(AVATAR_SIZE)
     expect(meta.height).toBe(AVATAR_SIZE)
     expect(meta.format).toBe('webp')
+  })
+
+  test('rejects images that are too small to upscale cleanly', async () => {
+    const tiny = await sharp({
+      create: {
+        width: 64,
+        height: 64,
+        channels: 3,
+        background: { r: 0, g: 0, b: 0 },
+      },
+    })
+      .png()
+      .toBuffer()
+
+    await expect(
+      processAvatarImage({
+        buffer: tiny,
+        mimetype: 'image/png',
+        originalname: 'tiny.png',
+      }),
+    ).rejects.toMatchObject({ code: 'AVATAR_TOO_SMALL' })
+
+    expect(MIN_SOURCE_PX).toBeGreaterThanOrEqual(128)
   })
 })
