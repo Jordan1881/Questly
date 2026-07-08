@@ -5,6 +5,7 @@ import { useAuthStore } from './authStore'
 import { useToastStore } from './toastStore'
 import { useLevelUpStore } from './levelUpStore'
 import { isLevelUpNotificationsEnabled } from '../lib/userPreferences'
+import { MOTION } from '../design-system/motion/config'
 
 function levelFromLifetime(lifetimeXp) {
   return Math.floor(Math.max(0, lifetimeXp ?? 0) / 1000) + 1
@@ -75,11 +76,17 @@ export const useTaskStore = create((set, get) => ({
           const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
           const oldLevel = levelFromLifetime(prevLifetime)
           if (newLevel > oldLevel && isLevelUpNotificationsEnabled(user)) {
-            useLevelUpStore.getState().show(newLevel)
+            useLevelUpStore.getState().queueShow(newLevel, MOTION.taskComplete.levelUpDeferMs)
           }
         }
       }
-      return { task: updated, user, reward }
+      const newLevel = user ? levelFromLifetime(user.lifetime_xp ?? prevLifetime) : null
+      const oldLevel = levelFromLifetime(prevLifetime)
+      const levelUp =
+        completed && user && newLevel > oldLevel && isLevelUpNotificationsEnabled(user)
+          ? newLevel
+          : null
+      return { task: updated, user, reward, levelUp }
     } catch (err) {
       set((s) => ({
         tasks: s.tasks.map((t) => (t.id === id ? task : t)),

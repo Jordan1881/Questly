@@ -19,6 +19,9 @@ server/uploads/
 # Claude Code local config
 .claude/
 
+# Cursor agent skills (installed locally at ~/.cursor/skills/)
+.cursor/skills/
+
 # Test coverage output
 coverage/
 server/coverage/

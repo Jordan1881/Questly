@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { apiFetch } from '../lib/api'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
@@ -15,6 +15,8 @@ import { useXP } from '../hooks/useXP'
 import XPHistory from '../components/XPHistory'
 import { SkeletonCard, SkeletonList } from '../components/Skeleton'
 import MetricStatCard from '../design-system/components/MetricStatCard'
+import AnimatedReveal from '../components/motion/AnimatedReveal'
+import { useTaskCompleteMotion } from '../hooks/useTaskCompleteMotion'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -40,6 +42,84 @@ const LightningBoltIcon = ({ size = 20 }) => (
 const QuestCountIcon = ({ count = 0 }) => (
   <span className="text-[length:var(--text-h6)] font-bold text-[color:var(--color-brand)]">{count}</span>
 )
+
+function PriorityTaskRow({ task, onToggle }) {
+  const cardRef = useRef(null)
+  const checkboxRef = useRef(null)
+  const xpGhostRef = useRef(null)
+  const { playCompleteJuice } = useTaskCompleteMotion({ cardRef, checkboxRef, xpGhostRef })
+
+  const handleToggle = async () => {
+    if (task.done) {
+      await onToggle(task.id)
+      return
+    }
+
+    const result = await onToggle(task.id)
+    await playCompleteJuice({
+      xp: task.xp,
+      compressed: Boolean(result?.levelUp),
+    })
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      className="relative overflow-hidden border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-5 py-5"
+      style={{ boxShadow: 'var(--shadow-sm)' }}
+    >
+      <span
+        ref={xpGhostRef}
+        data-task-xp-ghost
+        data-xp-amount={task.xp}
+        className="pointer-events-none absolute right-5 top-5 z-10 text-[length:var(--text-h4)] font-semibold text-[color:var(--color-brand)] invisible"
+        aria-hidden="true"
+      >
+        +{task.xp} XP
+      </span>
+
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <button
+            ref={checkboxRef}
+            type="button"
+            aria-label={task.done ? 'Mark incomplete' : 'Mark complete'}
+            onClick={handleToggle}
+            className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 cursor-pointer transition-colors duration-200 ds-focus-ring"
+            style={{
+              background: task.done ? 'var(--color-success-500)' : 'var(--color-gray-200)',
+            }}
+          >
+            {task.done && <CheckmarkIcon />}
+          </button>
+
+          <div className="flex flex-col gap-2 min-w-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              <DifficultyBadge level={task.difficulty} />
+              <span
+                className={`text-[length:var(--text-h6)] font-medium ${
+                  task.done
+                    ? 'line-through text-[color:var(--color-text-subtle)]'
+                    : 'text-[color:var(--color-gray-800)]'
+                }`}
+              >
+                {task.title}
+              </span>
+            </div>
+            <span className="ds-body-sm">Due {task.due}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0 ml-4">
+          <StarIcon color="var(--color-brand)" size={16} />
+          <span className="text-[length:var(--text-h4)] font-semibold text-[color:var(--color-brand)]">
+            +{task.xp}XP
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Sub-components ──────────────────────────────────────────
 
@@ -120,8 +200,9 @@ export default function Dashboard() {
 
   const toggleTask = async (id) => {
     try {
-      await toggleTaskCompletion(id)
+      const result = await toggleTaskCompletion(id)
       await refreshDashboard()
+      return result
     } catch {
       // taskStore handles rollback; global toast shows API error
     }
@@ -141,17 +222,19 @@ export default function Dashboard() {
 
       <main className="ds-page-main">
 
-        <h1 className="ds-page-title mb-6">Welcome back, {displayName}</h1>
+        <AnimatedReveal>
+          <h1 data-motion-reveal className="ds-page-title mb-6">Welcome back, {displayName}</h1>
+        </AnimatedReveal>
 
         {hasWorkspace && <TeamJiraBanner user={user} />}
 
         {!hasWorkspace ? (
           <NoWorkspacePrompt showJiraHint />
         ) : (
-        <div className="flex gap-8 items-start">
+        <AnimatedReveal className="flex gap-8 items-start" stagger={0.12}>
 
           {/* ── Left column ── */}
-          <div className="w-[314px] flex flex-col gap-6 shrink-0">
+          <div data-motion-reveal className="w-[314px] flex flex-col gap-6 shrink-0">
 
             {isInitialLoading ? (
               <SkeletonCard />
@@ -205,7 +288,7 @@ export default function Dashboard() {
           </div>
 
           {/* ── Right column ── */}
-          <div className="flex-1 flex flex-col gap-6">
+          <div data-motion-reveal className="flex-1 flex flex-col gap-6">
 
             <div className="ds-card ds-card-pad">
               <div className="flex items-center justify-between mb-4">
@@ -270,50 +353,8 @@ export default function Dashboard() {
               )}
 
               <div className="flex flex-col gap-4">
-                {priorityTasks.map(task => (
-                  <div
-                    key={task.id}
-                    className="border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-5 py-5"
-                  >
-                    <div className="flex items-start justify-between">
-
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <button
-                          onClick={() => toggleTask(task.id)}
-                          className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 cursor-pointer transition-colors duration-200"
-                          style={{
-                            background: task.done ? 'var(--color-success-500)' : 'var(--color-gray-200)',
-                          }}
-                        >
-                          {task.done && <CheckmarkIcon />}
-                        </button>
-
-                        <div className="flex flex-col gap-2 min-w-0">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <DifficultyBadge level={task.difficulty} />
-                            <span
-                              className={`text-[length:var(--text-h6)] font-medium ${
-                                task.done
-                                  ? 'line-through text-[color:var(--color-text-subtle)]'
-                                  : 'text-[color:var(--color-gray-800)]'
-                              }`}
-                            >
-                              {task.title}
-                            </span>
-                          </div>
-                          <span className="ds-body-sm">Due {task.due}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0 ml-4">
-                        <StarIcon color="var(--color-brand)" size={16} />
-                        <span className="text-[length:var(--text-h4)] font-semibold text-[color:var(--color-brand)]">
-                          +{task.xp}XP
-                        </span>
-                      </div>
-
-                    </div>
-                  </div>
+                {priorityTasks.map((task) => (
+                  <PriorityTaskRow key={task.id} task={task} onToggle={toggleTask} />
                 ))}
               </div>
 
@@ -341,7 +382,7 @@ export default function Dashboard() {
             </div>
 
           </div>
-        </div>
+        </AnimatedReveal>
         )}
       </main>
     </div>

@@ -4,6 +4,7 @@ import PageHeader from '../components/PageHeader'
 import NoWorkspacePrompt from '../components/NoWorkspacePrompt'
 import TaskCard from '../components/TaskCard'
 import FilterBar, { filterTasks } from '../components/FilterBar'
+import AnimatedReveal from '../components/motion/AnimatedReveal'
 import { useAuthStore } from '../stores/authStore'
 import { useTaskStore } from '../stores/taskStore'
 
@@ -203,7 +204,11 @@ export default function TaskList() {
   }, [userRole, hasWorkspace, fetchTasks])
 
   const toggleTask = async (id) => {
-    await toggleTaskCompletion(id).catch(() => {})
+    try {
+      return await toggleTaskCompletion(id)
+    } catch {
+      return undefined
+    }
   }
 
   const filtered = filterTasks(tasks, { status: statusFilter, difficulty: difficultyFilter })
@@ -273,23 +278,29 @@ export default function TaskList() {
               onDifficultyChange={setDifficultyFilter}
             />
 
-            <div className="flex flex-col gap-4 mb-6">
+            <AnimatedReveal
+              className="flex flex-col gap-4 mb-6"
+              stagger={0.08}
+              refreshKey={`${statusFilter}-${difficultyFilter}-${filtered.length}`}
+            >
               {isLoading && tasks.length === 0 ? (
-                <div className="ds-card ds-card-pad py-10 text-center ds-body-sm">
+                <div data-motion-reveal className="ds-card ds-card-pad py-10 text-center ds-body-sm">
                   Loading tasks from Jira…
                 </div>
               ) : filtered.length > 0 ? (
                 filtered.map((task) => (
-                  <TaskCard key={task.id} task={task} onToggle={toggleTask} />
+                  <div key={task.id} data-motion-reveal>
+                    <TaskCard task={task} onToggle={toggleTask} />
+                  </div>
                 ))
               ) : (
-                <div className="ds-card ds-card-pad py-12 text-center">
+                <div data-motion-reveal className="ds-card ds-card-pad py-12 text-center">
                   <p className="text-[length:var(--text-body-lg)] text-[color:var(--color-text-subtle)]">
                     No tasks match this filter.
                   </p>
                 </div>
               )}
-            </div>
+            </AnimatedReveal>
 
             <div className="ds-card ds-card-pad bg-[color:var(--color-bg-subtle)] flex items-start gap-4 mb-6">
               <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 ds-brand-gradient">

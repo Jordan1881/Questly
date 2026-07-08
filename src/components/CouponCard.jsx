@@ -23,17 +23,17 @@ export default function CouponCard({ purchase, onDelete, isDeleting = false }) {
   }
 
   return (
-    <div className="border border-[#e5e7eb] rounded-[12px] p-5 flex flex-col gap-3 bg-white">
+    <div className="ds-card ds-card-pad ds-card-lift flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[14px] font-semibold text-[#1f2937]">{purchase.rewardTitle}</h3>
+        <h3 className="ds-subsection-title">{purchase.rewardTitle}</h3>
         {expired && (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[6px] bg-[#fee2e2] text-[#dc2626]">
+          <span className="text-[length:var(--text-caption)] font-semibold px-2 py-0.5 rounded-[var(--radius-sm)] bg-[color:var(--color-error-100)] text-[color:var(--color-error-600)]">
             Expired
           </span>
         )}
         {expiringSoon && (
           <span
-            className="text-[10px] font-semibold px-2 py-0.5 rounded-[6px] bg-[#fef3c7] text-[#d97706]"
+            className="text-[length:var(--text-caption)] font-semibold px-2 py-0.5 rounded-[var(--radius-sm)] bg-[color:var(--color-warning-100)] text-[color:var(--color-warning-600)]"
             aria-label="Expiring soon"
           >
             Expiring soon
@@ -44,25 +44,23 @@ export default function CouponCard({ purchase, onDelete, isDeleting = false }) {
       <button
         type="button"
         onClick={() => setRevealed((v) => !v)}
-        className="text-left font-mono text-[13px] text-[#374151] bg-[#f9fafb] px-3 py-2 rounded-[8px] border border-[#e5e7eb] cursor-pointer"
+        className="ds-focus-ring text-left font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-gray-700)] bg-[color:var(--color-bg-subtle)] px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] cursor-pointer transition-colors duration-200 hover:border-[color:var(--color-border-brand)] hover:bg-[color:var(--color-bg-brand-subtle)]"
       >
         {revealed ? purchase.couponCode : maskCouponCode(purchase.couponCode)}
-        <span className="block text-[11px] text-[#9ca3af] mt-1 font-sans">
+        <span className="block text-[11px] text-[color:var(--color-text-subtle)] mt-1 font-sans">
           {revealed ? 'Hide code' : 'Click to reveal'}
         </span>
       </button>
 
-      <p className="text-[12px] text-[#6b7280]">
-        Expires: {formatExpiryDate(purchase.expiresAt)}
-      </p>
-      <p className="text-[12px] text-[#9ca3af]">{purchase.coinsSpent} Coins spent</p>
+      <p className="ds-body-sm">Expires: {formatExpiryDate(purchase.expiresAt)}</p>
+      <p className="ds-caption">{purchase.coinsSpent} Coins spent</p>
 
       <button
         type="button"
         onClick={handleDelete}
         disabled={isDeleting}
-        className={`text-[12px] font-semibold cursor-pointer disabled:opacity-60 self-start ${
-          confirmDelete ? 'text-[#dc2626]' : 'text-[#6b7280] hover:text-[#ef4444]'
+        className={`ds-focus-ring text-[length:var(--text-body-sm)] font-semibold cursor-pointer disabled:opacity-60 self-start transition-colors duration-200 ${
+          confirmDelete ? 'text-[color:var(--color-error-600)]' : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-error-500)]'
         }`}
       >
         {confirmDelete ? 'Confirm remove?' : 'Remove from My Rewards'}
