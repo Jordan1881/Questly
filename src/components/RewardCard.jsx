@@ -16,7 +16,7 @@ export default function RewardCard({
   else if (!canAfford) helperText = 'Not enough coins'
 
   return (
-    <div className="ds-card ds-card-pad flex flex-col gap-4 transition-all duration-200">
+    <div className="ds-card ds-card-pad ds-card-lift flex flex-col gap-4 transition-all duration-200">
       <div
         className="w-14 h-14 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0 overflow-hidden shadow-[var(--shadow-primary-sm)]"
         style={{
@@ -62,7 +62,7 @@ export default function RewardCard({
           className={`h-[42px] flex items-center justify-center rounded-[var(--radius-md)] text-[length:var(--text-body)] font-medium transition-all duration-200 ${
             buyDisabled
               ? 'bg-[color:var(--color-gray-200)] text-[color:var(--color-gray-400)] cursor-not-allowed'
-              : 'text-white cursor-pointer ds-brand-gradient shadow-[var(--shadow-primary-sm)]'
+              : 'ds-btn-primary ds-focus-ring text-white rounded-[var(--radius-md)] h-[42px] shadow-[var(--shadow-primary-sm)]'
           }`}
         >
           Buy

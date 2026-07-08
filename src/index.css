@@ -82,6 +82,194 @@
   .ds-warning-gradient {
     background: linear-gradient(to bottom, var(--color-warning-400), var(--color-warning-500));
   }
+
+  /* ── ui-ux-pro-max polish utilities ─────────────────────── */
+
+  .ds-focus-ring:focus {
+    outline: none;
+  }
+
+  .ds-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .ds-card-lift {
+    transition: box-shadow var(--transition-ui), border-color var(--transition-ui);
+  }
+
+  @media (hover: hover) {
+    .ds-card-lift:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-border-brand);
+    }
+  }
+
+  .ds-btn-primary {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    color: white;
+    font-family: var(--font-body);
+    border: none;
+    background: linear-gradient(to bottom, var(--color-primary-500), var(--color-primary-400));
+    box-shadow: var(--shadow-primary);
+    transition: transform var(--transition-ui), box-shadow var(--transition-ui), opacity var(--transition-ui);
+  }
+
+  .ds-btn-primary:hover {
+    box-shadow: var(--shadow-primary-sm);
+    transform: translateY(-1px);
+  }
+
+  .ds-btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .ds-btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .ds-btn-hero {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    color: white;
+    font-family: var(--font-body);
+    border: none;
+    background: linear-gradient(to bottom, var(--color-primary-500), var(--color-primary-400));
+    box-shadow: var(--shadow-primary);
+    transition: transform 300ms ease, color 300ms ease;
+  }
+
+  .ds-btn-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, white, var(--color-primary-300));
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+
+  @media (hover: hover) {
+    .ds-btn-hero:hover {
+      color: var(--color-brand);
+      transform: scale(1.02);
+    }
+
+    .ds-btn-hero:hover::before {
+      opacity: 1;
+    }
+  }
+
+  .ds-btn-hero:active {
+    transform: scale(0.95);
+  }
+
+  .ds-btn-hero > span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ds-nav-drawer {
+    background: var(--color-bg);
+    border-right: 1px solid var(--color-border);
+    font-family: var(--font-heading);
+  }
+
+  .ds-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 46.5px;
+    padding-left: var(--space-sm);
+    border-radius: var(--radius-md);
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-size: var(--text-body);
+    color: var(--color-text-muted);
+    transition: background-color var(--transition-ui), color var(--transition-ui);
+  }
+
+  .ds-nav-item:hover {
+    background: var(--color-bg-subtle);
+  }
+
+  .ds-nav-item--active {
+    background: var(--color-gray-100);
+    color: var(--color-brand);
+    font-weight: var(--weight-medium);
+  }
+
+  .ds-header-nav {
+    height: 100%;
+    border-bottom: 2px solid transparent;
+    font-size: var(--text-body-lg);
+    cursor: pointer;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    color: var(--color-text-muted);
+    font-weight: var(--weight-regular);
+    transition: color var(--transition-ui), border-color var(--transition-ui);
+  }
+
+  .ds-header-nav:hover {
+    color: var(--color-gray-800);
+  }
+
+  .ds-header-nav--active {
+    border-bottom-color: var(--color-brand);
+    color: var(--color-brand);
+    font-weight: var(--weight-semibold);
+  }
+
+  .ds-filter-pill {
+    height: 41px;
+    padding: 0 20px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-body);
+    cursor: pointer;
+    transition: background-color var(--transition-ui), border-color var(--transition-ui),
+      color var(--transition-ui), box-shadow var(--transition-ui);
+  }
+
+  .ds-filter-pill--inactive {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-muted);
+  }
+
+  @media (hover: hover) {
+    .ds-filter-pill--inactive:hover {
+      background: var(--color-bg-brand-subtle);
+      border-color: var(--color-border-brand);
+      color: var(--color-gray-700);
+    }
+  }
+
+  .ds-filter-pill--active {
+    background: var(--color-brand);
+    color: white;
+    border: none;
+    box-shadow: var(--shadow-primary-sm);
+  }
+
+  .ds-input-field {
+    transition: border-color var(--transition-ui), box-shadow var(--transition-ui);
+  }
+
+  .ds-input-field:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: var(--focus-ring);
+  }
 }
 
 @keyframes heroFadeUp {
