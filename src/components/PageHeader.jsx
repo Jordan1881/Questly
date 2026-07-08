@@ -1,6 +1,8 @@
-import { useNavigate, useLocation } from 'react-router'
+import { useNavigate, useLocation, Link } from 'react-router'
 import { BurgerIcon } from './icons'
 import ProfileAvatar from './ProfileAvatar'
+import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
+import logoIcon from '../assets/LOGO.svg'
 import { useAuthStore } from '../stores/authStore'
 import { getAvatarUrl, getDisplayUsername } from '../lib/displayUser'
 
@@ -46,17 +48,34 @@ export default function PageHeader({ onOpenSidebar }) {
     <header className="bg-[color:var(--color-bg)] border-b border-[color:var(--color-border)] px-[var(--space-2xl)] h-[79px] flex items-stretch">
       <div className="w-full flex items-center justify-between">
 
-        <div className="flex items-stretch gap-6 h-full">
+        <div className="flex items-stretch gap-6 h-full min-w-0">
           <button
             type="button"
             onClick={onOpenSidebar}
-            className="ds-focus-ring flex items-center justify-center cursor-pointer bg-transparent hover:bg-[color:var(--color-bg-subtle)] rounded-[var(--radius-md)] px-2 transition-colors duration-200"
+            className="ds-focus-ring flex items-center justify-center cursor-pointer bg-transparent hover:bg-[color:var(--color-bg-subtle)] rounded-[var(--radius-md)] px-2 transition-colors duration-200 shrink-0"
             aria-label="Open menu"
           >
             <BurgerIcon />
           </button>
 
-          <nav className="flex items-stretch gap-10 h-full" aria-label="Main">
+          <Link
+            to="/dashboard"
+            className="ds-focus-ring flex items-center shrink-0 self-center rounded-[var(--radius-sm)]"
+            aria-label="Questly home"
+          >
+            <img
+              src={logoHorizontal}
+              alt="Questly"
+              className="h-[28px] w-auto hidden md:block"
+            />
+            <img
+              src={logoIcon}
+              alt="Questly"
+              className="h-9 w-9 md:hidden"
+            />
+          </Link>
+
+          <nav className="flex items-stretch gap-10 h-full min-w-0 overflow-x-auto" aria-label="Main">
             {NAV_LINKS.map(({ id, label }) => (
               <button
                 key={id}
