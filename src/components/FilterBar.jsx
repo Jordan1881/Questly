@@ -22,9 +22,6 @@ export function filterTasks(tasks, { status = 'all', difficulty = 'all' } = {}) 
   })
 }
 
-const baseBtnClass =
-  'h-[41px] px-5 rounded-[var(--radius-md)] text-[length:var(--text-body)] cursor-pointer transition-all duration-200'
-
 export default function FilterBar({ statusFilter, difficultyFilter, onStatusChange, onDifficultyChange }) {
   return (
     <div className="flex items-center gap-3 mb-6 flex-wrap">
@@ -35,11 +32,7 @@ export default function FilterBar({ statusFilter, difficultyFilter, onStatusChan
             key={f.id}
             type="button"
             onClick={() => onStatusChange(f.id)}
-            className={`${baseBtnClass} ${
-              active
-                ? 'bg-[color:var(--color-brand)] text-white border-0 shadow-[var(--shadow-primary-sm)]'
-                : 'bg-[color:var(--color-bg)] text-[color:var(--color-text-muted)] border border-[color:var(--color-border-subtle)]'
-            }`}
+            className={`ds-filter-pill ds-focus-ring ${active ? 'ds-filter-pill--active' : 'ds-filter-pill--inactive'}`}
           >
             {f.label}
           </button>
@@ -53,10 +46,8 @@ export default function FilterBar({ statusFilter, difficultyFilter, onStatusChan
             key={f.id}
             type="button"
             onClick={() => onDifficultyChange(difficultyFilter === f.id ? 'all' : f.id)}
-            className={`${baseBtnClass} ${
-              active
-                ? 'bg-[color:var(--color-brand)] text-white border-0 shadow-[var(--shadow-primary-sm)]'
-                : 'bg-[color:var(--color-bg)] border'
+            className={`ds-filter-pill ds-focus-ring ${
+              active ? 'ds-filter-pill--active' : 'ds-filter-pill--inactive'
             }`}
             style={
               active

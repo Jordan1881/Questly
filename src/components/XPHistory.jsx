@@ -23,13 +23,13 @@ export default function XPHistory({ transactions = [], isLoading = false, error 
   }
 
   if (error) {
-    return <p className="text-[14px] text-red-600">{error}</p>
+    return <p className="ds-body text-[color:var(--color-error-600)]">{error}</p>
   }
 
   if (!transactions.length) {
     return (
-      <div className="rounded-[8px] bg-[#f9fafb] border border-[#e5e7eb] px-5 py-8 text-center">
-        <p className="text-[14px] text-[#6b7280]">No XP transactions yet. Complete a task to earn your first XP.</p>
+      <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-5 py-8 text-center">
+        <p className="ds-body">No XP transactions yet. Complete a task to earn your first XP.</p>
       </div>
     )
   }
@@ -41,15 +41,16 @@ export default function XPHistory({ transactions = [], isLoading = false, error 
         return (
           <div
             key={tx.id}
-            className="flex items-center justify-between border border-[#e5e7eb] rounded-[8px] px-4 py-3 bg-white"
+            className="ds-card-lift flex items-center justify-between border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-4 py-3 bg-[color:var(--color-bg)]"
           >
             <div className="flex flex-col gap-0.5">
-              <span className="text-[14px] font-medium text-[#1f2937]">{formatReason(tx.reason)}</span>
-              <span className="text-[12px] text-[#9ca3af]">{formatDate(tx.createdAt)}</span>
+              <span className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-800)]">{formatReason(tx.reason)}</span>
+              <span className="ds-caption">{formatDate(tx.createdAt)}</span>
             </div>
             <span
-              className="text-[16px] font-semibold"
-              style={{ color: positive ? '#10b981' : '#ef4444' }}
+              className={`text-[length:var(--text-body-lg)] font-semibold ${
+                positive ? 'text-[color:var(--color-success-500)]' : 'text-[color:var(--color-error-500)]'
+              }`}
             >
               {positive ? '+' : ''}{tx.amount} XP
             </span>

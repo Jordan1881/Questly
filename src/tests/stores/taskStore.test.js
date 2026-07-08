@@ -6,6 +6,7 @@ import { useToastStore } from '../../stores/toastStore'
 import { useLevelUpStore } from '../../stores/levelUpStore'
 import { createMockTask } from '../factories/index'
 import { apiFetch } from '../../lib/api'
+import { MOTION } from '../../design-system/motion/config'
 
 vi.mock('../../lib/api', () => ({
   apiFetch: vi.fn(),
@@ -19,15 +20,19 @@ const RESET = {
 
 describe('taskStore', () => {
   beforeEach(() => {
+    vi.useFakeTimers()
     useTaskStore.setState(RESET)
     useAuthStore.setState({ user: { lifetime_xp: 0, current_sprint_xp: 0, coin_balance: 0 } })
     useXpStore.setState({ userXP: 0, userCoins: 0 })
     useToastStore.setState({ message: null })
     useLevelUpStore.setState({ level: null, lastShownLevel: 0 })
+    useLevelUpStore.getState()._clearPendingShow()
     vi.clearAllMocks()
   })
 
   afterEach(() => {
+    useLevelUpStore.getState()._clearPendingShow()
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -97,7 +102,7 @@ describe('taskStore', () => {
     expect(apiFetch).not.toHaveBeenCalled()
   })
 
-  it('shows level-up overlay when lifetime XP crosses a level threshold', async () => {
+  it('queues level-up overlay after completion juice when lifetime XP crosses a level threshold', async () => {
     const task = createMockTask({ done: false })
     useTaskStore.setState({ tasks: [task] })
     apiFetch.mockResolvedValue({
@@ -106,8 +111,12 @@ describe('taskStore', () => {
       user: { lifetime_xp: 1000, current_sprint_xp: 1000, coin_balance: 100, streak_days: 1 },
     })
 
-    await useTaskStore.getState().toggleTaskCompletion(task.id)
+    const togglePromise = useTaskStore.getState().toggleTaskCompletion(task.id)
+    await togglePromise
 
+    expect(useLevelUpStore.getState().level).toBeNull()
+
+    vi.advanceTimersByTime(MOTION.taskComplete.levelUpDeferMs)
     expect(useLevelUpStore.getState().level).toBe(2)
   })
 

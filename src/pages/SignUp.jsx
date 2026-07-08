@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
+import { Link, useNavigate } from 'react-router'
 import signUpImg from '../assets/signUp-img.png'
+import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
 import { LegalAgreementText } from '../components/LegalFooterLinks'
 import JiraAuth from '../overlays/JiraAuth'
@@ -22,16 +22,6 @@ const EyeIcon = ({ open }) =>
     </svg>
   )
 
-const inputClass = `
-  w-full h-[56px] rounded-[8px] bg-[#f5eefd]
-  border border-transparent
-  px-5 text-[15px] text-black
-  placeholder-[#a7a3ff]
-  outline-none
-  focus:border-[#942fcd] focus:border-opacity-40
-  transition-colors duration-200
-`
-
 function PasswordInput({ placeholder, value, onChange }) {
   const [show, setShow] = useState(false)
   return (
@@ -41,13 +31,13 @@ function PasswordInput({ placeholder, value, onChange }) {
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={inputClass}
-        style={{ fontFamily: 'Inter, sans-serif', paddingRight: '52px' }}
+        className={`${authInputClass} pr-[52px]`}
       />
       <button
         type="button"
         onClick={() => setShow(!show)}
-        className="absolute right-[18px] top-1/2 -translate-y-1/2 text-[#a7a3ff] hover:text-[#942fcd] transition-colors duration-200 cursor-pointer"
+        aria-label={show ? 'Hide password' : 'Show password'}
+        className="absolute right-[18px] top-1/2 -translate-y-1/2 text-[color:var(--color-primary-300)] hover:text-[color:var(--color-brand)] transition-colors duration-200 cursor-pointer ds-focus-ring rounded-[var(--radius-sm)]"
       >
         <EyeIcon open={show} />
       </button>
@@ -123,80 +113,50 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbfbfb] flex items-start justify-center pt-[140px] pb-16 relative" style={{ fontFamily: 'Inter, sans-serif' }}>
-
-      {/* Logo — top left */}
-      <img
-        src={logoHorizontal}
-        alt="Questly"
-        className="absolute top-[60px] left-[75px] w-[180px] cursor-pointer"
-        onClick={() => navigate('/')}
-        style={{ height: 'auto' }}
-      />
-
-      {/* Main layout */}
-      <div className="flex items-center justify-between w-[941px]">
-
-        {/* ── Left: text + illustration ── */}
-        <div className="flex-1 flex flex-col gap-8 relative">
-
-          <div className="flex flex-col gap-4 max-w-[421px]">
-            <h1 className="text-[48px] font-semibold text-black leading-[1.2] w-[235px]">
-              Sign up to Questly
-            </h1>
-            <p className="text-[24px] font-medium text-black leading-[1.4] w-[397px]">
-              Create your account and start turning tasks into quests
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-2 max-w-[421px]">
-            <p className="text-[16px] text-black">If you already have an account</p>
-            <p className="text-[16px] text-black">
+    <>
+      <AuthLayout
+        className="items-start pt-[140px] pb-16"
+        title="Sign up to Questly"
+        subtitle="Create your account and start turning tasks into quests"
+        footer={
+          <>
+            <p>If you already have an account</p>
+            <p>
               You can{' '}
-              <span
-                className="text-[#4d47c3] cursor-pointer hover:underline"
-                onClick={() => navigate('/login')}
+              <Link
+                to="/login"
+                className="text-[color:var(--color-primary-700)] hover:underline ds-focus-ring rounded-[var(--radius-sm)]"
               >
                 Login here !
-              </span>
+              </Link>
             </p>
-          </div>
-
-          {/* 3D illustration */}
+          </>
+        }
+        leftExtra={
           <img
             src={signUpImg}
             alt="Quest character"
             className="w-[280px] object-contain mt-4"
-            style={{ height: 'auto' }}
           />
-
-        </div>
-
-        {/* ── Right: form card ── */}
-        <div
-          className="bg-white rounded-[16px] w-[440px] flex flex-col gap-8 pt-10 px-10 pb-10 shrink-0"
-          style={{ boxShadow: '0px 8px 32px 0px rgba(148, 47, 205, 0.12)' }}
-        >
-          {/* Card header */}
+        }
+      >
+        <div className="ds-card ds-card-pad w-[440px] flex flex-col gap-8 shrink-0 shadow-[var(--shadow-lg)]">
           <div className="flex flex-col gap-2">
-            <h2 className="text-[32px] font-medium text-black leading-tight">Create Your Account</h2>
-            <p className="text-[14px] text-[#6b6b6b]">Start your journey with Questly today</p>
+            <h2 className="text-[32px] font-medium text-[color:var(--color-gray-900)] leading-tight">Create Your Account</h2>
+            <p className="ds-body-sm">Start your journey with Questly today</p>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
-            {/* Error banner */}
             {(validationError || error) && (
               <div className="rounded-[8px] bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">
                 {validationError ?? error}
               </div>
             )}
 
-            {/* Role toggle cards */}
             <div className="flex gap-3">
               {[
-                { role: 'developer', label: 'Developer',      desc: 'Complete quests & earn XP', Icon: CodeBracketIcon },
-                { role: 'admin',     label: 'Admin / Manager', desc: 'Manage your team & rewards', Icon: CrownIcon      },
+                { role: 'developer', label: 'Developer', desc: 'Complete quests & earn XP', Icon: CodeBracketIcon },
+                { role: 'admin', label: 'Admin / Manager', desc: 'Manage your team & rewards', Icon: CrownIcon },
               ].map(({ role, label, desc, Icon }) => {
                 const active = selectedRole === role
                 return (
@@ -204,26 +164,26 @@ export default function SignUp() {
                     key={role}
                     type="button"
                     onClick={() => setSelectedRole(role)}
-                    className="flex-1 flex flex-col items-center gap-2 rounded-[12px] py-4 px-3 border-2 text-center cursor-pointer transition-all duration-200"
-                    style={{
-                      borderColor: active ? '#942fcd' : '#e5e7eb',
-                      background:  active ? 'rgba(148,47,205,0.06)' : 'white',
-                      boxShadow:   active ? '0px 0px 0px 3px rgba(148,47,205,0.12)' : 'none',
-                    }}
+                    className={`flex-1 flex flex-col items-center gap-2 rounded-[12px] py-4 px-3 border-2 text-center cursor-pointer transition-all duration-200 ds-focus-ring ${
+                      active
+                        ? 'border-[color:var(--color-brand)] bg-[color:var(--color-bg-brand-subtle)] shadow-[var(--focus-ring)]'
+                        : 'border-[color:var(--color-border)] bg-[color:var(--color-bg)]'
+                    }`}
                   >
-                    <div style={{ color: active ? '#942fcd' : '#9ca3af', transition: 'color 0.2s' }}>
+                    <div className={active ? 'text-[color:var(--color-brand)]' : 'text-[color:var(--color-text-muted)]'}>
                       <Icon />
                     </div>
-                    <span className="text-[13px] font-semibold" style={{ color: active ? '#942fcd' : '#374151' }}>{label}</span>
-                    <span className="text-[11px] text-[#9ca3af] leading-[1.4]">{desc}</span>
+                    <span className={`text-[13px] font-semibold ${active ? 'text-[color:var(--color-brand)]' : 'text-[color:var(--color-gray-700)]'}`}>
+                      {label}
+                    </span>
+                    <span className="text-[11px] text-[color:var(--color-text-muted)] leading-[1.4]">{desc}</span>
                   </button>
                 )
               })}
             </div>
 
-            {/* Email */}
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-black">Email Address</label>
+              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Email Address</label>
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -231,14 +191,12 @@ export default function SignUp() {
                 onChange={set('email')}
                 required
                 autoComplete="email"
-                className={inputClass}
-                style={{ fontFamily: 'Inter, sans-serif' }}
+                className={authInputClass}
               />
             </div>
 
-            {/* Username */}
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-black">Username</label>
+              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Username</label>
               <input
                 type="text"
                 placeholder="Create a username"
@@ -247,14 +205,12 @@ export default function SignUp() {
                 required
                 minLength={2}
                 autoComplete="username"
-                className={inputClass}
-                style={{ fontFamily: 'Inter, sans-serif' }}
+                className={authInputClass}
               />
             </div>
 
-            {/* Password */}
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-black">Password</label>
+              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Password</label>
               <PasswordInput
                 placeholder="Create a password"
                 value={form.password}
@@ -262,9 +218,8 @@ export default function SignUp() {
               />
             </div>
 
-            {/* Confirm Password */}
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-black">Confirm Password</label>
+              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Confirm Password</label>
               <PasswordInput
                 placeholder="Re-enter your password"
                 value={form.confirmPassword}
@@ -272,27 +227,24 @@ export default function SignUp() {
               />
             </div>
 
-            {/* Submit */}
             <LegalAgreementText />
 
             <FormButton type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Creating account…' : 'Create Account'}
             </FormButton>
 
-            {/* Bottom link */}
-            <p className="text-[14px] text-[#6b6b6b] text-center">
+            <p className="ds-body-sm text-center">
               Already have an account?{' '}
-              <span
-                className="text-[#942fcd] cursor-pointer hover:underline"
-                onClick={() => navigate('/login')}
+              <Link
+                to="/login"
+                className="text-[color:var(--color-brand)] hover:underline ds-focus-ring rounded-[var(--radius-sm)]"
               >
                 Log in
-              </span>
+              </Link>
             </p>
-
           </form>
         </div>
-      </div>
+      </AuthLayout>
 
       {showJiraAuth && (
         <JiraAuth
@@ -301,6 +253,6 @@ export default function SignUp() {
           onSkip={finishAuth}
         />
       )}
-    </div>
+    </>
   )
 }

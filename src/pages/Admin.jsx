@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
+import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { useAuthStore } from '../stores/authStore'
@@ -14,8 +16,6 @@ import { mapMemberToDeveloper } from '../lib/adminMembers'
 import { SkeletonList } from '../components/Skeleton'
 
 // ── Constants ──────────────────────────────────────────────
-
-const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
 
 const AVATAR_GRADIENTS = [
   'linear-gradient(135deg, #6366f1, #a855f7)',
@@ -59,8 +59,8 @@ const XIcon = () => (
 
 const CoinIcon = ({ size = 14 }) => (
   <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-    <circle cx="12" cy="12" r="9" stroke="#f59e0b" strokeWidth="1.8" />
-    <path d="M12 7v2M12 15v2M9.5 9.5C9.5 8.4 10.6 8 12 8s2.5.4 2.5 1.5-1 1.5-2.5 2-2.5 1-2.5 2.5 1.1 2 2.5 2 2.5-.5 2.5-1.5" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="12" cy="12" r="9" stroke="var(--color-warning-500)" strokeWidth="1.8" />
+    <path d="M12 7v2M12 15v2M9.5 9.5C9.5 8.4 10.6 8 12 8s2.5.4 2.5 1.5-1 1.5-2.5 2-2.5 1-2.5 2.5 1.1 2 2.5 2 2.5-.5 2.5-1.5" stroke="var(--color-warning-500)" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 )
 
@@ -90,9 +90,9 @@ function DevAvatar({ idx, size = 36 }) {
 
 function StatusBadge({ status }) {
   return status === 'active' ? (
-    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[6px] bg-[#d1fae5] text-[#059669]">Active</span>
+    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[var(--radius-sm)] bg-[color:var(--color-success-100)] text-[color:var(--color-success-600)]">Active</span>
   ) : (
-    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[6px] bg-[#f3f4f6] text-[#9ca3af]">Inactive</span>
+    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[var(--radius-sm)] bg-[color:var(--color-gray-100)] text-[color:var(--color-text-subtle)]">Inactive</span>
   )
 }
 
@@ -102,24 +102,27 @@ function TeamTab({ developers }) {
   const [view, setView] = useState('leaderboard')
   const sorted = [...developers].sort((a, b) => b.xp - a.xp)
   const MEDALS = ['🥇', '🥈', '🥉']
-  const TH = 'text-[12px] font-semibold text-[#6b7280] uppercase tracking-wide text-left py-3 px-4'
-  const TD = 'py-3.5 px-4 text-[13px] text-[#374151]'
+  const TH = 'text-[length:var(--text-caption)] font-semibold text-[color:var(--color-text-muted)] uppercase tracking-wide text-left py-3 px-4'
+  const TD = 'py-3.5 px-4 text-[length:var(--text-body-sm)] text-[color:var(--color-gray-700)]'
 
   return (
     <div>
       {/* View toggle */}
       <div className="flex items-center justify-between mb-6">
-        <p className="text-[14px] text-[#6b7280]">{developers.length} developers on your team</p>
-        <div className="flex gap-1 p-1 bg-[#f3f4f6] rounded-[8px]">
+        <p className="ds-body-sm">{developers.length} developers on your team</p>
+        <div className="flex gap-1 p-1 bg-[color:var(--color-gray-100)] rounded-[var(--radius-md)]">
           {[
             { id: 'leaderboard', label: 'Leaderboard', Icon: ListIcon },
             { id: 'cards',       label: 'Cards',       Icon: GridIcon },
           ].map(({ id, label, Icon }) => (
             <button
               key={id}
+              type="button"
               onClick={() => setView(id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-medium transition-all duration-150 cursor-pointer ${
-                view === id ? 'bg-white text-[#1f2937] shadow-sm' : 'text-[#6b7280] hover:text-[#374151]'
+              className={`ds-focus-ring flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] text-[length:var(--text-body-sm)] font-medium transition-all duration-150 cursor-pointer ${
+                view === id
+                  ? 'bg-[color:var(--color-bg)] text-[color:var(--color-gray-800)] shadow-sm'
+                  : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-gray-700)]'
               }`}
             >
               <Icon />
@@ -131,10 +134,10 @@ function TeamTab({ developers }) {
 
       {view === 'leaderboard' ? (
 
-        <div className={`${CARD} overflow-hidden`}>
+        <div className="ds-card overflow-hidden">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#f3f4f6]">
+              <tr className="border-b border-[color:var(--color-gray-100)]">
                 <th className={TH}>Rank</th>
                 <th className={TH}>Developer</th>
                 <th className={TH}>Level</th>
@@ -146,27 +149,24 @@ function TeamTab({ developers }) {
             </thead>
             <tbody>
               {sorted.map((dev, i) => (
-                <tr key={dev.id} className="border-b border-[#f9fafb] hover:bg-[#fafafa] transition-colors">
+                <tr key={dev.id} className="border-b border-[color:var(--color-gray-50)] hover:bg-[color:var(--color-gray-50)] transition-colors">
                   <td className={`${TD} w-16`}>
-                    <span className="text-[16px]">{i < 3 ? MEDALS[i] : `#${i + 1}`}</span>
+                    <span className="text-[length:var(--text-h6)]">{i < 3 ? MEDALS[i] : `#${i + 1}`}</span>
                   </td>
                   <td className={TD}>
                     <div className="flex items-center gap-2.5">
                       <DevAvatar idx={dev.avatarIdx ?? 0} size={32} />
-                      <span className="font-medium text-[#1f2937]">{dev.name}</span>
+                      <span className="font-medium text-[color:var(--color-gray-800)]">{dev.name}</span>
                     </div>
                   </td>
                   <td className={TD}>
-                    <span
-                      className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
-                      style={{ background: 'linear-gradient(to right, #942fcd, #b565e0)' }}
-                    >
+                    <span className="ds-brand-gradient px-2 py-0.5 rounded-full text-[11px] font-semibold text-white">
                       Lv {dev.level}
                     </span>
                   </td>
                   <td className={TD}>
-                    <span className="font-semibold text-[#1f2937]">{dev.xp.toLocaleString()}</span>
-                    <span className="text-[#9ca3af] ml-1">XP</span>
+                    <span className="font-semibold text-[color:var(--color-gray-800)]">{dev.xp.toLocaleString()}</span>
+                    <span className="text-[color:var(--color-text-subtle)] ml-1">XP</span>
                   </td>
                   <td className={TD}>
                     <div className="flex items-center gap-1">
@@ -188,38 +188,32 @@ function TeamTab({ developers }) {
           {sorted.map((dev) => {
             const pct = Math.round((dev.xp / dev.xpMax) * 100)
             return (
-              <div key={dev.id} className={`${CARD} p-5 flex flex-col gap-3`}>
+              <div key={dev.id} className="ds-card ds-card-pad ds-card-lift flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <DevAvatar idx={dev.id - 1} size={44} />
                   <div className="min-w-0">
-                    <p className="text-[14px] font-semibold text-[#1f2937] truncate">{dev.name}</p>
+                    <p className="text-[length:var(--text-body)] font-semibold text-[color:var(--color-gray-800)] truncate">{dev.name}</p>
                     <StatusBadge status={dev.status} />
                   </div>
                 </div>
-                <span
-                  className="w-fit px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
-                  style={{ background: 'linear-gradient(to right, #942fcd, #b565e0)' }}
-                >
+                <span className="ds-brand-gradient w-fit px-2 py-0.5 rounded-full text-[11px] font-semibold text-white">
                   Level {dev.level}
                 </span>
                 <div>
                   <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-[#6b7280]">XP Progress</span>
-                    <span className="font-medium text-[#1f2937]">{dev.xp.toLocaleString()} / {dev.xpMax.toLocaleString()}</span>
+                    <span className="text-[color:var(--color-text-muted)]">XP Progress</span>
+                    <span className="font-medium text-[color:var(--color-gray-800)]">{dev.xp.toLocaleString()} / {dev.xpMax.toLocaleString()}</span>
                   </div>
-                  <div className="h-2 rounded-full bg-[#e5e7eb] overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${pct}%`, background: 'linear-gradient(to right, #942fcd, #b565e0)' }}
-                    />
+                  <div className="h-2 rounded-full bg-[color:var(--color-gray-200)] overflow-hidden">
+                    <div className="ds-progress-gradient h-full rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-[#f3f4f6]">
+                <div className="flex items-center justify-between pt-1 border-t border-[color:var(--color-gray-100)]">
                   <div className="flex items-center gap-1">
                     <CoinIcon size={13} />
-                    <span className="text-[12px] font-medium text-[#374151]">{dev.coins} Coins</span>
+                    <span className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">{dev.coins} Coins</span>
                   </div>
-                  <span className="text-[12px] text-[#6b7280]">{dev.tasks} tasks</span>
+                  <span className="text-[length:var(--text-caption)] text-[color:var(--color-text-muted)]">{dev.tasks} tasks</span>
                 </div>
               </div>
             )
@@ -261,55 +255,55 @@ function XPSettingsTab() {
     }
   }
 
-  const INPUT = 'w-24 h-10 border border-[#e5e7eb] rounded-[8px] px-3 text-[14px] font-medium text-[#1f2937] text-right focus:outline-none focus:border-[#942fcd] transition-colors'
+  const INPUT = 'w-24 h-10 border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-3 text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-800)] text-right focus:outline-none focus:border-[color:var(--color-brand)] transition-colors ds-focus-ring'
 
   return (
     <div className="max-w-[560px]">
       {toast && (
         <div
-          className="mb-6 flex items-center gap-2 px-4 py-3 rounded-[10px] text-[13px] font-medium text-[#059669]"
-          style={{ background: '#d1fae5', border: '1px solid #a7f3d0', animation: 'fadeInDown 0.3s ease' }}
+          className="mb-6 flex items-center gap-2 px-4 py-3 rounded-[10px] text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-success-600)] bg-[color:var(--color-success-100)] border border-[color:var(--color-success-200)]"
+          style={{ animation: 'fadeInDown 0.3s ease' }}
         >
           <CheckIcon />
           XP verification settings saved!
         </div>
       )}
 
-      <div className={`${CARD} p-6 flex flex-col gap-6 mb-6`}>
+      <div className="ds-card ds-card-pad flex flex-col gap-6 mb-6">
         <div>
-          <h3 className="text-[15px] font-semibold text-[#1f2937] mb-1">XP verification</h3>
-          <p className="text-[13px] text-[#6b7280]">
+          <h3 className="ds-section-title mb-1">XP verification</h3>
+          <p className="ds-body-sm">
             When enabled, developers submit completed tasks for your approval before XP and coins are awarded.
           </p>
         </div>
 
         <label className="flex items-center justify-between gap-4 cursor-pointer">
-          <span className="text-[14px] font-medium text-[#374151]">Require admin approval for task XP</span>
+          <span className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-700)]">Require admin approval for task XP</span>
           <input
             type="checkbox"
             checked={requireXpApproval}
             onChange={(e) => setRequireXpApproval(e.target.checked)}
-            className="w-5 h-5 accent-[#942fcd] cursor-pointer"
+            className="w-5 h-5 accent-[color:var(--color-brand)] cursor-pointer ds-focus-ring"
           />
         </label>
       </div>
 
-      <div className={`${CARD} p-6 flex flex-col gap-6`}>
+      <div className="ds-card ds-card-pad flex flex-col gap-6">
 
         <div>
-          <h3 className="text-[15px] font-semibold text-[#1f2937] mb-1">Task XP Rewards</h3>
-          <p className="text-[13px] text-[#6b7280]">XP values come from Jira story points during sync (display only)</p>
+          <h3 className="ds-section-title mb-1">Task XP Rewards</h3>
+          <p className="ds-body-sm">XP values come from Jira story points during sync (display only)</p>
         </div>
 
         <div className="flex flex-col gap-4">
           {[
-            { key: 'easy',   label: 'Easy Tasks',   color: '#10b981', bg: '#d1fae5' },
-            { key: 'medium', label: 'Medium Tasks',  color: '#f59e0b', bg: '#fef3c7' },
-            { key: 'hard',   label: 'Hard Tasks',    color: '#ef4444', bg: '#fee2e2' },
+            { key: 'easy',   label: 'Easy Tasks',   color: 'var(--color-success-600)', bg: 'var(--color-success-100)' },
+            { key: 'medium', label: 'Medium Tasks',  color: 'var(--color-warning-600)', bg: 'var(--color-warning-100)' },
+            { key: 'hard',   label: 'Hard Tasks',    color: 'var(--color-error-600)', bg: 'var(--color-error-100)' },
           ].map(({ key, label, color, bg }) => (
             <div key={key} className="flex items-center justify-between">
               <span
-                className="px-3 py-1 rounded-full text-[12px] font-semibold"
+                className="px-3 py-1 rounded-full text-[length:var(--text-caption)] font-semibold"
                 style={{ background: bg, color }}
               >
                 {label}
@@ -322,15 +316,15 @@ function XPSettingsTab() {
                   className={INPUT}
                   min={0}
                 />
-                <span className="text-[13px] text-[#6b7280] w-8">XP</span>
+                <span className="ds-body-sm w-8">XP</span>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="pt-4 border-t border-[#f3f4f6]">
-          <h3 className="text-[15px] font-semibold text-[#1f2937] mb-1">XP → Coins Conversion</h3>
-          <p className="text-[13px] text-[#6b7280] mb-2">
+        <div className="pt-4 border-t border-[color:var(--color-gray-100)]">
+          <h3 className="ds-section-title mb-1">XP → Coins Conversion</h3>
+          <p className="ds-body-sm mb-2">
             Coins are awarded with approved XP at <strong>10 XP = 1 Coin</strong> (e.g. 170 XP → 17 Coins).
           </p>
         </div>
@@ -339,8 +333,7 @@ function XPSettingsTab() {
           type="button"
           onClick={save}
           disabled={isLoading}
-          className="flex items-center justify-center gap-2 w-full h-11 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60"
-          style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)', boxShadow: '0px 4px 12px rgba(148,47,205,0.3)' }}
+          className="ds-btn-primary ds-focus-ring flex items-center justify-center gap-2 w-full h-11 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
         >
           <SaveIcon />
           {isLoading ? 'Saving…' : 'Save Verification Setting'}
@@ -354,25 +347,25 @@ function XPSettingsTab() {
 // ── Users Tab ─────────────────────────────────────────────
 
 function UsersTab({ developers, isLoading }) {
-  const TH = 'text-[12px] font-semibold text-[#6b7280] uppercase tracking-wide text-left py-3 px-4'
-  const TD = 'py-3.5 px-4 text-[13px] text-[#374151] align-top'
+  const TH = 'text-[length:var(--text-caption)] font-semibold text-[color:var(--color-text-muted)] uppercase tracking-wide text-left py-3 px-4'
+  const TD = 'py-3.5 px-4 text-[length:var(--text-body-sm)] text-[color:var(--color-gray-700)] align-top'
 
   if (isLoading) return <SkeletonList count={4} />
 
   if (developers.length === 0) {
     return (
-      <div className={`${CARD} p-10 text-center flex flex-col items-center gap-3`}>
-        <p className="text-[15px] font-medium text-[#374151]">No team members yet</p>
-        <p className="text-[13px] text-[#6b7280]">Share your workspace code so developers can request to join.</p>
+      <div className="ds-card ds-card-pad py-10 text-center flex flex-col items-center gap-3">
+        <p className="text-[length:var(--text-body-lg)] font-medium text-[color:var(--color-gray-700)]">No team members yet</p>
+        <p className="ds-body-sm">Share your workspace code so developers can request to join.</p>
       </div>
     )
   }
 
   return (
-    <div className={`${CARD} overflow-hidden`}>
+    <div className="ds-card overflow-hidden">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-[#f3f4f6]">
+          <tr className="border-b border-[color:var(--color-gray-100)]">
             <th className={TH}>Developer</th>
             <th className={TH}>Status</th>
             <th className={TH}>Sprint XP</th>
@@ -381,20 +374,20 @@ function UsersTab({ developers, isLoading }) {
         </thead>
         <tbody>
           {developers.map((dev) => (
-            <tr key={dev.id} className="border-b border-[#f9fafb] hover:bg-[#fafafa] transition-colors">
+            <tr key={dev.id} className="border-b border-[color:var(--color-gray-50)] hover:bg-[color:var(--color-gray-50)] transition-colors">
               <td className={TD}>
                 <div className="flex items-center gap-2.5 pt-0.5">
                   <DevAvatar idx={dev.avatarIdx ?? 0} size={32} />
                   <div>
-                    <p className="font-medium text-[#1f2937]">{dev.name}</p>
-                    <p className="text-[11px] text-[#9ca3af]">Level {dev.level}</p>
+                    <p className="font-medium text-[color:var(--color-gray-800)]">{dev.name}</p>
+                    <p className="text-[11px] text-[color:var(--color-text-subtle)]">Level {dev.level}</p>
                   </div>
                 </div>
               </td>
               <td className={TD}><StatusBadge status={dev.status} /></td>
               <td className={TD}>
-                <span className="font-semibold text-[#1f2937]">{dev.xp.toLocaleString()}</span>
-                <span className="text-[#9ca3af] ml-1 text-[11px]">XP</span>
+                <span className="font-semibold text-[color:var(--color-gray-800)]">{dev.xp.toLocaleString()}</span>
+                <span className="text-[color:var(--color-text-subtle)] ml-1 text-[11px]">XP</span>
               </td>
               <td className={TD}>
                 <div className="flex items-center gap-1">
@@ -464,7 +457,7 @@ export default function Admin() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f9fafb]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="ds-page">
 
       <Sidebar
         isOpen={showSidebar}
@@ -475,8 +468,15 @@ export default function Admin() {
         onOpenSidebar={() => setShowSidebar(true)}
       />
 
-      <main className="px-12 py-9">
-        <h1 className="text-[32px] font-semibold text-[#1f2937] mb-6">Admin Panel</h1>
+      <main className="ds-page-main">
+        <Link
+          to="/dashboard"
+          className="inline-block mb-4 ds-focus-ring rounded-[var(--radius-md)]"
+        >
+          <img src={logoHorizontal} alt="Questly" className="h-8" />
+        </Link>
+
+        <h1 className="ds-page-title mb-6">Admin Panel</h1>
 
         {workspace?.code && (
           <div className="mb-8">
@@ -485,34 +485,31 @@ export default function Admin() {
         )}
 
         {/* Sub-tab bar */}
-        <div className="flex gap-0 border-b border-[#e5e7eb] mb-8">
+        <div className="flex gap-0 border-b border-[color:var(--color-border)] mb-8">
           {TABS.map(({ id, label }) => (
             <button
               key={id}
+              type="button"
               onClick={() => setActiveTab(id)}
-              className={`px-5 py-3 text-[14px] font-medium transition-all duration-150 cursor-pointer relative ${
-                activeTab === id ? 'text-[#942fcd] font-semibold' : 'text-[#6b7280] hover:text-[#374151]'
+              className={`ds-focus-ring px-5 py-3 text-[length:var(--text-body)] font-medium transition-all duration-150 cursor-pointer relative ${
+                activeTab === id
+                  ? 'text-[color:var(--color-brand)] font-semibold'
+                  : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-gray-700)]'
               }`}
             >
               {label}
               {id === 'joins' && totalJoinPending > 0 && (
-                <span
-                  className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{ color: '#6366f1', background: 'rgba(99,102,241,0.1)' }}
-                >
+                <span className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full text-[color:var(--color-secondary-600)] bg-[color:var(--color-secondary-100)]">
                   {totalJoinPending}
                 </span>
               )}
               {id === 'xp-approvals' && totalXpPending > 0 && (
-                <span
-                  className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{ color: '#942fcd', background: 'rgba(148,47,205,0.1)' }}
-                >
+                <span className="ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full text-[color:var(--color-brand)] bg-[color:var(--color-bg-brand-subtle)]">
                   {totalXpPending}
                 </span>
               )}
               {activeTab === id && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full bg-[#942fcd]" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-t-full bg-[color:var(--color-brand)]" />
               )}
             </button>
           ))}
