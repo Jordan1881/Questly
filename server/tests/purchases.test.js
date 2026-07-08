@@ -217,10 +217,21 @@ describe('PATCH /api/users/me', () => {
 })
 
 describe('POST /api/users/me/avatar', () => {
-  const tinyPng = Buffer.from(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-    'base64',
-  )
+  const sharp = require('sharp')
+  let avatarPng
+
+  beforeAll(async () => {
+    avatarPng = await sharp({
+      create: {
+        width: 480,
+        height: 480,
+        channels: 3,
+        background: { r: 148, g: 47, b: 205 },
+      },
+    })
+      .png()
+      .toBuffer()
+  })
 
   test('uploads avatar image', async () => {
     const dev = await registerAndLogin('developer', 'avatar')
@@ -228,7 +239,7 @@ describe('POST /api/users/me/avatar', () => {
     const res = await request(app)
       .post('/api/users/me/avatar')
       .set('Authorization', `Bearer ${dev.token}`)
-      .attach('avatar', tinyPng, 'avatar.png')
+      .attach('avatar', avatarPng, 'avatar.png')
 
     expect(res.status).toBe(200)
     expect(res.body.profile.avatarUrl).toMatch(/^\/api\/uploads\/avatars\//)

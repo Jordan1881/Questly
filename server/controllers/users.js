@@ -196,6 +196,9 @@ async function uploadAvatar(req, res, next) {
 
     res.json({ profile, avatarUrl })
   } catch (err) {
+    if (err.code === 'AVATAR_TOO_SMALL') {
+      return res.status(400).json({ error: err.message })
+    }
     if (err.message?.startsWith('Avatar storage misconfigured')) {
       return res.status(500).json({ error: err.message })
     }

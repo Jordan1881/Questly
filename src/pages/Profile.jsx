@@ -260,7 +260,7 @@ export default function Profile() {
             /* Admin Hero */
             <div data-motion-reveal className="ds-card ds-card-pad-lg">
               <div className="flex items-center gap-8">
-                <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="admin" />
+                <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="admin" size={128} priority />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
                     <h1 className="text-[length:var(--text-h4)] font-bold text-[color:var(--color-gray-800)] leading-tight">
@@ -296,7 +296,7 @@ export default function Profile() {
             /* Developer Hero */
             <div data-motion-reveal className="ds-card ds-card-pad-lg">
               <div className="flex items-center gap-8">
-                <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="developer" />
+                <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="developer" size={128} priority />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
                     <h1 className="text-[length:var(--text-h4)] font-bold text-[color:var(--color-gray-800)] leading-tight">
