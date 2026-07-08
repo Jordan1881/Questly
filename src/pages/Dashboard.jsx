@@ -15,6 +15,7 @@ import { useXP } from '../hooks/useXP'
 import XPHistory from '../components/XPHistory'
 import { SkeletonCard, SkeletonList } from '../components/Skeleton'
 import MetricStatCard from '../design-system/components/MetricStatCard'
+import AnimatedReveal from '../components/motion/AnimatedReveal'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -141,17 +142,19 @@ export default function Dashboard() {
 
       <main className="ds-page-main">
 
-        <h1 className="ds-page-title mb-6">Welcome back, {displayName}</h1>
+        <AnimatedReveal>
+          <h1 data-motion-reveal className="ds-page-title mb-6">Welcome back, {displayName}</h1>
+        </AnimatedReveal>
 
         {hasWorkspace && <TeamJiraBanner user={user} />}
 
         {!hasWorkspace ? (
           <NoWorkspacePrompt showJiraHint />
         ) : (
-        <div className="flex gap-8 items-start">
+        <AnimatedReveal className="flex gap-8 items-start" stagger={0.12}>
 
           {/* ── Left column ── */}
-          <div className="w-[314px] flex flex-col gap-6 shrink-0">
+          <div data-motion-reveal className="w-[314px] flex flex-col gap-6 shrink-0">
 
             {isInitialLoading ? (
               <SkeletonCard />
@@ -205,7 +208,7 @@ export default function Dashboard() {
           </div>
 
           {/* ── Right column ── */}
-          <div className="flex-1 flex flex-col gap-6">
+          <div data-motion-reveal className="flex-1 flex flex-col gap-6">
 
             <div className="ds-card ds-card-pad">
               <div className="flex items-center justify-between mb-4">
@@ -341,7 +344,7 @@ export default function Dashboard() {
             </div>
 
           </div>
-        </div>
+        </AnimatedReveal>
         )}
       </main>
     </div>
