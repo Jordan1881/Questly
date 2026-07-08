@@ -9,6 +9,7 @@
 
 ## Future enhancements
 
+- **Completion juice (locked):** checkbox pulse → card glow → ghost `+XP` rise/fade → bar tick (~700ms). See `MOTION-SPEC.md`.
 - Animate progress bar fill on data load (`gsap.to` width %)
 - XP history rows: stagger on fetch complete
 - MetricStatCard hover: subtle `y: -2` lift (transform only)
