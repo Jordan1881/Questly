@@ -51,8 +51,9 @@ python3 ~/.cursor/skills/ui-ux-pro-max/scripts/search.py \
 
 ## Still to polish (next pass)
 
-- `Admin.jsx` + admin tabs — migrate to `ds-page` / `ds-card`
-- Auth pages (`SignIn`, `SignUp`, workspace flows) — shared `AuthLayout`
+- ~~`Admin.jsx` + admin tabs~~ — done
+- ~~Auth pages (`SignIn`, `SignUp`, workspace flows)~~ — `AuthLayout` + tokens
 - `MetricStatCard.jsx` — token shadow + typography
 - `PurchaseConfirm.jsx` — secondary button hover/focus
-- Phase 1 motion from `MOTION-SPEC.md` (completion juice)
+- ~~Phase 1 motion from `MOTION-SPEC.md` (completion juice)~~ — done
+- Legal pages — `LegalPageShell` with logo + ds-card

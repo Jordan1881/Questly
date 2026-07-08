@@ -44,9 +44,14 @@ export default function WorkspaceJoin() {
 
   if (joinRequest) {
     return (
-      <AuthLayout centered logoClassName="hidden">
+      <AuthLayout centered>
         <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-4 text-center shadow-[var(--shadow-lg)]">
-          <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-2xl">⏳</div>
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto ds-brand-gradient text-white text-[length:var(--text-h4)] font-bold"
+            aria-hidden
+          >
+            …
+          </div>
           <h1 className="ds-page-title">Join Request Pending</h1>
           <p className="ds-body">
             Your request to join the workspace is waiting for admin approval. You will get access once approved.

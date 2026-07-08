@@ -54,9 +54,9 @@
 
 ## Implementation checklist
 
-- [ ] `useTaskCompleteMotion` hook (shared TaskCard + dashboard row)
-- [ ] Wire into `TaskCard.jsx` and `Dashboard.jsx` priority tasks
-- [ ] Compressed path when `levelUp` pending
-- [ ] Sidebar active-item highlight in `Sidebar.jsx`
-- [ ] Page stagger on remaining routes
-- [ ] Unit tests: reduced-motion skips timeline; level-up defers modal
+- [x] `useTaskCompleteMotion` hook (shared TaskCard + dashboard row)
+- [x] Wire into `TaskCard.jsx` and `Dashboard.jsx` priority tasks
+- [x] Compressed path when `levelUp` pending
+- [x] Sidebar active-item highlight in `Sidebar.jsx`
+- [x] Page stagger on remaining routes (RewardShop, Profile, Settings)
+- [x] Unit tests: reduced-motion skips timeline; level-up defers modal
