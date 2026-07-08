@@ -104,7 +104,7 @@ function EditProfileFields({
           >
             {uploading ? 'Uploading…' : 'Upload photo'}
           </button>
-          <p className="text-[11px] text-[color:var(--color-gray-400)]">JPEG, PNG, WebP, or GIF · max 2 MB</p>
+          <p className="text-[11px] text-[color:var(--color-gray-400)]">JPEG, PNG, WebP, or GIF · max 8 MB · saved as HQ WebP</p>
         </div>
       </div>
 
