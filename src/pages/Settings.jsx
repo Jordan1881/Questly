@@ -6,6 +6,7 @@ import JiraIntegrationCard from '../components/JiraIntegrationCard'
 import { useAuthStore } from '../stores/authStore'
 import { useProfileStore } from '../stores/profileStore'
 import { parsePreferences } from '../lib/userPreferences'
+import AnimatedReveal from '../components/motion/AnimatedReveal'
 
 const fieldClass =
   'mt-1 w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-body-sm)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand)]/30'
@@ -223,16 +224,22 @@ export default function Settings() {
       <PageHeader onOpenSidebar={() => setShowSidebar(true)} />
 
       <main className="ds-page-main">
-        <div className="flex flex-col gap-6 max-w-3xl">
-          <div>
+        <AnimatedReveal className="flex flex-col gap-6 max-w-3xl">
+          <div data-motion-reveal>
             <h1 className="text-[length:var(--text-h4)] font-bold text-[color:var(--color-gray-800)]">Settings</h1>
             <p className="ds-body-sm mt-1">Manage security, notifications, and integrations.</p>
           </div>
 
-          <PasswordSection />
-          <NotificationsSection />
-          <IntegrationsSection />
-        </div>
+          <div data-motion-reveal>
+            <PasswordSection />
+          </div>
+          <div data-motion-reveal>
+            <NotificationsSection />
+          </div>
+          <div data-motion-reveal>
+            <IntegrationsSection />
+          </div>
+        </AnimatedReveal>
       </main>
     </div>
   )

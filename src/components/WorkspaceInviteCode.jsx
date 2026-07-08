@@ -1,7 +1,5 @@
 import { useState } from 'react'
 
-const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
-
 export default function WorkspaceInviteCode({ code, workspaceName, compact = false }) {
   const [copied, setCopied] = useState(false)
 
@@ -20,12 +18,12 @@ export default function WorkspaceInviteCode({ code, workspaceName, compact = fal
   if (compact) {
     return (
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-[13px] text-[#6b7280]">Workspace code:</span>
-        <span className="font-mono text-[15px] font-bold tracking-[0.15em] text-[#1f2937]">{code}</span>
+        <span className="ds-body-sm">Workspace code:</span>
+        <span className="font-mono text-[length:var(--text-body-lg)] font-bold tracking-[0.15em] text-[color:var(--color-gray-800)]">{code}</span>
         <button
           type="button"
           onClick={copyCode}
-          className="text-[13px] font-semibold text-[#942fcd] hover:underline cursor-pointer"
+          className="ds-body-sm font-semibold text-[color:var(--color-brand)] hover:underline cursor-pointer ds-focus-ring rounded-[var(--radius-sm)] px-1"
         >
           {copied ? 'Copied!' : 'Copy'}
         </button>
@@ -35,12 +33,12 @@ export default function WorkspaceInviteCode({ code, workspaceName, compact = fal
 
   return (
     <div
-      className={`${CARD} p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`}
+      className="ds-card ds-card-pad flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
       data-testid="workspace-invite-code"
     >
       <div className="min-w-0">
-        <p className="text-[14px] font-semibold text-[#1f2937]">Invite developers</p>
-        <p className="text-[13px] text-[#6b7280] mt-0.5">
+        <p className="ds-subsection-title">Invite developers</p>
+        <p className="ds-body-sm mt-0.5">
           Share this code so developers can request to join
           {workspaceName ? (
             <>
@@ -55,15 +53,14 @@ export default function WorkspaceInviteCode({ code, workspaceName, compact = fal
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <div className="rounded-[10px] bg-[#f5eefd] border border-[#e9d5ff] px-5 py-3 text-center min-w-[160px]">
-          <p className="text-[11px] uppercase tracking-wide text-[#942fcd] font-semibold mb-1">Workspace Code</p>
-          <p className="font-mono text-[22px] font-bold tracking-[0.2em] text-[#1f2937]">{code}</p>
+        <div className="rounded-[var(--radius-lg)] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-primary-100)] px-5 py-3 text-center min-w-[160px]">
+          <p className="ds-caption uppercase tracking-wide text-[color:var(--color-brand)] font-semibold mb-1">Workspace Code</p>
+          <p className="font-mono text-[length:var(--text-h4)] font-bold tracking-[0.2em] text-[color:var(--color-gray-800)]">{code}</p>
         </div>
         <button
           type="button"
           onClick={copyCode}
-          className="h-10 px-4 rounded-[8px] text-[13px] font-semibold text-white cursor-pointer hover:opacity-90 transition-opacity"
-          style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+          className="h-10 px-4 ds-btn-primary ds-focus-ring rounded-[var(--radius-md)] ds-body-sm font-semibold"
         >
           {copied ? 'Copied!' : 'Copy Code'}
         </button>

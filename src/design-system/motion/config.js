@@ -27,6 +27,15 @@ export const MOTION = {
     md: 28,
     lg: 40,
   },
+  taskComplete: {
+    checkbox: 0.15,
+    glow: 0.2,
+    ghost: 0.25,
+    barTick: 0.1,
+    ghostRise: 24,
+    /** Steps 1–3 only — level-up modal opens after this delay */
+    levelUpDeferMs: 350,
+  },
 }
 
 export const MOTION_SELECTORS = {

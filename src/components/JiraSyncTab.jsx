@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import jiraLogo from '../assets/jira-original-wordmark.svg'
 import { useWorkspaceStore } from '../stores/workspaceStore'
-
-const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
 
 const SyncIcon = () => (
   <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
@@ -23,6 +20,9 @@ const SyncIcon = () => (
   </svg>
 )
 
+const INPUT_CLASS =
+  'ds-input-field ds-focus-ring w-full px-3 py-2.5 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-body)] text-[color:var(--color-gray-800)] placeholder:text-[color:var(--color-text-subtle)] bg-[color:var(--color-bg)]'
+
 function formatSyncTime(iso) {
   if (!iso) return null
   return new Date(iso).toLocaleString(undefined, {
@@ -34,7 +34,7 @@ function formatSyncTime(iso) {
 }
 
 function FieldLabel({ children }) {
-  return <label className="text-[13px] font-medium text-[#374151]">{children}</label>
+  return <label className="ds-body-sm font-medium text-[color:var(--color-gray-700)]">{children}</label>
 }
 
 function TextInput({ value, onChange, placeholder, type = 'text' }) {
@@ -44,7 +44,7 @@ function TextInput({ value, onChange, placeholder, type = 'text' }) {
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className="w-full px-3 py-2.5 rounded-[8px] border border-[#e5e7eb] text-[14px] text-[#1f2937] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30 focus:border-[#942fcd]"
+      className={INPUT_CLASS}
     />
   )
 }
@@ -155,17 +155,15 @@ export default function JiraSyncTab() {
 
   if (!workspace) {
     return (
-      <div className={`${CARD} p-10 flex flex-col items-center gap-4 text-center max-w-[560px]`}>
-        <img src={jiraLogo} alt="Jira" className="w-12 h-12 object-contain" />
-        <p className="text-[16px] font-semibold text-[#1f2937]">Create a workspace first</p>
-        <p className="text-[13px] text-[#6b7280]">
+      <div className="ds-card ds-card-pad-lg py-10 flex flex-col items-center gap-4 text-center max-w-[560px]">
+        <p className="ds-section-title">Create a workspace first</p>
+        <p className="ds-body-sm">
           You need a workspace before syncing tasks from Jira.
         </p>
         <button
           type="button"
           onClick={() => navigate('/workspace/create')}
-          className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer"
-          style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+          className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
         >
           Create Workspace
         </button>
@@ -179,41 +177,30 @@ export default function JiraSyncTab() {
     <div className="max-w-[640px] flex flex-col gap-6">
       {toast && (
         <div
-          className={`flex items-center gap-2 px-4 py-3 rounded-[10px] text-[13px] font-medium ${
+          className={`flex items-center gap-2 px-4 py-3 rounded-[var(--radius-lg)] ds-body-sm font-medium ${
             toast.type === 'success'
-              ? 'text-[#059669] bg-[#d1fae5] border border-[#a7f3d0]'
-              : 'text-[#ef4444] bg-[#fee2e2] border border-[#fecaca]'
+              ? 'text-[color:var(--color-success-600)] bg-[color:var(--color-success-100)] border border-[color:var(--color-success-200)]'
+              : 'text-[color:var(--color-error-500)] bg-[color:var(--color-error-100)] border border-[color:var(--color-error-200)]'
           }`}
         >
           {toast.message}
         </div>
       )}
 
-      <div className={`${CARD} p-6 flex flex-col gap-5`}>
+      <div className="ds-card ds-card-pad flex flex-col gap-5">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div
-              className="w-14 h-14 rounded-[12px] flex items-center justify-center shrink-0"
-              style={{
-                background: 'linear-gradient(to bottom, #fcfcfc, #87b9fb)',
-                boxShadow: '0px 4px 16px 0px rgba(0, 82, 204, 0.15)',
-              }}
-            >
-              <img src={jiraLogo} alt="Jira" className="w-9 h-9 object-contain" />
-            </div>
-            <div>
-              <h3 className="text-[18px] font-semibold text-[#1f2937]">Connect Jira</h3>
-              <p className="text-[13px] text-[#6b7280] mt-1">
-                Store your workspace Jira credentials for syncing tasks into{' '}
-                <strong>{workspace.name}</strong>.
-              </p>
-            </div>
+          <div>
+            <h3 className="ds-section-title">Connect Jira</h3>
+            <p className="ds-body-sm mt-1">
+              Store your workspace Jira credentials for syncing tasks into{' '}
+              <strong>{workspace.name}</strong>.
+            </p>
           </div>
           <span
-            className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-[6px] ${
+            className={`shrink-0 ds-caption font-semibold px-2.5 py-1 rounded-[var(--radius-md)] ${
               isConnected
-                ? 'bg-[#d1fae5] text-[#059669]'
-                : 'bg-[#f3f4f6] text-[#6b7280]'
+                ? 'bg-[color:var(--color-success-100)] text-[color:var(--color-success-600)]'
+                : 'bg-[color:var(--color-bg-muted)] text-[color:var(--color-text-muted)]'
             }`}
           >
             {isConnected ? 'Connected' : 'Not connected'}
@@ -221,7 +208,7 @@ export default function JiraSyncTab() {
         </div>
 
         {error && (
-          <div className="rounded-[8px] bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">
+          <div className="rounded-[var(--radius-md)] bg-[color:var(--color-error-50)] border border-[color:var(--color-error-200)] px-4 py-3 ds-body-sm text-[color:var(--color-error-600)]">
             {error}
           </div>
         )}
@@ -250,15 +237,14 @@ export default function JiraSyncTab() {
                 type="button"
                 onClick={handleOAuthConnect}
                 disabled={isLoading || !siteUrl.trim() || !projectKey.trim()}
-                className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+                className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
               >
                 {isLoading ? 'Redirecting…' : isConnected ? 'Reconnect with Atlassian' : 'Connect with Atlassian'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowManual(true)}
-                className="text-[13px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+                className="ds-body-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-gray-700)] hover:bg-[color:var(--color-bg-subtle)] px-2 py-1 rounded-[var(--radius-md)] cursor-pointer ds-focus-ring transition-colors"
               >
                 Advanced: use API token
               </button>
@@ -267,7 +253,7 @@ export default function JiraSyncTab() {
                   type="button"
                   onClick={handleDisconnect}
                   disabled={isLoading}
-                  className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-[#ef4444] bg-[#fee2e2] border border-[#fecaca] cursor-pointer disabled:opacity-60"
+                  className="px-5 py-2.5 rounded-[var(--radius-md)] ds-body font-semibold text-[color:var(--color-error-500)] bg-[color:var(--color-error-100)] border border-[color:var(--color-error-200)] cursor-pointer disabled:opacity-60 ds-focus-ring transition-colors hover:bg-[color:var(--color-error-200)]"
                 >
                   Disconnect
                 </button>
@@ -281,7 +267,7 @@ export default function JiraSyncTab() {
                 <button
                   type="button"
                   onClick={() => setShowManual(false)}
-                  className="self-start text-[13px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+                  className="self-start ds-body-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-gray-700)] hover:bg-[color:var(--color-bg-subtle)] px-2 py-1 rounded-[var(--radius-md)] cursor-pointer ds-focus-ring transition-colors"
                 >
                   Back to Atlassian OAuth
                 </button>
@@ -294,7 +280,7 @@ export default function JiraSyncTab() {
                   onChange={(e) => setAccessToken(e.target.value)}
                   placeholder={isConnected ? 'Enter a new token to update' : 'Your Atlassian API token'}
                 />
-                <p className="text-[11px] text-[#9ca3af]">
+                <p className="ds-caption text-[color:var(--color-text-subtle)]">
                   Use the email on your Questly admin account with this token. Tokens are stored securely
                   and never shown again.
                 </p>
@@ -304,8 +290,7 @@ export default function JiraSyncTab() {
                 <button
                   type="submit"
                   disabled={isLoading || !siteUrl.trim() || !projectKey.trim() || !accessToken.trim()}
-                  className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+                  className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
                 >
                   {isLoading ? 'Connecting…' : isConnected ? 'Update connection' : 'Connect with token'}
                 </button>
@@ -314,7 +299,7 @@ export default function JiraSyncTab() {
                     type="button"
                     onClick={handleDisconnect}
                     disabled={isLoading}
-                    className="px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-[#ef4444] bg-[#fee2e2] border border-[#fecaca] cursor-pointer disabled:opacity-60"
+                    className="px-5 py-2.5 rounded-[var(--radius-md)] ds-body font-semibold text-[color:var(--color-error-500)] bg-[color:var(--color-error-100)] border border-[color:var(--color-error-200)] cursor-pointer disabled:opacity-60 ds-focus-ring transition-colors hover:bg-[color:var(--color-error-200)]"
                   >
                     Disconnect
                   </button>
@@ -325,15 +310,15 @@ export default function JiraSyncTab() {
         </div>
       </div>
 
-      <div className={`${CARD} p-6 flex flex-col gap-6`}>
+      <div className="ds-card ds-card-pad flex flex-col gap-6">
         <div>
-          <h3 className="text-[18px] font-semibold text-[#1f2937]">Sync tasks from Jira</h3>
-          <p className="text-[13px] text-[#6b7280] mt-1">
+          <h3 className="ds-section-title">Sync tasks from Jira</h3>
+          <p className="ds-body-sm mt-1">
             Pull issues from your Jira project. Developers see assigned tasks on their Task List.
           </p>
         </div>
 
-        <div className="rounded-[10px] bg-[#f9fafb] border border-[#e5e7eb] px-4 py-3 text-[13px] text-[#6b7280] leading-relaxed">
+        <div className="rounded-[var(--radius-lg)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-4 py-3 ds-body-sm leading-relaxed">
           Difficulty and XP come from <strong>Jira story points</strong>: 1–2 pts → Easy (20 XP),
           3–5 → Medium (40 XP), 8+ → Hard (70 XP). Coins are awarded when developers complete tasks.
         </div>
@@ -349,17 +334,17 @@ export default function JiraSyncTab() {
             ].map(({ label, value }) => (
               <div
                 key={label}
-                className="rounded-[8px] bg-[#f5eefd] border border-[#e9d5ff] px-3 py-2 text-center"
+                className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-primary-100)] px-3 py-2 text-center"
               >
-                <p className="text-[20px] font-bold text-[#942fcd]">{value ?? 0}</p>
-                <p className="text-[11px] text-[#6b7280]">{label}</p>
+                <p className="text-[length:var(--text-h5)] font-bold text-[color:var(--color-brand)]">{value ?? 0}</p>
+                <p className="ds-caption">{label}</p>
               </div>
             ))}
           </div>
         )}
 
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-[12px] text-[#9ca3af]">
+          <p className="ds-caption text-[color:var(--color-text-subtle)]">
             {lastJiraSyncAt
               ? `Last synced ${formatSyncTime(lastJiraSyncAt)}`
               : 'Not synced yet this session'}
@@ -368,8 +353,7 @@ export default function JiraSyncTab() {
             type="button"
             onClick={handleSync}
             disabled={isLoading || !isConnected}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+            className="inline-flex items-center gap-2 ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
           >
             <SyncIcon />
             {isLoading ? 'Syncing…' : 'Sync with Jira'}

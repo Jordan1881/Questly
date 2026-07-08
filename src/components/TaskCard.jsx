@@ -1,5 +1,7 @@
+import { useRef } from 'react'
 import DifficultyBadge from './DifficultyBadge'
 import { CheckmarkIcon, StarIcon } from './icons'
+import { useTaskCompleteMotion } from '../hooks/useTaskCompleteMotion'
 
 const ClockIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 shrink-0">
@@ -34,18 +36,48 @@ const JiraBadge = ({ id }) => (
 
 export default function TaskCard({ task, onToggle }) {
   const isCompleted = task.done
+  const cardRef = useRef(null)
+  const checkboxRef = useRef(null)
+  const xpGhostRef = useRef(null)
+  const { playCompleteJuice } = useTaskCompleteMotion({ cardRef, checkboxRef, xpGhostRef })
+
+  const handleToggle = async () => {
+    if (isCompleted) {
+      await onToggle(task.id)
+      return
+    }
+
+    const result = await onToggle(task.id)
+    await playCompleteJuice({
+      xp: task.xp,
+      compressed: Boolean(result?.levelUp),
+    })
+  }
 
   return (
     <div
-      className={`ds-card ds-card-pad ds-card-lift w-full transition-opacity duration-200 ${
+      ref={cardRef}
+      className={`ds-card ds-card-pad ds-card-lift w-full relative overflow-hidden transition-opacity duration-200 ${
         isCompleted ? 'opacity-60 bg-[color:var(--color-bg-subtle)]' : ''
       }`}
+      style={{ boxShadow: 'var(--shadow-sm)' }}
     >
+      <span
+        ref={xpGhostRef}
+        data-task-xp-ghost
+        data-xp-amount={task.xp}
+        className="pointer-events-none absolute right-6 top-6 z-10 text-[length:var(--text-h4)] font-bold text-[color:var(--color-brand)] invisible"
+        aria-hidden="true"
+      >
+        +{task.xp} XP
+      </span>
+
       <div className="flex items-start gap-4">
         <button
+          ref={checkboxRef}
           type="button"
           aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
-          onClick={() => onToggle(task.id)}
+          onClick={handleToggle}
           className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 mt-[3px] cursor-pointer ds-focus-ring transition-colors duration-200 hover:ring-2 hover:ring-[color:var(--color-primary-200)]"
           style={{
             background: isCompleted ? 'var(--color-success-500)' : 'var(--color-gray-200)',

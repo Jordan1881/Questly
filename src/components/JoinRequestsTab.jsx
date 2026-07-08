@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 
-const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
-
 const CheckIcon = () => (
   <svg viewBox="0 0 14 14" fill="none" className="w-3.5 h-3.5 shrink-0">
     <path d="M2 7l3.5 3.5 6.5-6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -14,6 +12,9 @@ const XIcon = () => (
     <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 )
+
+const TH = 'ds-caption font-semibold uppercase tracking-wide text-left py-3 px-4'
+const TD = 'py-3.5 px-4 ds-body-sm text-[color:var(--color-gray-700)]'
 
 export default function JoinRequestsTab() {
   const {
@@ -49,34 +50,31 @@ export default function JoinRequestsTab() {
     }, 800)
   }
 
-  const TH = 'text-[12px] font-semibold text-[#6b7280] uppercase tracking-wide text-left py-3 px-4'
-  const TD = 'py-3.5 px-4 text-[13px] text-[#374151]'
-
   return (
     <div>
       <div className="mb-6">
-        <p className="text-[14px] font-semibold text-[#1f2937]">Join Requests</p>
-        <p className="text-[13px] text-[#6b7280] mt-0.5">
+        <p className="ds-subsection-title">Join Requests</p>
+        <p className="ds-body-sm mt-0.5">
           {pendingJoinRequests.length} request{pendingJoinRequests.length !== 1 ? 's' : ''} awaiting review
         </p>
-        {error && <p className="text-[13px] text-red-600 mt-2">{error}</p>}
+        {error && <p className="ds-body-sm text-[color:var(--color-error-600)] mt-2">{error}</p>}
       </div>
 
       {pendingJoinRequests.length === 0 ? (
-        <div className={`${CARD} p-12 flex flex-col items-center gap-3 text-center`}>
-          <div className="w-12 h-12 rounded-full bg-[#d1fae5] flex items-center justify-center text-[#059669]">
+        <div className="ds-card ds-card-pad-lg py-12 flex flex-col items-center gap-3 text-center">
+          <div className="w-12 h-12 rounded-full bg-[color:var(--color-success-100)] flex items-center justify-center text-[color:var(--color-success-600)]">
             <CheckIcon />
           </div>
-          <p className="text-[15px] font-semibold text-[#1f2937]">All caught up!</p>
-          <p className="text-[13px] text-[#9ca3af]">
+          <p className="ds-subsection-title font-semibold text-[color:var(--color-gray-800)]">All caught up!</p>
+          <p className="ds-body-sm text-[color:var(--color-text-subtle)]">
             No pending join requests right now. Share your workspace code so developers can request access.
           </p>
         </div>
       ) : (
-        <div className={`${CARD} overflow-hidden`}>
+        <div className="ds-card overflow-hidden">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#f3f4f6]">
+              <tr className="border-b border-[color:var(--color-bg-muted)]">
                 <th className={TH}>Developer</th>
                 <th className={TH}>Email</th>
                 <th className={TH}>Requested</th>
@@ -87,32 +85,34 @@ export default function JoinRequestsTab() {
               {pendingJoinRequests.map((request) => {
                 const status = rowStatus[request.id]
                 const rowBg = status === 'approved'
-                  ? 'bg-[#f0fdf4]'
+                  ? 'bg-[color:var(--color-success-50)]'
                   : status === 'rejected'
-                  ? 'bg-[#fff5f5]'
-                  : 'hover:bg-[#fafafa]'
+                  ? 'bg-[color:var(--color-error-50)]'
+                  : 'hover:bg-[color:var(--color-bg-subtle)]'
                 return (
-                  <tr key={request.id} className={`border-b border-[#f9fafb] transition-colors ${rowBg}`}>
-                    <td className={`${TD} font-medium text-[#1f2937]`}>{request.username}</td>
+                  <tr key={request.id} className={`border-b border-[color:var(--color-bg-subtle)] transition-colors ${rowBg}`}>
+                    <td className={`${TD} font-medium text-[color:var(--color-gray-800)]`}>{request.username}</td>
                     <td className={TD}>{request.email}</td>
                     <td className={TD}>{new Date(request.created_at).toLocaleDateString()}</td>
                     <td className={TD}>
                       {status ? (
-                        <span className={`text-[12px] font-semibold ${status === 'approved' ? 'text-[#059669]' : 'text-[#ef4444]'}`}>
+                        <span className={`ds-caption font-semibold ${status === 'approved' ? 'text-[color:var(--color-success-600)]' : 'text-[color:var(--color-error-500)]'}`}>
                           {status === 'approved' ? '✓ Approved' : '✗ Rejected'}
                         </span>
                       ) : (
                         <div className="flex gap-2">
                           <button
+                            type="button"
                             onClick={() => handle(request, 'approved')}
-                            className="flex items-center gap-1 px-3 py-1 rounded-[6px] text-[12px] font-semibold bg-[#d1fae5] text-[#059669] cursor-pointer hover:bg-[#a7f3d0] transition-colors"
+                            className="flex items-center gap-1 px-3 py-1 rounded-[var(--radius-md)] ds-caption font-semibold cursor-pointer transition-colors ds-focus-ring bg-[color:var(--color-success-100)] text-[color:var(--color-success-600)] hover:bg-[color:var(--color-success-200)]"
                           >
                             <CheckIcon />
                             Approve
                           </button>
                           <button
+                            type="button"
                             onClick={() => handle(request, 'rejected')}
-                            className="flex items-center gap-1 px-3 py-1 rounded-[6px] text-[12px] font-semibold bg-[#fee2e2] text-[#ef4444] cursor-pointer hover:bg-[#fecaca] transition-colors"
+                            className="flex items-center gap-1 px-3 py-1 rounded-[var(--radius-md)] ds-caption font-semibold cursor-pointer transition-colors ds-focus-ring bg-[color:var(--color-error-100)] text-[color:var(--color-error-500)] hover:bg-[color:var(--color-error-200)]"
                           >
                             <XIcon />
                             Reject

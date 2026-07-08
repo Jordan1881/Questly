@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
-import { gsap, registerGsap, MOTION, MOTION_SELECTORS } from '../../design-system/motion'
+import { gsap, registerGsap, MOTION, MOTION_SELECTORS, prefersReducedMotion } from '../../design-system/motion'
 
 registerGsap()
 
@@ -22,6 +22,11 @@ export default function AnimatedReveal({
     () => {
       const items = rootRef.current?.querySelectorAll(MOTION_SELECTORS.revealItem)
       if (!items?.length) return
+
+      if (prefersReducedMotion()) {
+        gsap.set(items, { autoAlpha: 1, y: 0 })
+        return
+      }
 
       gsap.from(items, {
         autoAlpha: 0,
