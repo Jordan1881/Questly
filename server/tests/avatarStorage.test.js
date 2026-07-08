@@ -1,10 +1,6 @@
 require('dotenv').config()
+const sharp = require('sharp')
 const avatarStorage = require('../lib/avatarStorage')
-
-const tinyPng = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-  'base64',
-)
 
 describe('avatarStorage', () => {
   const originalEnv = { ...process.env }
@@ -34,8 +30,19 @@ describe('avatarStorage', () => {
   test('uploads processed WebP to local disk in local mode', async () => {
     process.env.AVATAR_STORAGE = 'local'
     const userId = '11111111-1111-4111-8111-111111111111'
+    const source = await sharp({
+      create: {
+        width: 640,
+        height: 480,
+        channels: 3,
+        background: { r: 148, g: 47, b: 205 },
+      },
+    })
+      .png()
+      .toBuffer()
+
     const url = await avatarStorage.uploadAvatar(userId, {
-      buffer: tinyPng,
+      buffer: source,
       mimetype: 'image/png',
       originalname: 'avatar.png',
     })

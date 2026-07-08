@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { resolveAvatarUrl } from '../lib/displayUser'
 
 const PLACEHOLDER_STYLE = {
@@ -6,14 +6,34 @@ const PLACEHOLDER_STYLE = {
   admin: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
 }
 
-export default function ProfileAvatar({ avatarUrl, variant = 'developer', size = 110 }) {
+function devicePixelRatio() {
+  if (typeof window === 'undefined') return 2
+  return Math.min(window.devicePixelRatio || 1, 3)
+}
+
+/** Request a retina-sized render (?w=) from the API avatar pipeline. */
+export function buildAvatarSrc(avatarUrl, displaySize) {
+  const resolved = resolveAvatarUrl(avatarUrl)
+  if (!resolved) return null
+
+  const width = Math.min(Math.max(Math.round(displaySize * devicePixelRatio()), 64), 1024)
+  const joiner = resolved.includes('?') ? '&' : '?'
+  return `${resolved}${joiner}w=${width}`
+}
+
+export default function ProfileAvatar({
+  avatarUrl,
+  variant = 'developer',
+  size = 110,
+  priority = false,
+}) {
   const [failed, setFailed] = useState(false)
-  const src = resolveAvatarUrl(avatarUrl)
+  const src = useMemo(() => buildAvatarSrc(avatarUrl, size), [avatarUrl, size])
   const showImage = src && !failed
 
   return (
     <div
-      className="rounded-full overflow-hidden shrink-0"
+      className="rounded-full overflow-hidden shrink-0 [transform:translateZ(0)]"
       style={{
         width: size,
         height: size,
@@ -27,11 +47,11 @@ export default function ProfileAvatar({ avatarUrl, variant = 'developer', size =
         <img
           src={src}
           alt=""
-          width={size}
-          height={size}
           decoding="async"
-          loading="lazy"
-          className="w-full h-full object-cover object-center"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          className="block h-full w-full object-cover object-center"
+          style={{ width: size, height: size }}
           onError={() => setFailed(true)}
         />
       ) : (
