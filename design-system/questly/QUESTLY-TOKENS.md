@@ -32,5 +32,11 @@
 
 ## Skills installed
 
-- `.cursor/skills/ui-ux-pro-max` — design intelligence CLI
+- `~/.cursor/skills/ui-ux-pro-max` — design intelligence CLI (local machine, outside repo)
 - `.agents/skills/grill-me` — plan stress-testing (`/grill-me`)
+
+Run design search from anywhere:
+
+```bash
+python3 ~/.cursor/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system -p "Questly"
+```
