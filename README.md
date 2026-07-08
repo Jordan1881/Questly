@@ -232,8 +232,6 @@ Decisions made during development, with rationale:
 | [Tailwind CSS v4](https://tailwindcss.com) | Utility-first styling |
 | [React Router 7](https://reactrouter.com) | Client-side routing & role guards |
 | [Zustand](https://zustand.docs.pmnd.rs) | Lightweight global state |
-| [Motion](https://motion.dev) | Animations & transitions |
-| [Lucide React](https://lucide.dev) | Icon library |
 | [ESLint 9](https://eslint.org) | Linting (flat config) |
 
 ### Backend

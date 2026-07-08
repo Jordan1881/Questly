@@ -1,14 +1,3 @@
-export const createMockUser = (overrides = {}) => ({
-  id: crypto.randomUUID(),
-  email: 'test@example.com',
-  username: 'TestUser',
-  role: 'developer',
-  currentSprintXp: 0,
-  lifetimeXp: 0,
-  streakDays: 0,
-  ...overrides,
-})
-
 export const createMockTask = (overrides = {}) => ({
   id: crypto.randomUUID(),
   title: 'Mock Task',
@@ -17,15 +6,6 @@ export const createMockTask = (overrides = {}) => ({
   status: 'to_do',
   highPriority: false,
   dueDate: null,
-  ...overrides,
-})
-
-export const createMockReward = (overrides = {}) => ({
-  id: crypto.randomUUID(),
-  title: 'Mock Reward',
-  description: 'A test reward',
-  coinCost: 50,
-  isAvailable: true,
   ...overrides,
 })
 
