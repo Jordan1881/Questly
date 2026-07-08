@@ -20,6 +20,7 @@ describe('PageHeader', () => {
     )
 
     expect(screen.getByText('Yarden')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Questly home' })).toBeInTheDocument()
     expect(screen.queryByText('Ashton_44')).not.toBeInTheDocument()
     expect(screen.queryByText('Admin_User')).not.toBeInTheDocument()
   })
