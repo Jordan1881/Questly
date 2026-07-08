@@ -1,6 +1,6 @@
 const multer = require('multer')
 
-const MAX_BYTES = 2 * 1024 * 1024
+const MAX_BYTES = 8 * 1024 * 1024
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 
 const storage = multer.memoryStorage()
@@ -24,7 +24,7 @@ function uploadAvatarMiddleware(req, res, next) {
     if (!err) return next()
 
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'Avatar must be 2 MB or smaller' })
+      return res.status(400).json({ error: 'Avatar must be 8 MB or smaller' })
     }
 
     return res.status(400).json({ error: err.message || 'Invalid avatar upload' })
