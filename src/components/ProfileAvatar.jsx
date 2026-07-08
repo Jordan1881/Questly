@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { resolveAvatarUrl } from '../lib/displayUser'
 
 const PLACEHOLDER_STYLE = {
   developer: 'linear-gradient(135deg, #942fcd 0%, #ca9af4 100%)',
@@ -7,7 +8,8 @@ const PLACEHOLDER_STYLE = {
 
 export default function ProfileAvatar({ avatarUrl, variant = 'developer', size = 110 }) {
   const [failed, setFailed] = useState(false)
-  const showImage = avatarUrl && !failed
+  const src = resolveAvatarUrl(avatarUrl)
+  const showImage = src && !failed
 
   return (
     <div
@@ -23,9 +25,13 @@ export default function ProfileAvatar({ avatarUrl, variant = 'developer', size =
     >
       {showImage ? (
         <img
-          src={avatarUrl}
+          src={src}
           alt=""
-          className="w-full h-full object-cover"
+          width={size}
+          height={size}
+          decoding="async"
+          loading="lazy"
+          className="w-full h-full object-cover object-center"
           onError={() => setFailed(true)}
         />
       ) : (
