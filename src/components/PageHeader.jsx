@@ -43,28 +43,26 @@ export default function PageHeader({ onOpenSidebar }) {
   const avatarUrl = getAvatarUrl(user)
 
   return (
-    <header className="bg-white border-b border-[#e5e7eb] px-12 h-[79px] flex items-stretch">
+    <header className="bg-[color:var(--color-bg)] border-b border-[color:var(--color-border)] px-[var(--space-2xl)] h-[79px] flex items-stretch">
       <div className="w-full flex items-center justify-between">
 
         <div className="flex items-stretch gap-6 h-full">
           <button
+            type="button"
             onClick={onOpenSidebar}
-            className="flex items-center justify-center cursor-pointer bg-transparent hover:bg-[#f9fafb] rounded-[8px] px-2 transition-colors duration-200"
+            className="ds-focus-ring flex items-center justify-center cursor-pointer bg-transparent hover:bg-[color:var(--color-bg-subtle)] rounded-[var(--radius-md)] px-2 transition-colors duration-200"
             aria-label="Open menu"
           >
             <BurgerIcon />
           </button>
 
-          <nav className="flex items-stretch gap-10 h-full">
+          <nav className="flex items-stretch gap-10 h-full" aria-label="Main">
             {NAV_LINKS.map(({ id, label }) => (
               <button
                 key={id}
+                type="button"
                 onClick={() => navigate(PAGE_PATHS[id])}
-                className={`h-full border-b-2 text-[16px] cursor-pointer transition-colors duration-200 bg-transparent ${
-                  isActive(id)
-                    ? 'border-[#942fcd] text-[#942fcd] font-semibold'
-                    : 'border-transparent text-[#6b7280] font-normal hover:text-[#1f2937]'
-                }`}
+                className={`ds-header-nav ds-focus-ring ${isActive(id) ? 'ds-header-nav--active' : ''}`}
               >
                 {label}
               </button>
@@ -72,14 +70,19 @@ export default function PageHeader({ onOpenSidebar }) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-[16px] font-semibold text-[#1f2937]">{displayName}</span>
+        <button
+          type="button"
+          onClick={() => navigate('/profile')}
+          className="ds-focus-ring flex items-center gap-3 rounded-[var(--radius-md)] px-2 py-1 cursor-pointer hover:bg-[color:var(--color-bg-subtle)] transition-colors duration-200"
+          aria-label="Go to profile"
+        >
+          <span className="text-[length:var(--text-body-lg)] font-semibold text-[color:var(--color-gray-800)]">{displayName}</span>
           <ProfileAvatar
             avatarUrl={avatarUrl}
             variant={userRole === 'admin' ? 'admin' : 'developer'}
             size={48}
           />
-        </div>
+        </button>
 
       </div>
     </header>

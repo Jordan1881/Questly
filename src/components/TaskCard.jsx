@@ -37,7 +37,7 @@ export default function TaskCard({ task, onToggle }) {
 
   return (
     <div
-      className={`ds-card ds-card-pad w-full transition-opacity duration-200 ${
+      className={`ds-card ds-card-pad ds-card-lift w-full transition-opacity duration-200 ${
         isCompleted ? 'opacity-60 bg-[color:var(--color-bg-subtle)]' : ''
       }`}
     >
@@ -46,7 +46,7 @@ export default function TaskCard({ task, onToggle }) {
           type="button"
           aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
           onClick={() => onToggle(task.id)}
-          className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 mt-[3px] cursor-pointer transition-colors duration-200"
+          className="w-5 h-5 rounded-[5.8px] flex items-center justify-center shrink-0 mt-[3px] cursor-pointer ds-focus-ring transition-colors duration-200 hover:ring-2 hover:ring-[color:var(--color-primary-200)]"
           style={{
             background: isCompleted ? 'var(--color-success-500)' : 'var(--color-gray-200)',
           }}

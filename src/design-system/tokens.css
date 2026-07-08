@@ -190,4 +190,11 @@
 
   --card-padding:    24px;
   --card-radius:     var(--radius-card);
+
+  /* ----------------------------------------------------------
+     INTERACTION (ui-ux-pro-max polish)
+  ---------------------------------------------------------- */
+  --transition-fast: 150ms ease;
+  --transition-ui:   200ms ease;
+  --focus-ring:      0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary-300);
 }
