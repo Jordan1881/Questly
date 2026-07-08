@@ -9,6 +9,7 @@ import { useXpStore } from '../stores/xpStore'
 import { useRewardStore } from '../stores/rewardStore'
 import { useToastStore } from '../stores/toastStore'
 import { SkeletonRewardGrid } from '../components/Skeleton'
+import AnimatedReveal from '../components/motion/AnimatedReveal'
 
 export default function RewardShop() {
   const user = useAuthStore((s) => s.user)
@@ -64,13 +65,13 @@ export default function RewardShop() {
       <PageHeader onOpenSidebar={() => setShowSidebar(true)} />
 
       <main className="ds-page-main">
-        <div className="flex flex-col gap-6 max-w-6xl">
-          <div>
+        <AnimatedReveal className="flex flex-col gap-6 max-w-6xl">
+          <div data-motion-reveal>
             <h1 className="ds-page-title">Reward Shop</h1>
             <p className="ds-body mt-1">Spend coins on workspace rewards. Coins are earned automatically from XP (10 XP = 1 Coin).</p>
           </div>
 
-          <div className="ds-card ds-card-pad-lg flex items-center justify-between">
+          <div data-motion-reveal className="ds-card ds-card-pad-lg flex items-center justify-between">
             <div>
               <p className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-500)] mb-2">
                 Your coins
@@ -85,7 +86,7 @@ export default function RewardShop() {
           </div>
 
           {error && (
-            <div className="flex items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--color-error-200)] bg-[color:var(--color-error-50)] px-4 py-3">
+            <div data-motion-reveal className="flex items-center justify-between rounded-[var(--radius-md)] border border-[color:var(--color-error-200)] bg-[color:var(--color-error-50)] px-4 py-3">
               <p className="ds-body text-[color:var(--color-error-700)]">{error}</p>
               <button
                 type="button"
@@ -97,13 +98,17 @@ export default function RewardShop() {
             </div>
           )}
           {!workspaceId && (
-            <p className="ds-body">Join a workspace to browse rewards.</p>
+            <p data-motion-reveal className="ds-body">Join a workspace to browse rewards.</p>
           )}
 
-          {isLoading && <SkeletonRewardGrid count={4} />}
+          {isLoading && (
+            <div data-motion-reveal>
+              <SkeletonRewardGrid count={4} />
+            </div>
+          )}
 
           {!isLoading && workspaceId && rewards.length === 0 && (
-            <div className="ds-card ds-card-pad py-10 text-center">
+            <div data-motion-reveal className="ds-card ds-card-pad py-10 text-center">
               <p className="ds-subsection-title">No rewards available yet</p>
               <p className="ds-body mt-2">
                 Your admin can add rewards from the Admin panel.
@@ -112,7 +117,7 @@ export default function RewardShop() {
           )}
 
           {!isLoading && rewards.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div data-motion-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {rewards.map((reward) => (
                 <RewardCard
                   key={reward.id}
@@ -123,7 +128,7 @@ export default function RewardShop() {
               ))}
             </div>
           )}
-        </div>
+        </AnimatedReveal>
       </main>
     </div>
   )

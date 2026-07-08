@@ -2,6 +2,13 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import TaskCard from '../../components/TaskCard'
 
+vi.mock('../../hooks/useTaskCompleteMotion', () => ({
+  useTaskCompleteMotion: () => ({
+    playCompleteJuice: vi.fn().mockResolvedValue(undefined),
+    killTimeline: vi.fn(),
+  }),
+}))
+
 const baseTask = {
   id: 'task-1',
   title: 'Fix login bug',
@@ -20,8 +27,8 @@ describe('TaskCard', () => {
     expect(screen.getByText('HARD')).toBeInTheDocument()
   })
 
-  it('checkbox triggers onToggle with task id', () => {
-    const onToggle = vi.fn()
+  it('checkbox triggers onToggle with task id', async () => {
+    const onToggle = vi.fn().mockResolvedValue({})
     render(<TaskCard task={baseTask} onToggle={onToggle} />)
     fireEvent.click(screen.getByRole('button', { name: 'Mark complete' }))
     expect(onToggle).toHaveBeenCalledWith('task-1')

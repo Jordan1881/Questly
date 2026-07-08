@@ -204,7 +204,11 @@ export default function TaskList() {
   }, [userRole, hasWorkspace, fetchTasks])
 
   const toggleTask = async (id) => {
-    await toggleTaskCompletion(id).catch(() => {})
+    try {
+      return await toggleTaskCompletion(id)
+    } catch {
+      return undefined
+    }
   }
 
   const filtered = filterTasks(tasks, { status: statusFilter, difficulty: difficultyFilter })

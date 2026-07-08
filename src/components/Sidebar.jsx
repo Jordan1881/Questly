@@ -1,10 +1,15 @@
 import { useNavigate, useLocation } from 'react-router'
+import { useRef } from 'react'
+import { useGSAP } from '@gsap/react'
 import logoIcon from '../assets/LOGO.svg'
 import logoHorizental from '../assets/LOGO-HORIZENTAL.svg'
 import LegalFooterLinks from './LegalFooterLinks'
 import { useAuthStore } from '../stores/authStore'
 import { getLifetimeXp } from '../lib/displayUser'
 import { xpLevelInfo } from '../lib/xpLevel'
+import { gsap, registerGsap, MOTION, prefersReducedMotion } from '../design-system/motion'
+
+registerGsap()
 
 const iconStroke = (active) => (active ? 'var(--color-brand)' : 'var(--color-text-muted)')
 
@@ -100,6 +105,8 @@ const DEV_NAV_LINKS_WITH_JOIN = [
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const navRef = useRef(null)
+  const indicatorRef = useRef(null)
   const userRole = useAuthStore((s) => s.userRole)
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
@@ -114,6 +121,43 @@ export default function Sidebar({ isOpen, onClose }) {
   }
 
   const isActive = (id) => pathname === PAGE_PATHS[id]
+
+  useGSAP(
+    () => {
+      const nav = navRef.current
+      const indicator = indicatorRef.current
+      if (!nav || !indicator) return
+
+      const activeItem = nav.querySelector('.ds-nav-item--active')
+      if (!activeItem) {
+        gsap.set(indicator, { autoAlpha: 0 })
+        return
+      }
+
+      const navRect = nav.getBoundingClientRect()
+      const itemRect = activeItem.getBoundingClientRect()
+      const y = itemRect.top - navRect.top + nav.scrollTop
+      const height = itemRect.height
+
+      if (prefersReducedMotion()) {
+        gsap.set(indicator, { y, height, autoAlpha: 1 })
+        return
+      }
+
+      gsap.to(indicator, {
+        y,
+        height,
+        autoAlpha: 1,
+        duration: MOTION.duration.fast,
+        ease: MOTION.ease.standard,
+      })
+    },
+    {
+      scope: navRef,
+      dependencies: [pathname, userRole, user?.workspace_id],
+      revertOnUpdate: true,
+    },
+  )
 
   return (
     <>
@@ -144,7 +188,13 @@ export default function Sidebar({ isOpen, onClose }) {
           </button>
         </div>
 
-        <nav className="flex flex-col gap-3 p-4 flex-1 overflow-y-auto">
+        <nav ref={navRef} className="relative flex flex-col gap-3 p-4 flex-1 overflow-y-auto">
+          <div
+            ref={indicatorRef}
+            className="absolute left-2 right-2 rounded-[var(--radius-md)] bg-[color:var(--color-gray-100)] pointer-events-none -z-0"
+            style={{ top: 0, height: 46.5, opacity: 0 }}
+            aria-hidden="true"
+          />
           {NAV_LINKS.map(({ id, label, Icon, dot }) => {
             const active = isActive(id)
             return (
@@ -152,7 +202,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 key={id}
                 type="button"
                 onClick={() => handleNav(id)}
-                className={`ds-nav-item ds-focus-ring relative ${active ? 'ds-nav-item--active' : ''}`}
+                className={`ds-nav-item ds-focus-ring relative z-[1] ${active ? 'ds-nav-item--active !bg-transparent' : ''}`}
               >
                 <Icon active={active} />
                 <span>{label}</span>

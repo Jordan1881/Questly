@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import { useRewardStore } from '../stores/rewardStore'
 
-const CARD = 'bg-white border border-[#e5e7eb] rounded-[12px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)]'
+const INPUT_CLASS =
+  'ds-input-field ds-focus-ring px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-body)] text-[color:var(--color-gray-800)] bg-[color:var(--color-bg)] w-full'
 
 const emptyForm = {
   title: '',
@@ -119,50 +120,50 @@ export default function RewardManagementTab() {
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
-      <div className={`${CARD} p-6`}>
-        <h2 className="text-[18px] font-semibold text-[#1f2937] mb-4">
+      <div className="ds-card ds-card-pad">
+        <h2 className="ds-section-title mb-4">
           {isEditing ? 'Edit reward' : 'Add reward'}
         </h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-medium text-[#374151]">Title</span>
+            <span className="ds-body-sm font-medium text-[color:var(--color-gray-700)]">Title</span>
             <input
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px]"
+              className={INPUT_CLASS}
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-medium text-[#374151]">Description</span>
+            <span className="ds-body-sm font-medium text-[color:var(--color-gray-700)]">Description</span>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               rows={3}
-              className="px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px]"
+              className={`${INPUT_CLASS} resize-y`}
             />
           </label>
           <div className="grid grid-cols-2 gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] font-medium text-[#374151]">Coin cost</span>
+              <span className="ds-body-sm font-medium text-[color:var(--color-gray-700)]">Coin cost</span>
               <input
                 type="number"
                 min="1"
                 value={form.coinCost}
                 onChange={(e) => setForm((f) => ({ ...f, coinCost: e.target.value }))}
-                className="px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px]"
+                className={INPUT_CLASS}
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] font-medium text-[#374151]">Image URL</span>
+              <span className="ds-body-sm font-medium text-[color:var(--color-gray-700)]">Image URL</span>
               <input
                 value={form.imageUrl}
                 onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                className="px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px]"
+                className={INPUT_CLASS}
               />
             </label>
           </div>
           <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-medium text-[#374151]">
+            <span className="ds-body-sm font-medium text-[color:var(--color-gray-700)]">
               {isEditing ? 'Add coupon codes (one per line)' : 'Coupon codes (one per line)'}
             </span>
             <textarea
@@ -170,12 +171,12 @@ export default function RewardManagementTab() {
               onChange={(e) => setForm((f) => ({ ...f, couponCodes: e.target.value }))}
               rows={4}
               placeholder="CODE-001&#10;CODE-002"
-              className="px-3 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px] font-mono"
+              className={`${INPUT_CLASS} font-mono resize-y`}
             />
           </label>
 
           {message && (
-            <p className={`text-[13px] ${message.type === 'success' ? 'text-[#059669]' : 'text-[#ef4444]'}`}>
+            <p className={`ds-body-sm ${message.type === 'success' ? 'text-[color:var(--color-success-600)]' : 'text-[color:var(--color-error-500)]'}`}>
               {message.text}
             </p>
           )}
@@ -184,8 +185,7 @@ export default function RewardManagementTab() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-[8px] text-[14px] font-semibold text-white cursor-pointer disabled:opacity-60"
-              style={{ background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
+              className="ds-btn-primary ds-focus-ring px-4 py-2 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
             >
               {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create reward'}
             </button>
@@ -193,7 +193,7 @@ export default function RewardManagementTab() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 rounded-[8px] text-[14px] font-medium text-[#374151] border border-[#e5e7eb] cursor-pointer hover:bg-[#f9fafb]"
+                className="px-4 py-2 rounded-[var(--radius-md)] ds-body font-medium text-[color:var(--color-gray-700)] border border-[color:var(--color-border)] cursor-pointer hover:bg-[color:var(--color-bg-subtle)] ds-focus-ring transition-colors"
               >
                 Cancel
               </button>
@@ -202,23 +202,25 @@ export default function RewardManagementTab() {
         </form>
       </div>
 
-      <div className={`${CARD} p-6`}>
-        <h2 className="text-[18px] font-semibold text-[#1f2937] mb-4">Catalog</h2>
-        {isLoading && <p className="text-[13px] text-[#6b7280]">Loading rewards…</p>}
+      <div className="ds-card ds-card-pad">
+        <h2 className="ds-section-title mb-4">Catalog</h2>
+        {isLoading && <p className="ds-body-sm">Loading rewards…</p>}
         {!isLoading && rewards.length === 0 && (
-          <p className="text-[13px] text-[#6b7280]">No rewards yet.</p>
+          <p className="ds-body-sm">No rewards yet.</p>
         )}
         <div className="flex flex-col gap-3">
           {rewards.map((reward) => (
             <div
               key={reward.id}
-              className={`flex items-center justify-between gap-4 p-4 rounded-[10px] border ${
-                editingRewardId === reward.id ? 'border-[#942fcd] bg-[#faf5ff]' : 'border-[#e5e7eb]'
+              className={`flex items-center justify-between gap-4 p-4 rounded-[var(--radius-lg)] border ${
+                editingRewardId === reward.id
+                  ? 'border-[color:var(--color-brand)] bg-[color:var(--color-primary-50)]'
+                  : 'border-[color:var(--color-border)]'
               }`}
             >
               <div>
-                <p className="text-[14px] font-semibold text-[#1f2937]">{reward.title}</p>
-                <p className="text-[12px] text-[#6b7280]">
+                <p className="ds-body font-semibold text-[color:var(--color-gray-800)]">{reward.title}</p>
+                <p className="ds-caption">
                   {reward.coinCost} Coins · {reward.stockCount ?? 0} in stock
                 </p>
               </div>
@@ -226,14 +228,14 @@ export default function RewardManagementTab() {
                 <button
                   type="button"
                   onClick={() => handleEdit(reward)}
-                  className="text-[12px] font-semibold text-[#942fcd] cursor-pointer"
+                  className="ds-caption font-semibold text-[color:var(--color-brand)] cursor-pointer hover:underline ds-focus-ring rounded-[var(--radius-sm)] px-1"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(reward.id)}
-                  className="text-[12px] font-semibold text-[#ef4444] cursor-pointer"
+                  className="ds-caption font-semibold text-[color:var(--color-error-500)] cursor-pointer hover:underline ds-focus-ring rounded-[var(--radius-sm)] px-1"
                 >
                   Delete
                 </button>

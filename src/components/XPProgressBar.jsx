@@ -10,7 +10,7 @@ export default function XPProgressBar({ xp = 0, className = '' }) {
   const { level, xpInLevel, levelMax, percent, xpToNext, nextLevel } = xpLevelInfo(xp)
 
   return (
-    <div className={className}>
+    <div className={className} data-xp-progress-bar>
       <div className="flex items-center justify-between mb-4">
         <span className="text-[14px] font-semibold text-[#1f2937]">XP Progress</span>
         <div className="flex items-center gap-1.5 bg-[rgba(99,102,241,0.1)] px-3 py-[5px] rounded-full">
@@ -44,6 +44,7 @@ export default function XPProgressBar({ xp = 0, className = '' }) {
 
       <div className="h-3 rounded-full bg-[#e5e7eb] overflow-hidden relative mb-1.5">
         <div
+          data-xp-bar-fill
           className="absolute top-0 left-0 h-full rounded-full"
           style={{ width: `${percent}%`, background: 'linear-gradient(to bottom, #942fcd, #b565e0)' }}
         />

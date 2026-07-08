@@ -16,6 +16,7 @@ import { apiFetch } from '../lib/api'
 import { buildWeeklyXpData, weeklyXpTotal } from '../lib/xpHistoryChart'
 import { summarizeTeam } from '../lib/adminMembers'
 import MetricStatCard from '../design-system/components/MetricStatCard'
+import AnimatedReveal from '../components/motion/AnimatedReveal'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -251,13 +252,13 @@ export default function Profile() {
 
       {/* ── Main ── */}
       <main className="ds-page-main">
-        <div className="flex flex-col gap-6">
+        <AnimatedReveal className="flex flex-col gap-6">
 
           {/* ── Profile Hero Card ── */}
           {isAdmin ? (
 
             /* Admin Hero */
-            <div className="ds-card ds-card-pad-lg">
+            <div data-motion-reveal className="ds-card ds-card-pad-lg">
               <div className="flex items-center gap-8">
                 <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="admin" />
                 <div className="flex-1 min-w-0">
@@ -293,7 +294,7 @@ export default function Profile() {
           ) : (
 
             /* Developer Hero */
-            <div className="ds-card ds-card-pad-lg">
+            <div data-motion-reveal className="ds-card ds-card-pad-lg">
               <div className="flex items-center gap-8">
                 <ProfileAvatar avatarUrl={displayProfile?.avatarUrl} variant="developer" />
                 <div className="flex-1 min-w-0">
@@ -351,13 +352,17 @@ export default function Profile() {
 
           )}
 
-          <EditProfileForm variant={isAdmin ? 'admin' : 'developer'} />
+          <div data-motion-reveal>
+            <EditProfileForm variant={isAdmin ? 'admin' : 'developer'} />
+          </div>
 
           {/* ── Developer-only: XP History + Account stats ── */}
           {!isAdmin && (
             <>
-            <TeamJiraBanner user={authUser} />
-            <div className="flex gap-6 items-start">
+            <div data-motion-reveal>
+              <TeamJiraBanner user={authUser} />
+            </div>
+            <div data-motion-reveal className="flex gap-6 items-start">
               <div className="flex-1 min-w-0 ds-card ds-card-pad">
                 <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
                   <div>
@@ -401,7 +406,7 @@ export default function Profile() {
 
           {/* ── Admin-only: Team Summary + Account Details ── */}
           {isAdmin && (
-            <div className="flex gap-6 items-start">
+            <div data-motion-reveal className="flex gap-6 items-start">
               <div className="flex-1 min-w-0 ds-card ds-card-pad">
                 <div className="flex items-center gap-3 mb-6">
                   <UsersIcon color="var(--color-primary-500)" />
@@ -444,7 +449,7 @@ export default function Profile() {
 
           {/* ── My Rewards Card (developer only) ── */}
           {!isAdmin && (
-            <div className="ds-card ds-card-pad">
+            <div data-motion-reveal className="ds-card ds-card-pad">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h2 className="ds-subsection-title">My Rewards</h2>
@@ -465,7 +470,7 @@ export default function Profile() {
             </div>
           )}
 
-        </div>
+        </AnimatedReveal>
       </main>
     </div>
   )
