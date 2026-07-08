@@ -1,11 +1,10 @@
+import AnimatedModal from '../components/motion/AnimatedModal'
+
 export default function LevelUp({ level, onContinue }) {
   if (!level) return null
 
   return (
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center"
-      style={{ background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(4px)' }}
-    >
+    <AnimatedModal open={Boolean(level)}>
       <div
         className="bg-white rounded-[16px] w-[420px] px-10 py-12 text-center flex flex-col items-center gap-6"
         style={{ boxShadow: '0px 8px 32px 0px rgba(148, 47, 205, 0.18)' }}
@@ -31,6 +30,6 @@ export default function LevelUp({ level, onContinue }) {
           Continue
         </button>
       </div>
-    </div>
+    </AnimatedModal>
   )
 }
