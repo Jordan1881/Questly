@@ -35,7 +35,7 @@ export default function WorkspaceCreate() {
 
   if (created) {
     return (
-      <AuthLayout centered logoClassName="hidden">
+      <AuthLayout centered>
         <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-6 shadow-[var(--shadow-lg)]">
           <h1 className="text-[32px] font-medium text-[color:var(--color-gray-900)]">Workspace Created</h1>
           <p className="ds-body">
