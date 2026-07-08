@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
+import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import { useAuthStore } from '../stores/authStore'
 
-const inputClass = `
-  w-full h-[56px] rounded-[8px] bg-[#f5eefd]
-  border border-transparent px-5 text-[15px] text-black
-  placeholder-[#a7a3ff] outline-none uppercase tracking-widest text-center
-  focus:border-[#942fcd] focus:border-opacity-40 transition-colors duration-200
-`
+const codeInputClass = `${authInputClass} uppercase tracking-widest text-center`
 
 export default function WorkspaceJoin() {
   const navigate = useNavigate()
@@ -49,14 +44,14 @@ export default function WorkspaceJoin() {
 
   if (joinRequest) {
     return (
-      <div className="min-h-screen bg-[#fbfbfb] flex items-center justify-center px-6" style={{ fontFamily: 'Inter, sans-serif' }}>
-        <div className="bg-white rounded-[16px] w-full max-w-[520px] p-10 flex flex-col gap-4 text-center" style={{ boxShadow: '0px 8px 32px 0px rgba(148, 47, 205, 0.12)' }}>
-          <div className="w-14 h-14 rounded-full bg-[#fef3c7] text-[#d97706] flex items-center justify-center mx-auto text-2xl">⏳</div>
-          <h1 className="text-[28px] font-semibold text-[#1f2937]">Join Request Pending</h1>
-          <p className="text-[15px] text-[#6b7280]">
+      <AuthLayout centered logoClassName="hidden">
+        <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-4 text-center shadow-[var(--shadow-lg)]">
+          <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-2xl">⏳</div>
+          <h1 className="ds-page-title">Join Request Pending</h1>
+          <p className="ds-body">
             Your request to join the workspace is waiting for admin approval. You will get access once approved.
           </p>
-          <p className="text-[13px] text-[#9ca3af]">
+          <p className="ds-body-sm">
             After approval, connect your Jira account on Profile to receive assigned tasks
             {joinRequest?.team_jira_site_host ? (
               <>
@@ -75,23 +70,16 @@ export default function WorkspaceJoin() {
             Check Status
           </FormButton>
         </div>
-      </div>
+      </AuthLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#fbfbfb] flex items-center justify-center relative px-6" style={{ fontFamily: 'Inter, sans-serif' }}>
-      <img
-        src={logoHorizontal}
-        alt="Questly"
-        className="absolute top-[60px] left-[75px] w-[180px] cursor-pointer hidden md:block"
-        onClick={() => navigate('/')}
-      />
-
-      <div className="bg-white rounded-[16px] w-full max-w-[520px] p-10 flex flex-col gap-8" style={{ boxShadow: '0px 8px 32px 0px rgba(148, 47, 205, 0.12)' }}>
+    <AuthLayout centered>
+      <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-8 shadow-[var(--shadow-lg)]">
         <div>
-          <h1 className="text-[32px] font-medium text-black">Join a Workspace</h1>
-          <p className="text-[15px] text-[#6b6b6b] mt-2">Enter the workspace code shared by your admin.</p>
+          <h1 className="text-[32px] font-medium text-[color:var(--color-gray-900)]">Join a Workspace</h1>
+          <p className="ds-body mt-2">Enter the workspace code shared by your admin.</p>
         </div>
 
         {error && (
@@ -107,7 +95,7 @@ export default function WorkspaceJoin() {
               placeholder="WORKSPACE CODE"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
-              className={inputClass}
+              className={codeInputClass}
               maxLength={12}
             />
             <FormButton type="submit" className="w-full" disabled={isLoading || !code.trim()}>
@@ -116,16 +104,16 @@ export default function WorkspaceJoin() {
           </form>
         ) : (
           <div className="flex flex-col gap-6">
-            <div className="rounded-[12px] bg-[#f9fafb] border border-[#e5e7eb] px-5 py-4">
-              <p className="text-[13px] text-[#6b7280]">You are requesting to join</p>
-              <p className="text-[20px] font-semibold text-[#1f2937]">{targetWorkspace.name}</p>
-              <p className="text-[13px] text-[#942fcd] font-medium mt-1">Code: {targetWorkspace.code}</p>
+            <div className="rounded-[12px] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-5 py-4">
+              <p className="ds-body-sm">You are requesting to join</p>
+              <p className="text-[20px] font-semibold text-[color:var(--color-gray-800)]">{targetWorkspace.name}</p>
+              <p className="text-[13px] text-[color:var(--color-brand)] font-medium mt-1">Code: {targetWorkspace.code}</p>
               {targetWorkspace.team_jira_site_host ? (
-                <p className="text-[13px] text-[#6b7280] mt-2">
+                <p className="ds-body-sm mt-2">
                   Team Jira site: <strong>{targetWorkspace.team_jira_site_host}</strong>
                 </p>
               ) : (
-                <p className="text-[13px] text-[#9ca3af] mt-2">
+                <p className="ds-body-sm mt-2">
                   Team Jira is not connected yet — your admin will set it up before you can sync tasks.
                 </p>
               )}
@@ -139,6 +127,6 @@ export default function WorkspaceJoin() {
           </div>
         )}
       </div>
-    </div>
+    </AuthLayout>
   )
 }
