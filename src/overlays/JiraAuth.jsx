@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
+import logo from '../assets/LOGO.svg'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
 import JiraButton from '../design-system/components/JiraButton'
 import { useAuthStore } from '../stores/authStore'
@@ -73,13 +74,19 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
       >
 
         <div
-          className="bg-white rounded-[16px] w-[640px] pt-[56px] px-[56px] pb-[56px] relative flex flex-col items-center gap-8"
-          style={{ boxShadow: '0px 8px 32px 0px rgba(148, 47, 205, 0.12)' }}
+          className="ds-card w-[640px] pt-[56px] px-[56px] pb-[56px] relative flex flex-col items-center gap-8 shadow-[var(--shadow-lg)]"
         >
+          <img
+            src={logo}
+            alt="Questly"
+            className="absolute top-5 left-6 h-8 w-auto"
+          />
 
           <button
+            type="button"
             onClick={onClose}
-            className="absolute top-4 right-5 text-[#9ca3af] hover:text-[#374151] text-[22px] leading-none cursor-pointer transition-colors duration-200"
+            aria-label="Close"
+            className="absolute top-4 right-5 text-[color:var(--color-text-muted)] hover:text-[color:var(--color-gray-700)] text-[22px] leading-none cursor-pointer transition-colors duration-200 ds-focus-ring rounded-[var(--radius-sm)]"
           >
             ✕
           </button>
@@ -174,7 +181,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
                   value={accessToken}
                   onChange={(e) => setAccessToken(e.target.value)}
                   placeholder="Paste your Atlassian API token"
-                  className="w-full px-4 py-3 rounded-[10px] border border-[#e5e7eb] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#942fcd]/30 focus:border-[#942fcd]"
+                  className="ds-input-field ds-focus-ring w-full px-4 py-3 rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-brand-subtle)] text-[15px]"
                 />
                 <p className="text-[12px] text-[#9ca3af]">
                   <a
