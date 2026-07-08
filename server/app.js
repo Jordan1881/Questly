@@ -6,6 +6,7 @@ const morgan = require('morgan')
 const routes = require('./routes/index')
 const { notFound, errorHandler } = require('./middleware/errorHandler')
 const avatarStorage = require('./lib/avatarStorage')
+const { serveAvatar } = require('./lib/avatarServe')
 
 function createApp() {
   const app = express()
@@ -21,6 +22,7 @@ function createApp() {
   app.use(express.json())
 
   if (avatarStorage.isLocalMode()) {
+    app.get('/api/uploads/avatars/:filename', serveAvatar)
     app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')))
   }
 

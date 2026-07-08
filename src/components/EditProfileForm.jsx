@@ -27,6 +27,21 @@ function EditProfileFields({
   const originalEmail = (displayProfile?.email ?? '').toLowerCase()
   const emailChanged = email.trim().toLowerCase() !== originalEmail
 
+  const readImageMinSide = (file) =>
+    new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file)
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        resolve(Math.min(img.naturalWidth, img.naturalHeight))
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error('Could not read image — try another file.'))
+      }
+      img.src = url
+    })
+
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -34,6 +49,13 @@ function EditProfileFields({
     setUploading(true)
     setSaveMessage(null)
     try {
+      const minSide = await readImageMinSide(file)
+      if (minSide < 400) {
+        throw new Error(
+          `Photo is only ${minSide}px on the short side. Use at least 400×400 pixels for a sharp profile picture.`,
+        )
+      }
+
       const previewUrl = URL.createObjectURL(file)
       setAvatarPreview(previewUrl)
       const profile = await uploadAvatar(file)
@@ -104,7 +126,7 @@ function EditProfileFields({
           >
             {uploading ? 'Uploading…' : 'Upload photo'}
           </button>
-          <p className="text-[11px] text-[color:var(--color-gray-400)]">JPEG, PNG, WebP, or GIF · max 8 MB · saved as HQ WebP</p>
+          <p className="text-[11px] text-[color:var(--color-gray-400)]">JPEG, PNG, WebP, or GIF · max 8 MB · min 400×400 px recommended</p>
         </div>
       </div>
 
