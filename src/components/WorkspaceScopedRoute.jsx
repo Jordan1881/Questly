@@ -23,10 +23,12 @@ export default function WorkspaceScopedRoute({ children }) {
     if (activeWorkspaceId !== workspaceId) {
       setActiveWorkspace(workspaceId)
     }
-  }, [multi, workspaceId, membership, activeWorkspaceId, setActiveWorkspace])
+  }, [multi, workspaceId, membership?.workspace_id, activeWorkspaceId, setActiveWorkspace])
 
   if (!multi) {
-    return <Navigate to={roleHomePath('developer')} replace />
+    // Flag-off (or memberships not loaded yet): don't bounce admins off scoped URLs mid-load.
+    // Flat routes + MultiWorkspaceRedirect handle the settled flag-on case.
+    return children
   }
 
   if (!membership) {
