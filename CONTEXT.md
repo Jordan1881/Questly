@@ -9,7 +9,7 @@ Surface polish (look/texture) ships first; app loop juice (quest-complete + Leve
 _Avoid_: Mixing tracks in one ticket, landing-first motion before authenticated surfaces
 
 **Soft depth**:
-Surface-polish texture language via design tokens in `src/design-system/tokens.css` and `ds-*` utilities in `src/index.css`. Canvas `--color-bg-canvas`, card `--color-card-surface`, quiet edge `--color-border-soft`, layered `--shadow-soft-sm` / `--shadow-soft-md`, refined `--focus-ring-soft`, header/sidebar chrome `--color-chrome-surface` + `--color-chrome-tint`. Not glass blur, grain, or full lilac page wash.
+Surface-polish texture language via design tokens in `src/design-system/tokens.css` and `ds-*` utilities in `src/index.css`. Canvas `--color-bg-canvas`, card `--color-card-surface`, quiet edge `--color-border-soft`, layered `--shadow-soft-sm` / `--shadow-soft-md`, refined `--focus-ring-soft`, header/sidebar chrome `--color-chrome-surface` + `--color-chrome-tint`. Lilac whisper on canvas only — not glass blur, grain, or full lilac page wash.
 _Avoid_: Glass blur, grain overlays, editorial hairlines, per-page one-off shadows
 
 **App loop juice**:

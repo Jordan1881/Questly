@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, Navigate } from 'react-router'
 import Hero from '../pages/Hero'
 import SignIn from '../pages/SignIn'
 import SignUp from '../pages/SignUp'
@@ -42,6 +42,7 @@ export const router = createBrowserRouter([
   { path: '/privacy', element: <PrivacyPolicy /> },
   { path: '/terms', element: <TermsOfService /> },
   { path: '/login', element: <SignIn /> },
+  { path: '/signin', element: <Navigate to="/login" replace /> },
   { path: '/signup', element: <SignUp /> },
   {
     path: '/dashboard',
