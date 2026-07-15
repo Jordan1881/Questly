@@ -79,7 +79,6 @@ const DEV_NAV_LINKS = [
 ]
 
 const ADMIN_NAV_LINKS = [
-  { id: 'workspacecreate', label: 'Workspace',    Icon: DashboardIcon },
   { id: 'admin',           label: 'Admin',         Icon: SettingsIcon  },
   { id: 'rewardshop',      label: 'Reward Shop',   Icon: RewardShopIcon },
   { id: 'profile',         label: 'Profile',       Icon: ProfileIcon   },

@@ -56,4 +56,26 @@ describe('authStore membership fetchMe', () => {
     expect(state.userRole).toBe('developer')
     expect(state.user.workspace_id).toBe('ws-2')
   })
+
+  it('applyMembershipPayload keeps the selected workspace over server active id', () => {
+    useAuthStore.getState().applyMembershipPayload({
+      memberships: [
+        { workspace_id: 'ws-1', role: 'admin', is_owner: true },
+        { workspace_id: 'ws-2', role: 'developer', is_owner: false },
+      ],
+      active_workspace_id: 'ws-1',
+      active_membership: { workspace_id: 'ws-1', role: 'admin', is_owner: true },
+    })
+
+    const state = useAuthStore.getState()
+    expect(state.activeWorkspaceId).toBe('ws-2')
+    expect(state.userRole).toBe('developer')
+  })
+
+  it('setActiveWorkspace is a no-op write when already active', () => {
+    const before = useAuthStore.getState().user
+    const path = useAuthStore.getState().setActiveWorkspace('ws-2')
+    expect(path).toBe('/w/ws-2/dashboard')
+    expect(useAuthStore.getState().user).toBe(before)
+  })
 })
