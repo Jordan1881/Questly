@@ -8,6 +8,7 @@ import RewardShop from '../pages/RewardShop'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
 import Admin from '../pages/Admin'
+import Workspace from '../pages/Workspace'
 import WorkspaceCreate from '../pages/WorkspaceCreate'
 import WorkspaceJoin from '../pages/WorkspaceJoin'
 import PrivacyPolicy from '../pages/PrivacyPolicy'
@@ -71,6 +72,16 @@ export const router = createBrowserRouter([
     element: flat('admin', <Admin />, 'admin'),
   },
   {
+    path: '/workspace',
+    element: (
+      <ProtectedRoute>
+        <MultiWorkspaceRedirect pageId="workspace">
+          <Workspace />
+        </MultiWorkspaceRedirect>
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/w/:workspaceId/dashboard',
     element: scoped('dashboard', <Dashboard />, 'developer'),
   },
@@ -97,6 +108,16 @@ export const router = createBrowserRouter([
   {
     path: '/w/:workspaceId/admin',
     element: scoped('admin', <Admin />, 'admin'),
+  },
+  {
+    path: '/w/:workspaceId/workspace',
+    element: (
+      <ProtectedRoute>
+        <WorkspaceScopedRoute>
+          <Workspace />
+        </WorkspaceScopedRoute>
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/workspace/create',

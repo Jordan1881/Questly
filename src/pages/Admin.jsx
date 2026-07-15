@@ -495,14 +495,14 @@ export default function Admin() {
             <WorkspaceInviteCode code={workspace.code} workspaceName={workspace.name} />
             {multiWorkspace && (
               <p className="ds-body-sm text-[color:var(--color-text-muted)]">
-                Need another team? Open the workspace menu in the header (▾), or{' '}
+                Need another team? Open the{' '}
                 <Link
-                  to="/workspace/create"
+                  to={pagePath('workspace', routeWorkspaceId || activeWorkspaceId)}
                   className="font-semibold text-[color:var(--color-brand)] hover:underline ds-focus-ring rounded-[var(--radius-sm)]"
                 >
-                  create a workspace
-                </Link>
-                .
+                  Workspace
+                </Link>{' '}
+                tab to create or join another one.
               </p>
             )}
           </div>

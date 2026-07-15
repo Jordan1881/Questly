@@ -16,6 +16,7 @@ describe('workspaceNav', () => {
 
   it('scopes page paths when workspace id is present', () => {
     expect(pagePath('dashboard', 'ws-9')).toBe('/w/ws-9/dashboard')
+    expect(pagePath('workspace', 'ws-9')).toBe('/w/ws-9/workspace')
     expect(pagePath('workspacecreate', 'ws-9')).toBe('/workspace/create')
   })
 
