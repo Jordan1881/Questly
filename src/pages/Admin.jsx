@@ -142,7 +142,7 @@ function TeamTab({ developers }) {
                 <th className={TH}>Rank</th>
                 <th className={TH}>Developer</th>
                 <th className={TH}>Level</th>
-                <th className={TH}>XP</th>
+                <th className={TH}>Season</th>
                 <th className={TH}>Coins</th>
                 <th className={TH}>Tasks Done</th>
                 <th className={TH}>Status</th>
@@ -202,7 +202,7 @@ function TeamTab({ developers }) {
                 </span>
                 <div>
                   <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-[color:var(--color-text-muted)]">XP Progress</span>
+                    <span className="text-[color:var(--color-text-muted)]">Season score</span>
                     <span className="font-medium text-[color:var(--color-gray-800)]">{dev.xp.toLocaleString()} / {dev.xpMax.toLocaleString()}</span>
                   </div>
                   <div className="h-2 rounded-full bg-[color:var(--color-gray-200)] overflow-hidden">
@@ -369,7 +369,7 @@ function UsersTab({ developers, isLoading }) {
           <tr className="border-b border-[color:var(--color-gray-100)]">
             <th className={TH}>Developer</th>
             <th className={TH}>Status</th>
-            <th className={TH}>Sprint XP</th>
+            <th className={TH}>Season score</th>
             <th className={TH}>Coins</th>
           </tr>
         </thead>

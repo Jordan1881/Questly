@@ -14,6 +14,9 @@ const DASHBOARD_PAYLOAD = {
   streak: 4,
   activeSprint: { id: 's1', name: 'Dash Sprint', status: 'active' },
   highPriorityTasks: [{ id: 't1', title: 'Urgent fix', highPriority: true, done: false }],
+  teamStandings: [
+    { userId: 'u1', username: 'dash', seasonXp: 450, level: 2, rank: 1 },
+  ],
 }
 
 describe('dashboardStore', () => {

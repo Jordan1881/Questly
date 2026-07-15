@@ -42,8 +42,8 @@ test('Journey 4 — admin creates sprint, closes sprint, developer sprint XP res
   await expect(taskCard.getByRole('button', { name: /mark incomplete/i })).toBeVisible({ timeout: 10000 })
 
   await page.goto('/profile')
-  const sprintXpRow = page.locator('div.flex.items-center.justify-between').filter({ hasText: 'Sprint XP' })
-  await expect(sprintXpRow.getByText('40 XP')).toBeVisible({ timeout: 10000 })
+  const seasonScoreRow = page.locator('div.flex.items-center.justify-between').filter({ hasText: 'Season score' })
+  await expect(seasonScoreRow.getByText('40 XP')).toBeVisible({ timeout: 10000 })
 
   await signInViaUi(page, { email: ADMIN_EMAIL, password: PASSWORD })
   await expect(page).toHaveURL(/\/admin/, { timeout: 15000 })
@@ -53,6 +53,6 @@ test('Journey 4 — admin creates sprint, closes sprint, developer sprint XP res
 
   await signInViaUi(page, { email: DEV_EMAIL, password: PASSWORD, skipJira: true })
   await page.goto('/profile')
-  const sprintXpRowAfter = page.locator('div.flex.items-center.justify-between').filter({ hasText: 'Sprint XP' })
-  await expect(sprintXpRowAfter.getByText('0 XP')).toBeVisible({ timeout: 15000 })
+  const seasonScoreRowAfter = page.locator('div.flex.items-center.justify-between').filter({ hasText: 'Season score' })
+  await expect(seasonScoreRowAfter.getByText('0 XP')).toBeVisible({ timeout: 15000 })
 })

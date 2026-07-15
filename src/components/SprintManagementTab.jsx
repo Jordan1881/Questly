@@ -121,11 +121,13 @@ export default function SprintManagementTab() {
 
       {activeSprint && (
         <div className="ds-card ds-card-pad">
-          <h2 className="ds-section-title mb-4">Active Sprint</h2>
+          <h2 className="ds-section-title mb-4">Current season</h2>
           <SprintStatusWidget sprint={activeSprint} className="mb-4" />
           {confirmCloseId === activeSprint.id ? (
             <div className="flex items-center gap-3 flex-wrap">
-              <p className="ds-body text-[color:var(--color-gray-700)]">Close sprint and reset all developer sprint XP?</p>
+              <p className="ds-body text-[color:var(--color-gray-700)]">
+                Close this season? Season score resets for everyone. Levels and coins stay.
+              </p>
               <button
                 type="button"
                 onClick={() => handleClose(activeSprint.id)}
