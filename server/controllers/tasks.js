@@ -6,6 +6,9 @@ const XpApprovalRequestModel = require('../models/xpApprovalRequest')
 const jiraSync = require('../services/jiraSync')
 const taskRewards = require('../services/taskRewards')
 const { applyStreakUpdate } = require('../services/streak')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
+const { canAccessWorkspace, userCanAdminWorkspace } = require('../lib/workspaceAuth')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 function formatDueDate(value) {
   if (!value) return null
@@ -34,14 +37,6 @@ function formatTask(row) {
   }
 }
 
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
-}
-
 async function listByWorkspace(req, res, next) {
   try {
     const workspace = await WorkspaceModel.findById(req.params.id)
@@ -49,7 +44,7 @@ async function listByWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -73,7 +68,10 @@ async function getById(req, res, next) {
     }
 
     const workspace = await WorkspaceModel.findById(task.workspace_id)
-    if (!workspace || !canAccessWorkspace(req.user, workspace)) {
+    const membership = isMultiWorkspaceEnabled()
+      ? await WorkspaceMembershipModel.findByUserAndWorkspace(req.user.id, task.workspace_id)
+      : req.membership
+    if (!workspace || !canAccessWorkspace(req.user, workspace, membership)) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -96,11 +94,12 @@ async function getById(req, res, next) {
 
 async function listMine(req, res, next) {
   try {
-    if (!req.user.workspace_id) {
+    const workspaceId = req.workspaceId ?? req.user.workspace_id
+    if (!workspaceId) {
       return res.status(404).json({ error: 'You are not in a workspace yet' })
     }
 
-    const rows = await TaskAssignmentModel.listForUser(req.user.id, req.user.workspace_id)
+    const rows = await TaskAssignmentModel.listForUser(req.user.id, workspaceId)
     res.json({ tasks: rows.map(formatTask) })
   } catch (err) {
     next(err)
@@ -114,7 +113,7 @@ async function sync(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (workspace.admin_id !== req.user.id) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -140,7 +139,8 @@ async function updateCompletion(req, res, next) {
       return res.status(404).json({ error: 'Task not found' })
     }
 
-    if (task.workspace_id !== req.user.workspace_id) {
+    const workspaceId = req.workspaceId ?? req.user.workspace_id
+    if (task.workspace_id !== workspaceId) {
       return res.status(403).json({
         error: 'This task belongs to another workspace. Ask your admin to sync tasks again.',
       })
@@ -177,10 +177,10 @@ async function updateCompletion(req, res, next) {
           trx,
         )
 
-        const balances = await taskRewards.getUserBalances(req.user.id, trx)
+        const balances = await taskRewards.getUserBalances(req.user.id, trx, workspaceId)
         const profile = await trx('users')
           .where({ id: req.user.id })
-          .select('current_sprint_xp', 'lifetime_xp', 'coin_balance', 'streak_days')
+          .select('streak_days')
           .first()
 
         return {
@@ -205,10 +205,10 @@ async function updateCompletion(req, res, next) {
       if (!completed && wasCompleted && pendingApproval) {
         await XpApprovalRequestModel.cancelPending(task.id, req.user.id, trx)
         const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, false, trx)
-        const balances = await taskRewards.getUserBalances(req.user.id, trx)
+        const balances = await taskRewards.getUserBalances(req.user.id, trx, workspaceId)
         const profile = await trx('users')
           .where({ id: req.user.id })
-          .select('current_sprint_xp', 'lifetime_xp', 'coin_balance', 'streak_days')
+          .select('streak_days')
           .first()
 
         return {
@@ -227,16 +227,17 @@ async function updateCompletion(req, res, next) {
         task,
         wasCompleted,
         willComplete: completed,
+        workspaceId,
       })
 
       if (completed && !wasCompleted) {
         await applyStreakUpdate(trx, req.user.id)
       }
 
-      const balances = await taskRewards.getUserBalances(req.user.id, trx)
+      const balances = await taskRewards.getUserBalances(req.user.id, trx, workspaceId)
       const profile = await trx('users')
         .where({ id: req.user.id })
-        .select('current_sprint_xp', 'lifetime_xp', 'coin_balance', 'streak_days')
+        .select('streak_days')
         .first()
 
       return {

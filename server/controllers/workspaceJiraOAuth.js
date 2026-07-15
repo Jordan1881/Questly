@@ -3,6 +3,7 @@ const config = require('../config')
 const UserModel = require('../models/user')
 const WorkspaceModel = require('../models/workspace')
 const atlassianOAuth = require('../services/atlassianOAuth')
+const { userCanAdminWorkspace } = require('../lib/workspaceAuth')
 
 const STATE_PURPOSE = 'workspace-jira-oauth'
 const WORKSPACE_CALLBACK_URL = () => config.atlassian.workspaceCallbackUrl
@@ -64,7 +65,7 @@ async function oauthStart(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (workspace.admin_id !== req.user.id) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -145,7 +146,7 @@ async function oauthCallback(req, res) {
 
     const workspace = await WorkspaceModel.findById(workspaceId)
     const admin = await UserModel.findByIdInternal(userId)
-    if (!workspace || !admin || workspace.admin_id !== admin.id) {
+    if (!workspace || !admin || !(await userCanAdminWorkspace(admin, workspace))) {
       return redirectToFrontend(res, returnTo, {
         workspace_jira_oauth: 'error',
         workspace_jira_oauth_reason: 'invalid_workspace',

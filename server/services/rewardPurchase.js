@@ -2,8 +2,9 @@ const db = require('../config/db')
 const RewardModel = require('../models/reward')
 const RewardCouponModel = require('../models/rewardCoupon')
 const taskRewards = require('./taskRewards')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
-async function purchaseReward({ userId, rewardId }) {
+async function purchaseReward({ userId, rewardId, workspaceId = null }) {
   try {
     return await db.transaction(async (trx) => {
       const reward = await trx(RewardModel.TABLE).where({ id: rewardId }).first()
@@ -19,14 +20,31 @@ async function purchaseReward({ userId, rewardId }) {
         throw err
       }
 
-      const user = await trx('users').where({ id: userId }).forUpdate().first()
-      if (!user) {
-        const err = new Error('User not found')
-        err.status = 404
-        throw err
+      const membershipMode = isMultiWorkspaceEnabled() && workspaceId
+      let coinBalance = 0
+
+      if (membershipMode) {
+        const membership = await trx('workspace_memberships')
+          .where({ user_id: userId, workspace_id: workspaceId, status: 'active' })
+          .forUpdate()
+          .first()
+        if (!membership) {
+          const err = new Error('Forbidden')
+          err.status = 403
+          throw err
+        }
+        coinBalance = membership.coin_balance ?? 0
+      } else {
+        const user = await trx('users').where({ id: userId }).forUpdate().first()
+        if (!user) {
+          const err = new Error('User not found')
+          err.status = 404
+          throw err
+        }
+        coinBalance = user.coin_balance ?? 0
       }
 
-      if ((user.coin_balance ?? 0) < reward.coin_cost) {
+      if (coinBalance < reward.coin_cost) {
         const err = new Error('Insufficient coins')
         err.status = 400
         throw err
@@ -40,11 +58,20 @@ async function purchaseReward({ userId, rewardId }) {
         throw err
       }
 
-      await trx('users')
-        .where({ id: userId })
-        .update({
-          coin_balance: trx.raw('coin_balance - ?', [reward.coin_cost]),
-        })
+      if (membershipMode) {
+        await trx('workspace_memberships')
+          .where({ user_id: userId, workspace_id: workspaceId, status: 'active' })
+          .update({
+            coin_balance: trx.raw('coin_balance - ?', [reward.coin_cost]),
+            updated_at: trx.fn.now(),
+          })
+      } else {
+        await trx('users')
+          .where({ id: userId })
+          .update({
+            coin_balance: trx.raw('coin_balance - ?', [reward.coin_cost]),
+          })
+      }
 
       const [purchase] = await trx('purchases')
         .insert({
@@ -62,7 +89,7 @@ async function purchaseReward({ userId, rewardId }) {
         await RewardModel.setAvailability(rewardId, false, trx)
       }
 
-      const balances = await taskRewards.getUserBalances(userId, trx)
+      const balances = await taskRewards.getUserBalances(userId, trx, workspaceId)
 
       return {
         purchase: {

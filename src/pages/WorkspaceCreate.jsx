@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router'
 import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
 import { useWorkspaceStore } from '../stores/workspaceStore'
+import { useAuthStore } from '../stores/authStore'
+import { roleHomePath } from '../lib/workspaceNav'
 
 export default function WorkspaceCreate() {
   const navigate = useNavigate()
@@ -10,11 +12,27 @@ export default function WorkspaceCreate() {
   const [name, setName] = useState('')
   const [created, setCreated] = useState(null)
 
+  const goAdminHome = (workspaceId) => {
+    const state = useAuthStore.getState()
+    const id = workspaceId || state.activeWorkspaceId
+    navigate(roleHomePath('admin', Array.isArray(state.memberships) ? id : null), {
+      replace: true,
+    })
+  }
+
   useEffect(() => {
+    // Flag-off legacy: admins with a workspace skip create.
+    // Flag-on: keep create available so owners can add another workspace.
+    const state = useAuthStore.getState()
+    if (Array.isArray(state.memberships)) return
+
     fetchMine()
-      .then(() => navigate('/admin', { replace: true }))
+      .then((workspace) => {
+        if (workspace?.id) goAdminHome(workspace.id)
+      })
       .catch(() => {})
-  }, [fetchMine, navigate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount redirect only
+  }, [fetchMine])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -47,7 +65,7 @@ export default function WorkspaceCreate() {
           </div>
           <div className="flex gap-3">
             <FormButton type="button" className="flex-1" onClick={copyCode}>Copy Code</FormButton>
-            <FormButton type="button" className="flex-1" onClick={() => navigate('/admin')}>Go to Admin</FormButton>
+            <FormButton type="button" className="flex-1" onClick={() => goAdminHome(created.id)}>Go to Admin</FormButton>
           </div>
         </div>
       </AuthLayout>

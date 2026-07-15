@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useWorkspaceStore } from '../stores/workspaceStore'
+import { jiraIdentityCue } from '../lib/workspaceNav'
 
 const SyncIcon = () => (
   <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
@@ -172,6 +173,13 @@ export default function JiraSyncTab() {
   }
 
   const isConnected = Boolean(workspace.jira_connected)
+  const identityCue = jiraIdentityCue({
+    jira_project_key: workspace.jira_project_key,
+    jira_site_url: workspace.jira_site_url,
+    team_jira_site_host: workspace.team_jira_site_host,
+    jira_connected: workspace.jira_connected,
+    team_jira_connected: workspace.jira_connected,
+  })
 
   return (
     <div className="max-w-[640px] flex flex-col gap-6">
@@ -190,10 +198,14 @@ export default function JiraSyncTab() {
       <div className="ds-card ds-card-pad flex flex-col gap-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="ds-section-title">Connect Jira</h3>
+            <h3 className="ds-section-title">Linked Jira</h3>
             <p className="ds-body-sm mt-1">
               Store your workspace Jira credentials for syncing tasks into{' '}
               <strong>{workspace.name}</strong>.
+            </p>
+            <p className="ds-body-sm mt-2 text-[color:var(--color-text-muted)]">
+              Identity:{' '}
+              <strong className="text-[color:var(--color-gray-800)]">{identityCue}</strong>
             </p>
           </div>
           <span

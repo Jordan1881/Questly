@@ -3,11 +3,10 @@ const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
 const { ensureDeveloperJiraAccountId } = require('../services/jiraAssignee')
 const { buildWorkspaceJiraOverrides } = require('../services/jiraSync')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const { jiraSiteHostname } = require('../lib/jiraSiteContext')
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
+const { userCanAdminWorkspace } = require('../lib/workspaceAuth')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 async function submit(req, res, next) {
   try {
@@ -16,16 +15,33 @@ async function submit(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (req.user.workspace_id) {
-      return res.status(400).json({ error: 'You already belong to a workspace' })
-    }
+    const multiWorkspace = isMultiWorkspaceEnabled()
 
-    const existing = await JoinRequestModel.findPendingByUserAndWorkspace(
-      req.user.id,
-      workspace.id
-    )
-    if (existing) {
-      return res.status(409).json({ error: 'Join request already pending' })
+    if (multiWorkspace) {
+      const activeMembership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+        req.user.id,
+        workspace.id
+      )
+      if (activeMembership?.status === 'active') {
+        return res.status(400).json({ error: 'You already belong to this workspace' })
+      }
+
+      const pendingAnywhere = await JoinRequestModel.findPendingByUser(req.user.id)
+      if (pendingAnywhere) {
+        return res.status(409).json({
+          error: 'You already have a pending join request',
+        })
+      }
+    } else if (req.user.workspace_id) {
+      return res.status(400).json({ error: 'You already belong to a workspace' })
+    } else {
+      const existing = await JoinRequestModel.findPendingByUserAndWorkspace(
+        req.user.id,
+        workspace.id
+      )
+      if (existing) {
+        return res.status(409).json({ error: 'Join request already pending' })
+      }
     }
 
     const joinRequest = await JoinRequestModel.create({
@@ -46,7 +62,7 @@ async function listPending(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -64,7 +80,7 @@ async function review(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -88,15 +104,46 @@ async function review(req, res, next) {
     })
 
     if (status === 'approved') {
-      await UserModel.assignWorkspace(joinRequest.user_id, workspace.id)
       const developer = await UserModel.findByIdInternal(joinRequest.user_id)
+      const priorMembership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+        joinRequest.user_id,
+        workspace.id
+      )
+      const existingMemberships = isMultiWorkspaceEnabled()
+        ? await WorkspaceMembershipModel.listActiveByUser(joinRequest.user_id)
+        : []
+      // Never overwrite retained balances when reactivating an inactive membership.
+      const copyProgress =
+        !priorMembership && (!isMultiWorkspaceEnabled() || existingMemberships.length === 0)
+
+      // Legacy primary: always set when flag off. When flag on, only set when unset
+      // so create-first users keep their created workspace (not the later join).
+      if (!isMultiWorkspaceEnabled() || !developer.workspace_id) {
+        await UserModel.assignWorkspace(joinRequest.user_id, workspace.id)
+      }
+
+      await WorkspaceMembershipModel.ensureMembershipFromUser(developer, {
+        workspace_id: workspace.id,
+        role: priorMembership?.role === 'admin' ? 'admin' : 'developer',
+        copyProgress,
+      })
       const jiraOverrides = await buildWorkspaceJiraOverrides(workspace)
-      await ensureDeveloperJiraAccountId(developer, jiraOverrides)
+      await ensureDeveloperJiraAccountId(
+        await UserModel.findByIdInternal(joinRequest.user_id),
+        jiraOverrides
+      )
     }
 
     const payload = { join_request: updated }
     if (status === 'approved') {
       payload.workspace = WorkspaceModel.sanitize(workspace)
+      if (isMultiWorkspaceEnabled()) {
+        const membership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+          joinRequest.user_id,
+          workspace.id
+        )
+        payload.membership = WorkspaceMembershipModel.toPublicMembership(membership, workspace)
+      }
     }
 
     res.json(payload)

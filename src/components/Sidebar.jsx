@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/authStore'
 import { getLifetimeXp } from '../lib/displayUser'
 import { xpLevelInfo } from '../lib/xpLevel'
 import { gsap, registerGsap, MOTION, prefersReducedMotion } from '../design-system/motion'
+import { getShellRole, pagePath, pathMatchesPage } from '../lib/workspaceNav'
 
 registerGsap()
 
@@ -69,17 +70,6 @@ const LogoutIcon = () => (
   </svg>
 )
 
-const PAGE_PATHS = {
-  dashboard:       '/dashboard',
-  tasklist:        '/tasks',
-  rewardshop:      '/rewards',
-  profile:         '/profile',
-  settings:        '/settings',
-  admin:           '/admin',
-  workspacecreate: '/workspace/create',
-  workspacejoin:   '/workspace/join',
-}
-
 const DEV_NAV_LINKS = [
   { id: 'dashboard',  label: 'Dashboard',   Icon: DashboardIcon  },
   { id: 'tasklist',   label: 'Tasks',        Icon: TasksIcon      },
@@ -110,17 +100,24 @@ export default function Sidebar({ isOpen, onClose }) {
   const userRole = useAuthStore((s) => s.userRole)
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
+  const memberships = useAuthStore((s) => s.memberships)
+  const activeWorkspaceId = useAuthStore((s) => s.activeWorkspaceId)
+  const activeMembership = useAuthStore((s) => s.activeMembership)
+  const shellRole = getShellRole({ memberships, activeMembership, userRole })
+  const multi = Array.isArray(memberships)
+  const workspaceId = multi ? activeWorkspaceId : null
+  const hasWorkspace = multi ? Boolean(activeWorkspaceId) : Boolean(user?.workspace_id)
   const levelInfo = xpLevelInfo(getLifetimeXp(user))
-  const NAV_LINKS = userRole === 'admin'
+  const NAV_LINKS = shellRole === 'admin'
     ? ADMIN_NAV_LINKS
-    : (!user?.workspace_id ? DEV_NAV_LINKS_WITH_JOIN : DEV_NAV_LINKS)
+    : (!hasWorkspace ? DEV_NAV_LINKS_WITH_JOIN : DEV_NAV_LINKS)
 
   const handleNav = (id) => {
-    if (PAGE_PATHS[id]) navigate(PAGE_PATHS[id])
+    navigate(pagePath(id, workspaceId))
     onClose?.()
   }
 
-  const isActive = (id) => pathname === PAGE_PATHS[id]
+  const isActive = (id) => pathMatchesPage(pathname, id, workspaceId)
 
   useGSAP(
     () => {
@@ -154,7 +151,7 @@ export default function Sidebar({ isOpen, onClose }) {
     },
     {
       scope: navRef,
-      dependencies: [pathname, userRole, user?.workspace_id],
+      dependencies: [pathname, shellRole, hasWorkspace, workspaceId],
       revertOnUpdate: true,
     },
   )

@@ -1,15 +1,15 @@
 const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const jiraClient = require('../services/jiraClient')
 const { publicWorkspaceLookup } = require('../lib/jiraSiteContext')
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
-}
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
+const {
+  isWorkspaceAdmin,
+  isWorkspaceOwner,
+  userCanAdminWorkspace,
+  userCanAccessWorkspace,
+} = require('../lib/workspaceAuth')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 async function create(req, res, next) {
   try {
@@ -19,7 +19,49 @@ async function create(req, res, next) {
     }
 
     const workspace = await WorkspaceModel.create({ name, admin_id: req.user.id })
-    res.status(201).json({ workspace: WorkspaceModel.sanitize(workspace) })
+    const owner = await UserModel.findByIdInternal(req.user.id)
+    const existingMemberships = isMultiWorkspaceEnabled()
+      ? await WorkspaceMembershipModel.listActiveByUser(req.user.id)
+      : []
+    const copyProgress = !isMultiWorkspaceEnabled()
+      ? !owner?.workspace_id
+      : existingMemberships.length === 0
+
+    await WorkspaceMembershipModel.ensureMembershipFromUser(owner, {
+      workspace_id: workspace.id,
+      role: 'admin',
+      copyProgress,
+    })
+
+    // Dual-path: keep users.role aligned so remaining requireRole('admin') routes work
+    // until membership-based auth lands in later tickets.
+    if (isMultiWorkspaceEnabled() && owner?.role !== 'admin') {
+      await UserModel.updateRole(req.user.id, 'admin')
+    }
+
+    // Flag on: activate the new workspace as legacy primary + last_used so /me and
+    // Jira helpers do not keep pointing at an older membership after create.
+    if (isMultiWorkspaceEnabled()) {
+      await UserModel.assignWorkspace(req.user.id, workspace.id)
+      const membership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+        req.user.id,
+        workspace.id
+      )
+      if (membership) await WorkspaceMembershipModel.touchLastUsed(membership.id)
+    }
+
+    const payload = { workspace: WorkspaceModel.sanitize(workspace) }
+    if (isMultiWorkspaceEnabled()) {
+      payload.memberships = await WorkspaceMembershipModel.listActivePublicByUser(req.user.id)
+      payload.active_workspace_id = workspace.id
+      payload.active_membership = {
+        workspace_id: workspace.id,
+        role: 'admin',
+        is_owner: true,
+      }
+    }
+
+    res.status(201).json(payload)
   } catch (err) {
     next(err)
   }
@@ -32,7 +74,7 @@ async function getById(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!canAccessWorkspace(req.user, workspace)) {
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -49,7 +91,7 @@ async function update(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -101,6 +143,19 @@ async function getByCode(req, res, next) {
 
 async function getMine(req, res, next) {
   try {
+    if (isMultiWorkspaceEnabled()) {
+      const context = await WorkspaceMembershipModel.buildMembershipContext(req.user)
+      if (!context.memberships.length) {
+        return res.status(404).json({ error: 'Workspace not found' })
+      }
+
+      const workspace = await WorkspaceModel.findById(context.active_workspace_id)
+      return res.json({
+        workspace: WorkspaceModel.sanitize(workspace),
+        ...context,
+      })
+    }
+
     const workspace = await WorkspaceModel.findByAdminId(req.user.id)
     if (!workspace) {
       return res.status(404).json({ error: 'Workspace not found' })
@@ -119,8 +174,25 @@ async function listMembers(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    if (isMultiWorkspaceEnabled()) {
+      const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(workspace.id)
+      return res.json({
+        members: members.map((row) => ({
+          id: row.id,
+          email: row.email,
+          username: row.username,
+          avatar_url: row.avatar_url,
+          role: row.membership_role,
+          workspace_id: row.workspace_id,
+          current_sprint_xp: row.current_sprint_xp,
+          lifetime_xp: row.lifetime_xp,
+          coin_balance: row.coin_balance,
+        })),
+      })
     }
 
     const members = await UserModel.listByWorkspace(workspace.id)
@@ -137,7 +209,7 @@ async function connectJira(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -181,12 +253,28 @@ async function disconnectJira(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (isMultiWorkspaceEnabled()) {
+      if (!isWorkspaceOwner(req.user, workspace)) {
+        return res.status(403).json({ error: 'Only the workspace owner can disconnect Jira' })
+      }
+    } else if (!isWorkspaceAdmin(req.user, workspace)) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
     const updated = await WorkspaceModel.disconnectJira(workspace.id)
     res.json({ workspace: WorkspaceModel.sanitize(updated) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function listMemberships(req, res, next) {
+  try {
+    if (!isMultiWorkspaceEnabled()) {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    res.json(await WorkspaceMembershipModel.buildMembershipContext(req.user))
   } catch (err) {
     next(err)
   }
@@ -199,6 +287,7 @@ module.exports = {
   getByCode,
   getMine,
   listMembers,
+  listMemberships,
   connectJira,
   disconnectJira,
 }
