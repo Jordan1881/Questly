@@ -6,6 +6,7 @@ const {
   getByCode,
   getMine,
   listMembers,
+  listMemberships,
   connectJira,
   disconnectJira,
 } = require('../controllers/workspace')
@@ -31,6 +32,7 @@ const router = Router()
 
 router.post('/', verifyToken, requireRoleUnlessMultiWorkspace('admin'), create)
 router.get('/mine', verifyToken, requireRoleUnlessMultiWorkspace('admin'), getMine)
+router.get('/memberships', verifyToken, listMemberships)
 router.get('/jira/oauth/status', verifyToken, requireRole('admin'), workspaceJiraOAuth.oauthStatus)
 router.get('/jira/oauth/callback', workspaceJiraOAuth.oauthCallback)
 router.get('/by-code/:code', verifyToken, getByCode)
