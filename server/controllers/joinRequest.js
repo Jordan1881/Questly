@@ -3,6 +3,7 @@ const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
 const { ensureDeveloperJiraAccountId } = require('../services/jiraAssignee')
 const { buildWorkspaceJiraOverrides } = require('../services/jiraSync')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const { jiraSiteHostname } = require('../lib/jiraSiteContext')
 const { isWorkspaceAdmin } = require('../lib/workspaceAuth')
 
@@ -87,6 +88,11 @@ async function review(req, res, next) {
     if (status === 'approved') {
       await UserModel.assignWorkspace(joinRequest.user_id, workspace.id)
       const developer = await UserModel.findByIdInternal(joinRequest.user_id)
+      await WorkspaceMembershipModel.ensureMembershipFromUser(developer, {
+        workspace_id: workspace.id,
+        role: 'developer',
+        copyProgress: true,
+      })
       const jiraOverrides = await buildWorkspaceJiraOverrides(workspace)
       await ensureDeveloperJiraAccountId(developer, jiraOverrides)
     }

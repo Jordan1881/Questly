@@ -7,6 +7,9 @@ async function cleanupCoreTables(db) {
   await db('tasks').del()
   await db('join_requests').del()
   await db('sprints').del()
+  if (await db.schema.hasTable('workspace_memberships')) {
+    await db('workspace_memberships').del()
+  }
   await db('users').del()
   await db('workspaces').del()
 }
