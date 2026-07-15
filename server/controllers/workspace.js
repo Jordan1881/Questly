@@ -3,7 +3,12 @@ const UserModel = require('../models/user')
 const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const jiraClient = require('../services/jiraClient')
 const { publicWorkspaceLookup } = require('../lib/jiraSiteContext')
-const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const {
+  isWorkspaceAdmin,
+  isWorkspaceOwner,
+  userCanAdminWorkspace,
+  userCanAccessWorkspace,
+} = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 async function create(req, res, next) {
@@ -58,7 +63,7 @@ async function getById(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!canAccessWorkspace(req.user, workspace)) {
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -75,7 +80,7 @@ async function update(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -158,7 +163,7 @@ async function listMembers(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -193,7 +198,7 @@ async function connectJira(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -237,7 +242,11 @@ async function disconnectJira(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (isMultiWorkspaceEnabled()) {
+      if (!isWorkspaceOwner(req.user, workspace)) {
+        return res.status(403).json({ error: 'Only the workspace owner can disconnect Jira' })
+      }
+    } else if (!isWorkspaceAdmin(req.user, workspace)) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 

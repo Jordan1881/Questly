@@ -5,7 +5,7 @@ const { ensureDeveloperJiraAccountId } = require('../services/jiraAssignee')
 const { buildWorkspaceJiraOverrides } = require('../services/jiraSync')
 const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const { jiraSiteHostname } = require('../lib/jiraSiteContext')
-const { isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const { userCanAdminWorkspace } = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 async function submit(req, res, next) {
@@ -62,7 +62,7 @@ async function listPending(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -80,7 +80,7 @@ async function review(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -105,10 +105,16 @@ async function review(req, res, next) {
 
     if (status === 'approved') {
       const developer = await UserModel.findByIdInternal(joinRequest.user_id)
+      const priorMembership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+        joinRequest.user_id,
+        workspace.id
+      )
       const existingMemberships = isMultiWorkspaceEnabled()
         ? await WorkspaceMembershipModel.listActiveByUser(joinRequest.user_id)
         : []
-      const copyProgress = !isMultiWorkspaceEnabled() || existingMemberships.length === 0
+      // Never overwrite retained balances when reactivating an inactive membership.
+      const copyProgress =
+        !priorMembership && (!isMultiWorkspaceEnabled() || existingMemberships.length === 0)
 
       // Keep legacy primary workspace_id: set when unset, or always when flag off.
       if (!isMultiWorkspaceEnabled() || !developer.workspace_id) {
@@ -117,7 +123,7 @@ async function review(req, res, next) {
 
       await WorkspaceMembershipModel.ensureMembershipFromUser(developer, {
         workspace_id: workspace.id,
-        role: 'developer',
+        role: priorMembership?.role === 'admin' ? 'admin' : 'developer',
         copyProgress,
       })
       const jiraOverrides = await buildWorkspaceJiraOverrides(workspace)

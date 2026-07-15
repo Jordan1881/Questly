@@ -7,7 +7,7 @@ const jiraSync = require('../services/jiraSync')
 const taskRewards = require('../services/taskRewards')
 const { applyStreakUpdate } = require('../services/streak')
 const WorkspaceMembershipModel = require('../models/workspaceMembership')
-const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const { canAccessWorkspace, userCanAdminWorkspace } = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 function formatDueDate(value) {
@@ -44,7 +44,7 @@ async function listByWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -113,7 +113,7 @@ async function sync(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 

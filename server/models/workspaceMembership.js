@@ -165,6 +165,22 @@ async function resetSprintXpForWorkspace(workspace_id, trx = db) {
   return members
 }
 
+async function setRole(user_id, workspace_id, role, trx = db) {
+  const [row] = await trx(TABLE)
+    .where({ user_id, workspace_id, status: 'active' })
+    .update({ role, updated_at: trx.fn.now() })
+    .returning('*')
+  return row || null
+}
+
+async function deactivate(user_id, workspace_id, trx = db) {
+  const [row] = await trx(TABLE)
+    .where({ user_id, workspace_id })
+    .update({ status: 'inactive', updated_at: trx.fn.now() })
+    .returning('*')
+  return row || null
+}
+
 module.exports = {
   findByUserAndWorkspace,
   listActiveByUser,
@@ -177,4 +193,6 @@ module.exports = {
   touchLastUsed,
   listActiveMembersWithProgress,
   resetSprintXpForWorkspace,
+  setRole,
+  deactivate,
 }

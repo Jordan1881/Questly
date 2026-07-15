@@ -3,7 +3,7 @@ const RewardModel = require('../models/reward')
 const RewardCouponModel = require('../models/rewardCoupon')
 const rewardPurchase = require('../services/rewardPurchase')
 const { defaultExpiresAt } = require('../services/coupon')
-const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const { userCanAccessWorkspace, userCanAdminWorkspace } = require('../lib/workspaceAuth')
 
 function parseCouponCodes(body) {
   const raw = body.couponCodes ?? body.codes ?? body.coupon_codes
@@ -23,7 +23,9 @@ async function createForWorkspace(req, res, next) {
   try {
     const workspace = await WorkspaceModel.findById(req.params.id)
     if (!workspace) return res.status(404).json({ error: 'Workspace not found' })
-    if (!isWorkspaceAdmin(req.user, workspace)) return res.status(403).json({ error: 'Forbidden' })
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
 
     const { title, description, coinCost, imageUrl } = req.body
     if (!title || !String(title).trim()) {
@@ -54,9 +56,11 @@ async function listForWorkspace(req, res, next) {
   try {
     const workspace = await WorkspaceModel.findById(req.params.id)
     if (!workspace) return res.status(404).json({ error: 'Workspace not found' })
-    if (!canAccessWorkspace(req.user, workspace)) return res.status(403).json({ error: 'Forbidden' })
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
 
-    const includeUnavailable = isWorkspaceAdmin(req.user, workspace)
+    const includeUnavailable = await userCanAdminWorkspace(req.user, workspace)
     const rewards = await RewardModel.listByWorkspace(workspace.id, { includeUnavailable })
     res.json({ rewards })
   } catch (err) {
@@ -70,7 +74,7 @@ async function updateReward(req, res, next) {
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -95,7 +99,7 @@ async function deleteReward(req, res, next) {
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -117,7 +121,7 @@ async function addCoupons(req, res, next) {
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
