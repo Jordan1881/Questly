@@ -71,7 +71,11 @@ async function review(req, res, next) {
 
       if (status === 'rejected') {
         await TaskAssignmentModel.setCompleted(task.id, approvalRequest.user_id, false, trx)
-        const balances = await taskRewards.getUserBalances(approvalRequest.user_id, trx)
+        const balances = await taskRewards.getUserBalances(
+          approvalRequest.user_id,
+          trx,
+          task.workspace_id
+        )
         return { xp_approval_request: updatedRequest, reward: null, user: balances }
       }
 
@@ -80,11 +84,16 @@ async function review(req, res, next) {
         task,
         wasCompleted: false,
         willComplete: true,
+        workspaceId: task.workspace_id,
       })
 
       await applyStreakUpdate(trx, approvalRequest.user_id)
 
-      const balances = await taskRewards.getUserBalances(approvalRequest.user_id, trx)
+      const balances = await taskRewards.getUserBalances(
+        approvalRequest.user_id,
+        trx,
+        task.workspace_id
+      )
       const assignment = await TaskAssignmentModel.findForUser(task.id, approvalRequest.user_id)
 
       return {

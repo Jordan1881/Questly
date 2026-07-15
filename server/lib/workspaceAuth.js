@@ -1,17 +1,38 @@
 /**
  * Workspace authorization helpers.
- * Today: owner via workspaces.admin_id; members via users.workspace_id.
- * Later memberships will plug in here without scattering checks across controllers.
+ * Flag off: owner via workspaces.admin_id; members via users.workspace_id.
+ * Flag on: also honor active membership role when provided.
  */
 
-function isWorkspaceAdmin(user, workspace) {
+const { isMultiWorkspaceEnabled } = require('./featureFlags')
+
+function isWorkspaceAdmin(user, workspace, membership = null) {
   if (!user || !workspace) return false
-  return workspace.admin_id === user.id
+  if (workspace.admin_id === user.id) return true
+  if (
+    isMultiWorkspaceEnabled() &&
+    membership &&
+    membership.workspace_id === workspace.id &&
+    membership.status === 'active' &&
+    membership.role === 'admin'
+  ) {
+    return true
+  }
+  return false
 }
 
-function canAccessWorkspace(user, workspace) {
+function canAccessWorkspace(user, workspace, membership = null) {
   if (!user || !workspace) return false
-  return isWorkspaceAdmin(user, workspace) || user.workspace_id === workspace.id
+  if (isWorkspaceAdmin(user, workspace, membership)) return true
+  if (
+    isMultiWorkspaceEnabled() &&
+    membership &&
+    membership.workspace_id === workspace.id &&
+    membership.status === 'active'
+  ) {
+    return true
+  }
+  return user.workspace_id === workspace.id
 }
 
 module.exports = {

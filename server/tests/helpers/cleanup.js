@@ -3,6 +3,9 @@ async function cleanupCoreTables(db) {
   await db('purchases').del()
   await db('reward_coupons').del()
   await db('rewards').del()
+  if (await db.schema.hasTable('xp_approval_requests')) {
+    await db('xp_approval_requests').del()
+  }
   await db('task_assignments').del()
   await db('tasks').del()
   await db('join_requests').del()

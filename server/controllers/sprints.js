@@ -2,7 +2,9 @@ const db = require('../config/db')
 const WorkspaceModel = require('../models/workspace')
 const SprintModel = require('../models/sprint')
 const UserModel = require('../models/user')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 function mapDateField(value, fieldName) {
   if (value === undefined) return undefined
@@ -144,22 +146,37 @@ async function closeSprint(req, res, next) {
     }
 
     await db.transaction(async (trx) => {
-      const members = await UserModel.listDevelopersByWorkspace(workspace.id)
+      if (isMultiWorkspaceEnabled()) {
+        const members = await WorkspaceMembershipModel.resetSprintXpForWorkspace(
+          workspace.id,
+          trx
+        )
+        for (const member of members) {
+          await trx('xp_transactions').insert({
+            user_id: member.user_id,
+            sprint_id: sprint.id,
+            amount: -member.current_sprint_xp,
+            reason: 'sprint_reset',
+          })
+        }
+      } else {
+        const members = await UserModel.listDevelopersByWorkspace(workspace.id)
 
-      for (const member of members) {
-        const xpAmount = member.current_sprint_xp ?? 0
-        if (xpAmount === 0) continue
+        for (const member of members) {
+          const xpAmount = member.current_sprint_xp ?? 0
+          if (xpAmount === 0) continue
 
-        await trx('users')
-          .where({ id: member.id })
-          .update({ current_sprint_xp: 0 })
+          await trx('users')
+            .where({ id: member.id })
+            .update({ current_sprint_xp: 0 })
 
-        await trx('xp_transactions').insert({
-          user_id: member.id,
-          sprint_id: sprint.id,
-          amount: -xpAmount,
-          reason: 'sprint_reset',
-        })
+          await trx('xp_transactions').insert({
+            user_id: member.id,
+            sprint_id: sprint.id,
+            amount: -xpAmount,
+            reason: 'sprint_reset',
+          })
+        }
       }
 
       await trx(SprintModel.TABLE)

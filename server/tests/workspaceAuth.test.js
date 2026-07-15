@@ -16,4 +16,22 @@ describe('workspaceAuth', () => {
     expect(canAccessWorkspace({ id: 'dev-2', workspace_id: 'ws-other' }, workspace)).toBe(false)
     expect(canAccessWorkspace({ id: 'dev-3', workspace_id: null }, workspace)).toBe(false)
   })
+
+  test('membership argument grants access when MULTI_WORKSPACE is on', () => {
+    const prev = process.env.MULTI_WORKSPACE
+    process.env.MULTI_WORKSPACE = 'true'
+    const membership = { workspace_id: 'ws-1', status: 'active', role: 'developer' }
+    expect(canAccessWorkspace({ id: 'dev-9', workspace_id: null }, workspace, membership)).toBe(
+      true
+    )
+    expect(
+      isWorkspaceAdmin(
+        { id: 'co-admin' },
+        workspace,
+        { workspace_id: 'ws-1', status: 'active', role: 'admin' }
+      )
+    ).toBe(true)
+    if (prev === undefined) delete process.env.MULTI_WORKSPACE
+    else process.env.MULTI_WORKSPACE = prev
+  })
 })
