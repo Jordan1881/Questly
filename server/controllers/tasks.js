@@ -6,6 +6,7 @@ const XpApprovalRequestModel = require('../models/xpApprovalRequest')
 const jiraSync = require('../services/jiraSync')
 const taskRewards = require('../services/taskRewards')
 const { applyStreakUpdate } = require('../services/streak')
+const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
 
 function formatDueDate(value) {
   if (!value) return null
@@ -32,14 +33,6 @@ function formatTask(row) {
     xpPendingAmount: xpPending ? row.pending_xp_amount : null,
     status: row.status,
   }
-}
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
 }
 
 async function listByWorkspace(req, res, next) {
@@ -114,7 +107,7 @@ async function sync(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (workspace.admin_id !== req.user.id) {
+    if (!isWorkspaceAdmin(req.user, workspace)) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 

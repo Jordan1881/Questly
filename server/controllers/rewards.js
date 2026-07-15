@@ -3,14 +3,7 @@ const RewardModel = require('../models/reward')
 const RewardCouponModel = require('../models/rewardCoupon')
 const rewardPurchase = require('../services/rewardPurchase')
 const { defaultExpiresAt } = require('../services/coupon')
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
-}
+const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
 
 function parseCouponCodes(body) {
   const raw = body.couponCodes ?? body.codes ?? body.coupon_codes

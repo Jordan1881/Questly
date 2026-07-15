@@ -4,10 +4,7 @@ const UserModel = require('../models/user')
 const { ensureDeveloperJiraAccountId } = require('../services/jiraAssignee')
 const { buildWorkspaceJiraOverrides } = require('../services/jiraSync')
 const { jiraSiteHostname } = require('../lib/jiraSiteContext')
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
+const { isWorkspaceAdmin } = require('../lib/workspaceAuth')
 
 async function submit(req, res, next) {
   try {

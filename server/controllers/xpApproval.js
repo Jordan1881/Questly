@@ -6,10 +6,7 @@ const XpApprovalRequestModel = require('../models/xpApprovalRequest')
 const taskRewards = require('../services/taskRewards')
 const { applyStreakUpdate } = require('../services/streak')
 const { formatTask } = require('./tasks')
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
+const { isWorkspaceAdmin } = require('../lib/workspaceAuth')
 
 async function listPending(req, res, next) {
   try {

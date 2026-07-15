@@ -2,14 +2,7 @@ const db = require('../config/db')
 const WorkspaceModel = require('../models/workspace')
 const SprintModel = require('../models/sprint')
 const UserModel = require('../models/user')
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
-}
+const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
 
 function mapDateField(value, fieldName) {
   if (value === undefined) return undefined
