@@ -5,10 +5,10 @@ import SprintStatusWidget from '../../components/SprintStatusWidget'
 describe('SprintStatusWidget', () => {
   it('shows empty state when no sprint', () => {
     render(<SprintStatusWidget sprint={null} />)
-    expect(screen.getByText('No active sprint')).toBeInTheDocument()
+    expect(screen.getByText('No active season')).toBeInTheDocument()
   })
 
-  it('renders active sprint details and badge', () => {
+  it('renders active sprint details and season badge', () => {
     render(
       <SprintStatusWidget
         sprint={{
@@ -22,8 +22,10 @@ describe('SprintStatusWidget', () => {
     )
 
     expect(screen.getByText('Sprint 42')).toBeInTheDocument()
-    expect(screen.getByText('Active')).toBeInTheDocument()
+    expect(screen.getByText('Current season')).toBeInTheDocument()
     expect(screen.getByText(/Days remaining:/)).toBeInTheDocument()
     expect(screen.getByText('10')).toBeInTheDocument()
+    expect(screen.getByText(/season score resets/i)).toBeInTheDocument()
   })
 })
+

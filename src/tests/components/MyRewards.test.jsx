@@ -41,6 +41,7 @@ describe('MyRewards', () => {
     )
 
     expect(screen.getByText('No rewards yet')).toBeInTheDocument()
+    expect(screen.getByText(/spend coins on coupons/i)).toBeInTheDocument()
   })
 
   it('calls onDelete when coupon remove is confirmed', async () => {

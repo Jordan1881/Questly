@@ -185,6 +185,7 @@ export default function Profile() {
   const authUser = useAuthStore((s) => s.user)
   const userRole = useAuthStore((s) => s.userRole)
   const userXP = useXpStore((s) => s.userXP)
+  const userCoins = useXpStore((s) => s.userCoins)
   const profile = useProfileStore((s) => s.profile)
   const purchases = useProfileStore((s) => s.purchases)
   const profileLoading = useProfileStore((s) => s.isLoading)
@@ -343,7 +344,7 @@ export default function Profile() {
                 </div>
                 <MetricStatCard
                   value={userXP.toLocaleString()}
-                  label="Available XP"
+                  label="Season score"
                   className="shrink-0 min-w-[110px] py-2"
                   icon={false}
                 />
@@ -386,9 +387,10 @@ export default function Profile() {
                 <h2 className="ds-subsection-title mb-5">Account stats</h2>
                 <div className="flex flex-col divide-y divide-[color:var(--color-gray-100)]">
                   {[
-                    { label: 'Sprint XP', value: `${userXP.toLocaleString()} XP`, star: true },
+                    { label: 'Season score', value: `${userXP.toLocaleString()} XP`, star: true },
                     { label: 'Lifetime XP', value: `${(displayProfile?.lifetimeXp ?? 0).toLocaleString()} XP`, star: true },
-                    { label: 'Streak', value: `${displayProfile?.streakDays ?? 0} days` },
+                    { label: 'Spendable coins', value: String(userCoins ?? 0), star: false },
+                    { label: 'Quest streak', value: `${displayProfile?.streakDays ?? 0} days` },
                   ].map(({ label, value, star }) => (
                     <div key={label} className="flex items-center justify-between py-3">
                       <span className="ds-body-sm">{label}</span>

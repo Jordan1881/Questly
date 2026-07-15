@@ -14,8 +14,8 @@ The browser talks to Vercel for static assets; API calls go to Railway via `VITE
 
 1. **Workspaces** — tenant boundary; admin owns workspace, developers join via code.
 2. **Jira sync** — admin connects workspace Jira; issues become quests with XP from story points.
-3. **XP economy** — sprint XP (resets on sprint close), lifetime XP (levels), coins (100 XP = 10 coins).
-4. **Rewards** — admins upload coupon codes; developers spend sprint XP in the Reward Shop.
+3. **XP economy** — season score / sprint XP (resets on sprint close), lifetime XP (levels), coins (100 XP = 10 coins).
+4. **Rewards** — admins upload coupon codes; developers spend **coins** in the Reward Shop.
 
 ## Jira integration
 
@@ -60,7 +60,7 @@ CI (`.github/workflows/ci.yml`): backend tests → frontend coverage → E2E on 
 - Sync upserts by `jira_issue_id` only — stale tasks from old workspaces need assignment filtering (#203).
 - Join approval must not throw when Jira is unconfigured (CI E2E).
 - Playwright needs `workers: 1` and production build (`serve`) to match CI.
-- Lifetime vs sprint XP must be clearly labeled in UI (dashboard vs profile).
+- Lifetime XP (level), season score (sprint XP), and spendable coins must be clearly labeled in UI (dashboard vs profile vs shop).
 
 ## Production URLs
 

@@ -1,4 +1,5 @@
 import { xpLevelInfo } from '../lib/xpLevel'
+import { ECONOMY } from '../lib/economyCopy'
 
 const ArrowUpIcon = () => (
   <svg viewBox="0 0 10 10" fill="none" className="w-[9px] h-[9px]">
@@ -12,7 +13,7 @@ export default function XPProgressBar({ xp = 0, className = '' }) {
   return (
     <div className={className} data-xp-progress-bar>
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[14px] font-semibold text-[#1f2937]">XP Progress</span>
+        <span className="text-[14px] font-semibold text-[#1f2937]">{ECONOMY.levelProgress}</span>
         <div className="flex items-center gap-1.5 bg-[rgba(99,102,241,0.1)] px-3 py-[5px] rounded-full">
           <ArrowUpIcon />
           <span className="text-[11px] font-medium text-[#6366f1]">Level {level}</span>
@@ -23,7 +24,7 @@ export default function XPProgressBar({ xp = 0, className = '' }) {
         <span className="text-[32px] font-bold text-[#1f2937] leading-tight">{xpInLevel}</span>
         <span className="text-[16px] font-medium text-[#6b7280]">XP</span>
       </div>
-      <p className="text-[11px] text-[#9ca3af] mb-0.5">Out of {levelMax} XP</p>
+      <p className="text-[11px] text-[#9ca3af] mb-0.5">Out of {levelMax} lifetime XP this level</p>
       <p className="text-[10px] mb-4">
         <span className="font-semibold text-[#1f2937]">{xpToNext} XP</span>
         <span className="text-[#6b7280]"> to reach Level {nextLevel}</span>
