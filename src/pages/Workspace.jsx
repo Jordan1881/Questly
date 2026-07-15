@@ -92,7 +92,12 @@ export default function Workspace() {
   const otherMemberships = sortMemberships(memberships || []).filter(
     (m) => m.workspace_id !== active?.workspace_id,
   )
-  const showJoin = multi || !activeWorkspaceId
+  const hasAnyMembership = multi
+    ? (memberships || []).length > 0
+    : Boolean(activeWorkspaceId || workspace?.id)
+  // Admins (and users with no membership yet) can create. Developers only join.
+  const canCreate = isAdminShell || !hasAnyMembership
+  const showJoin = multi || !hasAnyMembership
 
   return (
     <div className="ds-page">
@@ -102,9 +107,11 @@ export default function Workspace() {
       <main className="ds-page-main max-w-[720px]">
         <h1 className="ds-page-title mb-2">Workspace</h1>
         <p className="ds-body-sm mb-8 text-[color:var(--color-text-muted)]">
-          {multi
-            ? 'See your teams, create a new workspace, or join another with a code.'
-            : 'Create or join a workspace to get started.'}
+          {isAdminShell
+            ? 'Manage this team, create another workspace, or join one with a code.'
+            : hasAnyMembership
+              ? 'See your teams and join another workspace with a code from an admin.'
+              : 'Create a workspace for your team, or join one with a code from your admin.'}
         </p>
 
         {error && (
@@ -139,7 +146,10 @@ export default function Workspace() {
         ) : (
           <section className="mb-10 rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-bg-subtle)] px-5 py-4">
             <p className="ds-body-sm">
-              You are not in a workspace yet. Create one below or join with a code from your admin.
+              You are not in a workspace yet.
+              {canCreate
+                ? ' Create one below or join with a code from your admin.'
+                : ' Join with a code from your admin.'}
             </p>
           </section>
         )}
@@ -173,49 +183,51 @@ export default function Workspace() {
           </section>
         )}
 
-        <section className="mb-10">
-          <h2 className="ds-subsection-title mb-1">
-            {active || workspace?.id ? 'Create another workspace' : 'Create workspace'}
-          </h2>
-          <p className="ds-body-sm mb-4 text-[color:var(--color-text-muted)]">
-            Become the owner/admin of a new team with its own invite code and Jira link.
-          </p>
+        {canCreate && (
+          <section className="mb-10">
+            <h2 className="ds-subsection-title mb-1">
+              {hasAnyMembership ? 'Create another workspace' : 'Create workspace'}
+            </h2>
+            <p className="ds-body-sm mb-4 text-[color:var(--color-text-muted)]">
+              Become the owner/admin of a new team with its own invite code and Jira link.
+            </p>
 
-          {created ? (
-            <div className="ds-card ds-card-pad flex flex-col gap-4">
-              <p className="ds-body">
-                <strong>{created.name}</strong> is ready. Share this code with developers:
-              </p>
-              <WorkspaceInviteCode code={created.code} workspaceName={created.name} />
-              <div className="flex flex-wrap gap-3">
-                <button type="button" className={primaryBtn} onClick={() => activateCreated(created.id)}>
-                  Open as admin
-                </button>
-                <button type="button" className={ghostBtn} onClick={() => setCreated(null)}>
-                  Create another
-                </button>
+            {created ? (
+              <div className="ds-card ds-card-pad flex flex-col gap-4">
+                <p className="ds-body">
+                  <strong>{created.name}</strong> is ready. Share this code with developers:
+                </p>
+                <WorkspaceInviteCode code={created.code} workspaceName={created.name} />
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" className={primaryBtn} onClick={() => activateCreated(created.id)}>
+                    Open as admin
+                  </button>
+                  <button type="button" className={ghostBtn} onClick={() => setCreated(null)}>
+                    Create another
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <form onSubmit={handleCreate} className="flex flex-col gap-4 max-w-[480px]">
-              <div className="flex flex-col gap-2">
-                <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">
-                  Workspace name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Acme Engineering"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                  className={authInputClass}
-                />
-              </div>
-              <button type="submit" className={primaryBtn} disabled={isLoading || !createName.trim()}>
-                {isLoading ? 'Creating…' : 'Create workspace'}
-              </button>
-            </form>
-          )}
-        </section>
+            ) : (
+              <form onSubmit={handleCreate} className="flex flex-col gap-4 max-w-[480px]">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">
+                    Workspace name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Acme Engineering"
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    className={authInputClass}
+                  />
+                </div>
+                <button type="submit" className={primaryBtn} disabled={isLoading || !createName.trim()}>
+                  {isLoading ? 'Creating…' : 'Create workspace'}
+                </button>
+              </form>
+            )}
+          </section>
+        )}
 
         {showJoin && (
           <section className="mb-6">
