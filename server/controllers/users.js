@@ -20,11 +20,13 @@ async function loadTeamStandings(workspaceId) {
 
   if (isMultiWorkspaceEnabled()) {
     const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(workspaceId)
-    return buildTeamStandings(members)
+    // Developer climb only — match listDevelopersByWorkspace / sprint-reset scope.
+    const developers = members.filter((m) => m.membership_role === 'developer')
+    return buildTeamStandings(developers)
   }
 
-  const members = await UserModel.listByWorkspace(workspaceId)
-  return buildTeamStandings(members)
+  const developers = await UserModel.listDevelopersByWorkspace(workspaceId)
+  return buildTeamStandings(developers)
 }
 
 async function xpHistory(req, res, next) {

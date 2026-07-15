@@ -92,19 +92,16 @@ describe('GET /api/users/me/dashboard', () => {
     expect(res.body.activeSprint).toMatchObject({ name: 'Dash Sprint', status: 'active' })
     expect(res.body.highPriorityTasks).toHaveLength(1)
     expect(res.body.highPriorityTasks[0].title).toBe('Urgent fix')
-    expect(res.body.teamStandings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          userId: devUser.id,
-          username: 'dashdash-dev',
-          seasonXp: 450,
-          level: 2,
-          rank: expect.any(Number),
-        }),
-      ]),
-    )
-
-    expect(adminUser.id).toBeTruthy()
+    expect(res.body.teamStandings).toEqual([
+      expect.objectContaining({
+        userId: devUser.id,
+        username: 'dashdash-dev',
+        seasonXp: 450,
+        level: 2,
+        rank: 1,
+      }),
+    ])
+    expect(res.body.teamStandings.map((row) => row.userId)).not.toContain(adminUser.id)
   })
 })
 
