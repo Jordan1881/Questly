@@ -21,18 +21,22 @@ export default function WorkspaceCreate() {
   }
 
   useEffect(() => {
-    // Flag-off legacy: admins with a workspace skip create.
-    // Flag-on: keep create available so owners can add another workspace.
     const state = useAuthStore.getState()
-    if (Array.isArray(state.memberships)) return
+    // Flag-on: hub page owns create/join; keep /workspace/create for first-time only.
+    if (Array.isArray(state.memberships)) {
+      const id = state.activeWorkspaceId
+      navigate(id ? `/w/${id}/workspace` : '/workspace', { replace: true })
+      return
+    }
 
+    // Flag-off legacy: admins with a workspace skip create.
     fetchMine()
       .then((workspace) => {
         if (workspace?.id) goAdminHome(workspace.id)
       })
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount redirect only
-  }, [fetchMine])
+  }, [fetchMine, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

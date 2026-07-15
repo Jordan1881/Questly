@@ -16,6 +16,7 @@ const DEV_NAV_LINKS = [
 ]
 
 const ADMIN_NAV_LINKS = [
+  { id: 'workspace',       label: 'Workspace'    },
   { id: 'admin',           label: 'Admin'        },
   { id: 'rewardshop',      label: 'Reward Shop'  },
   { id: 'profile',         label: 'Profile'      },

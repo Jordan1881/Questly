@@ -26,11 +26,13 @@ export function pagePath(pageId, workspaceId = null) {
     shop: '/shop',
     settings: '/settings',
     admin: '/admin',
+    workspace: '/workspace',
     workspacecreate: '/workspace/create',
     workspacejoin: '/workspace/join',
   }
   const path = flat[pageId]
   if (!path) return '/'
+  // Keep onboarding create/join forms unscoped; hub `/workspace` is shell-scoped.
   if (!workspaceId || path.startsWith('/workspace/')) return path
   return `/w/${workspaceId}${path}`
 }
