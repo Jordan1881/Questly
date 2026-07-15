@@ -92,6 +92,11 @@ const DEV_NAV_LINKS_WITH_JOIN = [
   ...DEV_NAV_LINKS.slice(4),
 ]
 
+const DEV_NAV_LINKS_MULTI = [
+  { id: 'workspace', label: 'Workspace', Icon: DashboardIcon },
+  ...DEV_NAV_LINKS,
+]
+
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -110,7 +115,9 @@ export default function Sidebar({ isOpen, onClose }) {
   const levelInfo = xpLevelInfo(getLifetimeXp(user))
   const NAV_LINKS = shellRole === 'admin'
     ? ADMIN_NAV_LINKS
-    : (!hasWorkspace ? DEV_NAV_LINKS_WITH_JOIN : DEV_NAV_LINKS)
+    : multi
+      ? DEV_NAV_LINKS_MULTI
+      : (!hasWorkspace ? DEV_NAV_LINKS_WITH_JOIN : DEV_NAV_LINKS)
 
   const handleNav = (id) => {
     navigate(pagePath(id, workspaceId))

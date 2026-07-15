@@ -17,17 +17,30 @@ const fetchMine = vi.fn(async () => ({
 const fetchMyJoinRequest = vi.fn(async () => null)
 const clearError = vi.fn()
 
+let authState = {
+  memberships: [
+    {
+      workspace_id: 'ws-1',
+      role: 'admin',
+      is_owner: true,
+      workspace: { name: 'questly', jira_project_key: 'SCRUM' },
+    },
+  ],
+  activeWorkspaceId: 'ws-1',
+  activeMembership: {
+    workspace_id: 'ws-1',
+    role: 'admin',
+    is_owner: true,
+    workspace: { name: 'questly', jira_project_key: 'SCRUM' },
+  },
+  userRole: 'admin',
+  user: { username: 'Admin' },
+  setActiveWorkspace: vi.fn(),
+  fetchMe: vi.fn(async () => null),
+}
+
 vi.mock('../../stores/authStore', () => ({
-  useAuthStore: (selector) =>
-    selector({
-      memberships: [{ workspace_id: 'ws-1', role: 'admin', is_owner: true }],
-      activeWorkspaceId: 'ws-1',
-      activeMembership: { workspace_id: 'ws-1', role: 'admin', is_owner: true },
-      userRole: 'admin',
-      user: { username: 'Admin' },
-      setActiveWorkspace: vi.fn(),
-      fetchMe: vi.fn(async () => null),
-    }),
+  useAuthStore: (selector) => selector(authState),
 }))
 
 vi.mock('../../stores/workspaceStore', () => ({
@@ -52,6 +65,13 @@ describe('Workspace hub page', () => {
   beforeEach(() => {
     createWorkspace.mockClear()
     fetchMine.mockClear()
+    authState.userRole = 'admin'
+    authState.activeMembership = {
+      workspace_id: 'ws-1',
+      role: 'admin',
+      is_owner: true,
+      workspace: { name: 'questly', jira_project_key: 'SCRUM' },
+    }
   })
 
   it('lets an admin create another workspace', async () => {
@@ -73,7 +93,29 @@ describe('Workspace hub page', () => {
     await waitFor(() => {
       expect(createWorkspace).toHaveBeenCalledWith('Second Team')
     })
-    expect(await screen.findByRole('button', { name: /Open in Admin/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Open as admin/i })).toBeInTheDocument()
     expect(screen.getAllByTestId('workspace-invite-code').length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('shows join/create hub for a developer without calling /mine invite UI', async () => {
+    authState.userRole = 'developer'
+    authState.activeMembership = {
+      workspace_id: 'ws-1',
+      role: 'developer',
+      is_owner: false,
+      workspace: { name: 'questly', jira_project_key: 'SCRUM' },
+    }
+    authState.memberships = [authState.activeMembership]
+
+    render(
+      <MemoryRouter>
+        <Workspace />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText(/Your role: Developer/i)).toBeInTheDocument()
+    expect(screen.getByText(/Create another workspace/i)).toBeInTheDocument()
+    expect(screen.getByText(/Join another workspace/i)).toBeInTheDocument()
+    expect(fetchMine).not.toHaveBeenCalled()
   })
 })

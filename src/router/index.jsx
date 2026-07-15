@@ -73,7 +73,13 @@ export const router = createBrowserRouter([
   },
   {
     path: '/workspace',
-    element: flat('workspace', <Workspace />, 'admin'),
+    element: (
+      <ProtectedRoute>
+        <MultiWorkspaceRedirect pageId="workspace">
+          <Workspace />
+        </MultiWorkspaceRedirect>
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/w/:workspaceId/dashboard',
@@ -105,7 +111,13 @@ export const router = createBrowserRouter([
   },
   {
     path: '/w/:workspaceId/workspace',
-    element: scoped('workspace', <Workspace />, 'admin'),
+    element: (
+      <ProtectedRoute>
+        <WorkspaceScopedRoute>
+          <Workspace />
+        </WorkspaceScopedRoute>
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/workspace/create',

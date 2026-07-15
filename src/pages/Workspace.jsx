@@ -6,7 +6,7 @@ import WorkspaceInviteCode from '../components/WorkspaceInviteCode'
 import { authInputClass } from '../components/layout/AuthLayout'
 import { useAuthStore } from '../stores/authStore'
 import { useWorkspaceStore } from '../stores/workspaceStore'
-import { jiraIdentityCue, roleHomePath } from '../lib/workspaceNav'
+import { getShellRole, jiraIdentityCue, roleHomePath, sortMemberships } from '../lib/workspaceNav'
 
 const codeInputClass = `${authInputClass} uppercase tracking-widest text-center`
 const primaryBtn =
@@ -18,9 +18,13 @@ export default function Workspace() {
   const navigate = useNavigate()
   const memberships = useAuthStore((s) => s.memberships)
   const activeWorkspaceId = useAuthStore((s) => s.activeWorkspaceId)
+  const activeMembership = useAuthStore((s) => s.activeMembership)
+  const userRole = useAuthStore((s) => s.userRole)
   const setActiveWorkspace = useAuthStore((s) => s.setActiveWorkspace)
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const multi = Array.isArray(memberships)
+  const shellRole = getShellRole({ memberships, activeMembership, userRole })
+  const isAdminShell = shellRole === 'admin'
 
   const {
     workspace,
@@ -42,11 +46,11 @@ export default function Workspace() {
   const [joinTarget, setJoinTarget] = useState(null)
 
   useEffect(() => {
-    fetchMine().catch(() => {})
-    if (multi) fetchMyJoinRequest().catch(() => {})
-  }, [fetchMine, fetchMyJoinRequest, multi])
+    if (isAdminShell) fetchMine().catch(() => {})
+    fetchMyJoinRequest().catch(() => {})
+  }, [fetchMine, fetchMyJoinRequest, isAdminShell])
 
-  const activateAndGoAdmin = async (workspaceId) => {
+  const activateCreated = async (workspaceId) => {
     if (!workspaceId) return
     if (multi) {
       setActiveWorkspace(workspaceId)
@@ -82,6 +86,14 @@ export default function Workspace() {
     setJoinCode('')
   }
 
+  const active = activeMembership
+    || (memberships || []).find((m) => m.workspace_id === activeWorkspaceId)
+    || null
+  const otherMemberships = sortMemberships(memberships || []).filter(
+    (m) => m.workspace_id !== active?.workspace_id,
+  )
+  const showJoin = multi || !activeWorkspaceId
+
   return (
     <div className="ds-page">
       <Sidebar isOpen={showSidebar} onClose={() => setShowSidebar(false)} />
@@ -90,7 +102,9 @@ export default function Workspace() {
       <main className="ds-page-main max-w-[720px]">
         <h1 className="ds-page-title mb-2">Workspace</h1>
         <p className="ds-body-sm mb-8 text-[color:var(--color-text-muted)]">
-          Manage this workspace and add another team when you need one.
+          {multi
+            ? 'See your teams, create a new workspace, or join another with a code.'
+            : 'Create or join a workspace to get started.'}
         </p>
 
         {error && (
@@ -99,7 +113,7 @@ export default function Workspace() {
           </div>
         )}
 
-        {workspace?.code ? (
+        {isAdminShell && workspace?.code ? (
           <section className="mb-10">
             <h2 className="ds-subsection-title mb-3">Current workspace</h2>
             <WorkspaceInviteCode code={workspace.code} workspaceName={workspace.name} />
@@ -107,20 +121,64 @@ export default function Workspace() {
               Linked Jira: {jiraIdentityCue(workspace)}
             </p>
           </section>
+        ) : active?.workspace ? (
+          <section className="mb-10">
+            <h2 className="ds-subsection-title mb-3">Current workspace</h2>
+            <div className="ds-card ds-card-pad flex flex-col gap-2">
+              <p className="text-[18px] font-semibold text-[color:var(--color-gray-900)]">
+                {active.workspace.name || 'Workspace'}
+              </p>
+              <p className="ds-body-sm text-[color:var(--color-text-muted)]">
+                Your role: {active.role === 'admin' ? 'Admin' : 'Developer'}
+                {active.is_owner ? ' · Owner' : ''}
+                {' · '}
+                Jira: {jiraIdentityCue(active.workspace)}
+              </p>
+            </div>
+          </section>
         ) : (
           <section className="mb-10 rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-bg-subtle)] px-5 py-4">
             <p className="ds-body-sm">
-              You do not have an admin workspace yet. Create one below to get a join code for your team.
+              You are not in a workspace yet. Create one below or join with a code from your admin.
             </p>
+          </section>
+        )}
+
+        {multi && otherMemberships.length > 0 && (
+          <section className="mb-10">
+            <h2 className="ds-subsection-title mb-3">Your other workspaces</h2>
+            <ul className="flex flex-col gap-2">
+              {otherMemberships.map((m) => (
+                <li key={m.workspace_id}>
+                  <button
+                    type="button"
+                    className={`${ghostBtn} w-full max-w-[480px] text-left flex flex-col items-start gap-0.5 !h-auto py-3`}
+                    onClick={async () => {
+                      const path = setActiveWorkspace(m.workspace_id)
+                      await fetchMe().catch(() => {})
+                      if (path) navigate(path)
+                    }}
+                  >
+                    <span className="font-semibold">{m.workspace?.name || 'Workspace'}</span>
+                    <span className="text-[12px] text-[color:var(--color-text-muted)]">
+                      {m.role === 'admin' ? 'Admin' : 'Developer'}
+                      {m.is_owner ? ' · Owner' : ''}
+                      {' · '}
+                      {jiraIdentityCue(m.workspace)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 
         <section className="mb-10">
           <h2 className="ds-subsection-title mb-1">
-            {workspace?.id ? 'Create another workspace' : 'Create workspace'}
+            {active || workspace?.id ? 'Create another workspace' : 'Create workspace'}
           </h2>
           <p className="ds-body-sm mb-4 text-[color:var(--color-text-muted)]">
-            Start a new team with its own invite code, Jira link, and rewards.
+            Become the owner/admin of a new team with its own invite code and Jira link.
           </p>
 
           {created ? (
@@ -130,8 +188,8 @@ export default function Workspace() {
               </p>
               <WorkspaceInviteCode code={created.code} workspaceName={created.name} />
               <div className="flex flex-wrap gap-3">
-                <button type="button" className={primaryBtn} onClick={() => activateAndGoAdmin(created.id)}>
-                  Open in Admin
+                <button type="button" className={primaryBtn} onClick={() => activateCreated(created.id)}>
+                  Open as admin
                 </button>
                 <button type="button" className={ghostBtn} onClick={() => setCreated(null)}>
                   Create another
@@ -159,11 +217,13 @@ export default function Workspace() {
           )}
         </section>
 
-        {multi && (
+        {showJoin && (
           <section className="mb-6">
-            <h2 className="ds-subsection-title mb-1">Join another workspace</h2>
+            <h2 className="ds-subsection-title mb-1">
+              {active || workspace?.id ? 'Join another workspace' : 'Join a workspace'}
+            </h2>
             <p className="ds-body-sm mb-4 text-[color:var(--color-text-muted)]">
-              Enter a code from another team to request access as a developer (or await re-approval).
+              Enter a code from a team admin to request developer access.
             </p>
 
             {joinRequest ? (
@@ -233,7 +293,7 @@ export default function Workspace() {
           </section>
         )}
 
-        {activeWorkspaceId && workspace?.id && (
+        {multi && activeWorkspaceId && (
           <p className="ds-body-sm text-[color:var(--color-text-muted)]">
             Tip: use the workspace menu in the header to switch between teams you already belong to.
           </p>
