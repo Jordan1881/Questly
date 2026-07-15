@@ -146,26 +146,16 @@ export default function WorkspaceSwitcher() {
             ))
           )}
 
-          <div className="border-t border-[color:var(--color-border)] mt-1 pt-1 flex flex-col gap-0.5">
+          <div className="border-t border-[color:var(--color-border)] mt-1 pt-1">
             <button
               type="button"
               className="ds-focus-ring w-full text-left px-3 py-2 rounded-[var(--radius-md)] text-[13px] font-medium text-[color:var(--color-gray-800)] hover:bg-[color:var(--color-bg-subtle)]"
               onClick={() => {
                 setOpen(false)
-                navigate('/workspace/create')
+                navigate(activeWorkspaceId ? `/w/${activeWorkspaceId}/workspace` : '/workspace')
               }}
             >
-              Create workspace
-            </button>
-            <button
-              type="button"
-              className="ds-focus-ring w-full text-left px-3 py-2 rounded-[var(--radius-md)] text-[13px] font-medium text-[color:var(--color-gray-800)] hover:bg-[color:var(--color-bg-subtle)]"
-              onClick={() => {
-                setOpen(false)
-                navigate('/workspace/join')
-              }}
-            >
-              Join workspace
+              Manage workspaces
             </button>
           </div>
         </div>

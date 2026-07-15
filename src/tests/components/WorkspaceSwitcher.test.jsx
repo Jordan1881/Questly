@@ -15,9 +15,18 @@ vi.mock('react-router', async () => {
   }
 })
 
+let authState = {}
+
 vi.mock('../../stores/authStore', () => ({
-  useAuthStore: (selector) =>
-    selector({
+  useAuthStore: (selector) => selector(authState),
+}))
+
+describe('WorkspaceSwitcher', () => {
+  beforeEach(() => {
+    navigate.mockClear()
+    setActiveWorkspace.mockClear()
+    fetchMe.mockClear()
+    authState = {
       memberships: [
         {
           workspace_id: 'ws-1',
@@ -47,14 +56,7 @@ vi.mock('../../stores/authStore', () => ({
       activeWorkspaceId: 'ws-1',
       setActiveWorkspace,
       fetchMe,
-    }),
-}))
-
-describe('WorkspaceSwitcher', () => {
-  beforeEach(() => {
-    navigate.mockClear()
-    setActiveWorkspace.mockClear()
-    fetchMe.mockClear()
+    }
   })
 
   it('shows the active workspace and membership identity in the menu', () => {
@@ -71,8 +73,9 @@ describe('WorkspaceSwitcher', () => {
     expect(screen.getByText('ALP')).toBeInTheDocument()
     expect(screen.getByText('Owner')).toBeInTheDocument()
     expect(screen.getByText('Not connected')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Create workspace/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Join workspace/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Manage workspaces/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Create workspace/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Join workspace/i })).not.toBeInTheDocument()
   })
 
   it('switches workspace and navigates to role home', async () => {
@@ -89,5 +92,16 @@ describe('WorkspaceSwitcher', () => {
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith('/w/ws-2/dashboard')
     })
+  })
+
+  it('shows Manage workspaces for developer memberships too', () => {
+    authState.activeWorkspaceId = 'ws-2'
+    render(
+      <MemoryRouter>
+        <WorkspaceSwitcher />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Beta/i }))
+    expect(screen.getByRole('button', { name: /Manage workspaces/i })).toBeInTheDocument()
   })
 })

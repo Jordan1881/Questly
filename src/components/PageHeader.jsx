@@ -16,6 +16,7 @@ const DEV_NAV_LINKS = [
 ]
 
 const ADMIN_NAV_LINKS = [
+  { id: 'workspace',       label: 'Workspace'    },
   { id: 'admin',           label: 'Admin'        },
   { id: 'rewardshop',      label: 'Reward Shop'  },
   { id: 'profile',         label: 'Profile'      },
@@ -43,9 +44,13 @@ export default function PageHeader({ onOpenSidebar }) {
     ? Boolean(activeWorkspaceId)
     : Boolean(user?.workspace_id)
 
-  const devLinks = !hasWorkspace
-    ? [...DEV_NAV_LINKS, { id: 'workspacejoin', label: 'Join Workspace' }]
-    : DEV_NAV_LINKS
+  // Multi-workspace: developers get a Workspace hub (create/join another).
+  // Legacy flag-off: keep Join Workspace only when they have no workspace yet.
+  const devLinks = multi
+    ? [{ id: 'workspace', label: 'Workspace' }, ...DEV_NAV_LINKS]
+    : !hasWorkspace
+      ? [...DEV_NAV_LINKS, { id: 'workspacejoin', label: 'Join Workspace' }]
+      : DEV_NAV_LINKS
   const NAV_LINKS = shellRole === 'admin' ? ADMIN_NAV_LINKS : devLinks
   const displayName = getDisplayUsername(user, shellRole)
   const avatarUrl = getAvatarUrl(user)
