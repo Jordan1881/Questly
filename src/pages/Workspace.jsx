@@ -89,15 +89,20 @@ export default function Workspace() {
   const active = activeMembership
     || (memberships || []).find((m) => m.workspace_id === activeWorkspaceId)
     || null
-  const otherMemberships = sortMemberships(memberships || []).filter(
-    (m) => m.workspace_id !== active?.workspace_id,
-  )
+  const allMemberships = sortMemberships(memberships || [])
   const hasAnyMembership = multi
-    ? (memberships || []).length > 0
+    ? allMemberships.length > 0
     : Boolean(activeWorkspaceId || workspace?.id)
   // Admins (and users with no membership yet) can create. Developers only join.
   const canCreate = isAdminShell || !hasAnyMembership
   const showJoin = multi || !hasAnyMembership
+
+  const switchTo = async (workspaceId) => {
+    if (!workspaceId || workspaceId === activeWorkspaceId) return
+    const path = setActiveWorkspace(workspaceId)
+    await fetchMe().catch(() => {})
+    if (path) navigate(path)
+  }
 
   return (
     <div className="ds-page">
@@ -108,9 +113,9 @@ export default function Workspace() {
         <h1 className="ds-page-title mb-2">Workspace</h1>
         <p className="ds-body-sm mb-8 text-[color:var(--color-text-muted)]">
           {isAdminShell
-            ? 'Manage this team, create another workspace, or join one with a code.'
+            ? 'Switch teams here, create another workspace, or join one with a code.'
             : hasAnyMembership
-              ? 'See your teams and join another workspace with a code from an admin.'
+              ? 'Switch between your teams here, or join another workspace with a code.'
               : 'Create a workspace for your team, or join one with a code from your admin.'}
         </p>
 
@@ -154,31 +159,46 @@ export default function Workspace() {
           </section>
         )}
 
-        {multi && otherMemberships.length > 0 && (
+        {multi && allMemberships.length > 0 && (
           <section className="mb-10">
-            <h2 className="ds-subsection-title mb-3">Your other workspaces</h2>
-            <ul className="flex flex-col gap-2">
-              {otherMemberships.map((m) => (
-                <li key={m.workspace_id}>
-                  <button
-                    type="button"
-                    className={`${ghostBtn} w-full max-w-[480px] text-left flex flex-col items-start gap-0.5 !h-auto py-3`}
-                    onClick={async () => {
-                      const path = setActiveWorkspace(m.workspace_id)
-                      await fetchMe().catch(() => {})
-                      if (path) navigate(path)
-                    }}
-                  >
-                    <span className="font-semibold">{m.workspace?.name || 'Workspace'}</span>
-                    <span className="text-[12px] text-[color:var(--color-text-muted)]">
-                      {m.role === 'admin' ? 'Admin' : 'Developer'}
-                      {m.is_owner ? ' · Owner' : ''}
-                      {' · '}
-                      {jiraIdentityCue(m.workspace)}
-                    </span>
-                  </button>
-                </li>
-              ))}
+            <h2 className="ds-subsection-title mb-3">Your workspaces</h2>
+            <p className="ds-body-sm mb-3 text-[color:var(--color-text-muted)]">
+              Choose a team to make it active.
+            </p>
+            <ul className="flex flex-col gap-2" data-testid="workspace-switch-list">
+              {allMemberships.map((m) => {
+                const isCurrent = m.workspace_id === activeWorkspaceId
+                return (
+                  <li key={m.workspace_id}>
+                    <button
+                      type="button"
+                      aria-current={isCurrent ? 'true' : undefined}
+                      disabled={isCurrent}
+                      className={`${ghostBtn} w-full max-w-[480px] text-left flex flex-col items-start gap-0.5 !h-auto py-3 ${
+                        isCurrent
+                          ? 'border-[color:var(--color-brand)] bg-[color:var(--color-bg-brand-subtle)] disabled:opacity-100'
+                          : ''
+                      }`}
+                      onClick={() => switchTo(m.workspace_id)}
+                    >
+                      <span className="font-semibold flex items-center gap-2">
+                        {m.workspace?.name || 'Workspace'}
+                        {isCurrent && (
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--color-brand)]">
+                            Current
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[12px] text-[color:var(--color-text-muted)]">
+                        {m.role === 'admin' ? 'Admin' : 'Developer'}
+                        {m.is_owner ? ' · Owner' : ''}
+                        {' · '}
+                        {jiraIdentityCue(m.workspace)}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </section>
         )}
@@ -305,11 +325,6 @@ export default function Workspace() {
           </section>
         )}
 
-        {multi && activeWorkspaceId && (
-          <p className="ds-body-sm text-[color:var(--color-text-muted)]">
-            Tip: use the workspace menu in the header to switch between teams you already belong to.
-          </p>
-        )}
       </main>
     </div>
   )

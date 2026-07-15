@@ -106,6 +106,7 @@ describe('Workspace hub page', () => {
       workspace: { name: 'questly', jira_project_key: 'SCRUM' },
     }
     authState.memberships = [authState.activeMembership]
+    authState.activeWorkspaceId = 'ws-1'
 
     render(
       <MemoryRouter>
@@ -114,6 +115,7 @@ describe('Workspace hub page', () => {
     )
 
     expect(screen.getByText(/Your role: Developer/i)).toBeInTheDocument()
+    expect(screen.getByTestId('workspace-switch-list')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Join another workspace/i })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /Create another workspace/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Create workspace$/i })).not.toBeInTheDocument()

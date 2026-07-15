@@ -1,7 +1,5 @@
 import { Link } from 'react-router'
 import logoHorizontal from '../../assets/LOGO-HORIZENTAL.svg'
-import WorkspaceSwitcher from '../WorkspaceSwitcher'
-import { useAuthStore } from '../../stores/authStore'
 
 /** Shared auth form input styling — ds-input-field + brand subtle background */
 export const authInputClass = `
@@ -14,9 +12,6 @@ export const authInputClass = `
 `
 
 function AuthCenteredShell({ children, className = '', logoClassName = '' }) {
-  const memberships = useAuthStore((s) => s.memberships)
-  const showSwitcher = Array.isArray(memberships)
-
   return (
     <div className={`ds-page flex items-center justify-center relative px-6 ${className}`.trim()}>
       <div className="absolute top-[48px] left-6 right-6 md:left-[75px] md:right-auto flex items-center gap-4 flex-wrap">
@@ -31,7 +26,6 @@ function AuthCenteredShell({ children, className = '', logoClassName = '' }) {
             className="w-[180px] h-auto cursor-pointer hidden md:block"
           />
         </Link>
-        {showSwitcher ? <WorkspaceSwitcher /> : null}
       </div>
       {children}
     </div>

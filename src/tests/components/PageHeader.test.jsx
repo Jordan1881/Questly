@@ -14,10 +14,6 @@ vi.mock('../../stores/authStore', () => ({
     }),
 }))
 
-vi.mock('../../components/WorkspaceSwitcher', () => ({
-  default: () => null,
-}))
-
 describe('PageHeader', () => {
   it('shows the logged-in username instead of demo placeholders', () => {
     render(
