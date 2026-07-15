@@ -94,6 +94,7 @@ export default function WorkspaceSwitcher() {
     setOpen(false)
     if (membership.workspace_id === activeWorkspaceId) return
     const path = setActiveWorkspace(membership.workspace_id)
+    // Refresh balances/membership list for the newly active workspace (X-Workspace-Id).
     await fetchMe().catch(() => {})
     if (path) navigate(path)
   }

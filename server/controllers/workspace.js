@@ -39,6 +39,17 @@ async function create(req, res, next) {
       await UserModel.updateRole(req.user.id, 'admin')
     }
 
+    // Flag on: activate the new workspace as legacy primary + last_used so /me and
+    // Jira helpers do not keep pointing at an older membership after create.
+    if (isMultiWorkspaceEnabled()) {
+      await UserModel.assignWorkspace(req.user.id, workspace.id)
+      const membership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+        req.user.id,
+        workspace.id
+      )
+      if (membership) await WorkspaceMembershipModel.touchLastUsed(membership.id)
+    }
+
     const payload = { workspace: WorkspaceModel.sanitize(workspace) }
     if (isMultiWorkspaceEnabled()) {
       payload.memberships = await WorkspaceMembershipModel.listActivePublicByUser(req.user.id)

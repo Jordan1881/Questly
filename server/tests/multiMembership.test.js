@@ -105,6 +105,48 @@ describe('MULTI_WORKSPACE multi-membership', () => {
     expect(listed.body.memberships[0]).toHaveProperty('last_used_at')
   })
 
+  test('create sets users.workspace_id; later join does not clobber it', async () => {
+    const owner = await register('create-primary@test.com', 'createprimary')
+    const created = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .send({ name: 'Primary HQ' })
+    expect(created.status).toBe(201)
+
+    const afterCreate = await db('users').where({ id: owner.user.id }).first()
+    expect(afterCreate.workspace_id).toBe(created.body.workspace.id)
+
+    const otherOwner = await register('other-join-owner@test.com', 'otherjoinowner')
+    const otherWs = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${otherOwner.token}`)
+      .send({ name: 'Other Team' })
+
+    // owner joins other as developer — primary must stay Primary HQ
+    const join = await request(app)
+      .post(`/api/workspaces/${otherWs.body.workspace.id}/join-requests`)
+      .set('Authorization', `Bearer ${owner.token}`)
+      .send({})
+    expect(join.status).toBe(201)
+    const pending = await db('join_requests')
+      .where({ user_id: owner.user.id, workspace_id: otherWs.body.workspace.id })
+      .first()
+    const approve = await request(app)
+      .patch(`/api/workspaces/${otherWs.body.workspace.id}/join-requests/${pending.id}`)
+      .set('Authorization', `Bearer ${otherOwner.token}`)
+      .send({ status: 'approved' })
+    expect(approve.status).toBe(200)
+
+    const afterJoin = await db('users').where({ id: owner.user.id }).first()
+    expect(afterJoin.workspace_id).toBe(created.body.workspace.id)
+
+    const me = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${owner.token}`)
+    expect(me.status).toBe(200)
+    expect(me.body.active_workspace_id).toBe(created.body.workspace.id)
+  })
+
   test('member can request to join a second workspace; second pending is rejected', async () => {
     const ownerA = await register('owner-a@test.com', 'ownera')
     const ownerB = await register('owner-b@test.com', 'ownerb')
