@@ -14,7 +14,6 @@ export default function ProtectedRoute({ children, requiredRole, skipRoleWhenMul
 
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
   const userRole = useAuthStore((s) => s.userRole)
-  const user = useAuthStore((s) => s.user)
   const memberships = useAuthStore((s) => s.memberships)
   const activeMembership = useAuthStore((s) => s.activeMembership)
   const activeWorkspaceId = useAuthStore((s) => s.activeWorkspaceId)
@@ -23,13 +22,20 @@ export default function ProtectedRoute({ children, requiredRole, skipRoleWhenMul
   const multi = Array.isArray(memberships)
   const shellRole = getShellRole({ memberships, activeMembership, userRole })
 
+  // Refresh session once on login — do NOT depend on `user`.
+  // fetchMe() always writes a new user object, which would re-trigger this
+  // effect and cause an infinite /me loop (Admin/Dashboard UI twitch).
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchMe().catch(() => {
-        useXpStore.getState().syncFromUser(user)
-      })
+    if (!isLoggedIn) return undefined
+    let cancelled = false
+    fetchMe().catch(() => {
+      if (cancelled) return
+      useXpStore.getState().syncFromUser(useAuthStore.getState().user)
+    })
+    return () => {
+      cancelled = true
     }
-  }, [isLoggedIn, fetchMe, user])
+  }, [isLoggedIn, fetchMe])
 
   if (!isLoggedIn) return <Navigate to="/login" replace />
 

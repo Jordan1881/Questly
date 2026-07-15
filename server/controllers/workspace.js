@@ -144,9 +144,24 @@ async function getByCode(req, res, next) {
 async function getMine(req, res, next) {
   try {
     if (isMultiWorkspaceEnabled()) {
-      const context = await WorkspaceMembershipModel.buildMembershipContext(req.user)
+      const preferred = (req.get('X-Workspace-Id') || '').trim() || null
+      let context = await WorkspaceMembershipModel.buildMembershipContext(req.user, {
+        preferredWorkspaceId: preferred,
+      })
       if (!context.memberships.length) {
         return res.status(404).json({ error: 'Workspace not found' })
+      }
+
+      // Admin panel always needs an admin membership. Prefer the header workspace
+      // when it is admin; otherwise fall back to the first admin seat (no 403 flash).
+      if (context.active_membership?.role !== 'admin') {
+        const adminSeat = context.memberships.find((m) => m.role === 'admin')
+        if (!adminSeat) {
+          return res.status(403).json({ error: 'Forbidden' })
+        }
+        context = await WorkspaceMembershipModel.buildMembershipContext(req.user, {
+          preferredWorkspaceId: adminSeat.workspace_id,
+        })
       }
 
       const workspace = await WorkspaceModel.findById(context.active_workspace_id)

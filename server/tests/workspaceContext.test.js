@@ -160,6 +160,33 @@ describe('X-Workspace-Id context + membership XP', () => {
     expect(dashB.body.xp.lifetime_xp).toBe(0)
   })
 
+  test('GET /workspaces/mine honors X-Workspace-Id for the admin membership', async () => {
+    const owner = await register('mine-switch-owner@test.com', 'mineswitchowner')
+    const wsA = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .send({ name: 'Mine A' })
+    const wsB = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .send({ name: 'Mine B' })
+
+    const mineA = await request(app)
+      .get('/api/workspaces/mine')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .set('X-Workspace-Id', wsA.body.workspace.id)
+    expect(mineA.status).toBe(200)
+    expect(mineA.body.workspace.id).toBe(wsA.body.workspace.id)
+    expect(mineA.body.active_workspace_id).toBe(wsA.body.workspace.id)
+
+    const mineB = await request(app)
+      .get('/api/workspaces/mine')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .set('X-Workspace-Id', wsB.body.workspace.id)
+    expect(mineB.status).toBe(200)
+    expect(mineB.body.workspace.id).toBe(wsB.body.workspace.id)
+  })
+
   test('GET /me honors X-Workspace-Id and syncs legacy users.workspace_id', async () => {
     const owner = await register('me-switch-owner@test.com', 'meswitchowner')
     const wsA = await request(app)
