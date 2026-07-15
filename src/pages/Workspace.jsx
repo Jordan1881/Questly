@@ -12,7 +12,7 @@ const codeInputClass = `${authInputClass} uppercase tracking-widest text-center`
 const primaryBtn =
   'h-10 px-4 ds-btn-primary ds-focus-ring rounded-[var(--radius-md)] ds-body-sm font-semibold disabled:opacity-55 disabled:cursor-not-allowed'
 const ghostBtn =
-  'h-10 px-4 ds-focus-ring rounded-[var(--radius-md)] ds-body-sm font-semibold border border-[color:var(--color-border)] bg-[color:var(--color-bg)] text-[color:var(--color-gray-800)] hover:bg-[color:var(--color-bg-subtle)]'
+  'h-10 px-4 ds-focus-ring rounded-[var(--radius-md)] ds-body-sm font-semibold border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)] text-[color:var(--color-gray-800)] hover:bg-[color:var(--color-bg-canvas)]'
 
 export default function Workspace() {
   const navigate = useNavigate()
@@ -149,7 +149,7 @@ export default function Workspace() {
             </div>
           </section>
         ) : (
-          <section className="mb-10 rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-bg-subtle)] px-5 py-4">
+          <section className="mb-10 rounded-[var(--radius-lg)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-bg-canvas)] px-5 py-4 shadow-[var(--shadow-soft-sm)]">
             <p className="ds-body-sm">
               You are not in a workspace yet.
               {canCreate

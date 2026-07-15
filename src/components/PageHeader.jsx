@@ -55,7 +55,7 @@ export default function PageHeader({ onOpenSidebar }) {
   const avatarUrl = getAvatarUrl(user)
 
   return (
-    <header className="bg-[color:var(--color-bg)] border-b border-[color:var(--color-border)] px-[var(--space-2xl)] h-[79px] flex items-stretch">
+    <header className="ds-chrome ds-chrome-tint border-b border-[color:var(--color-border-soft)] px-[var(--space-2xl)] h-[79px] flex items-stretch">
       <div className="w-full flex items-center justify-between gap-3">
 
         <div className="flex items-stretch gap-4 md:gap-6 h-full min-w-0">

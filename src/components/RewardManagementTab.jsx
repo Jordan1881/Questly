@@ -193,7 +193,7 @@ export default function RewardManagementTab() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 rounded-[var(--radius-md)] ds-body font-medium text-[color:var(--color-gray-700)] border border-[color:var(--color-border)] cursor-pointer hover:bg-[color:var(--color-bg-subtle)] ds-focus-ring transition-colors"
+                className="px-4 py-2 rounded-[var(--radius-md)] ds-body font-medium text-[color:var(--color-gray-700)] border border-[color:var(--color-border-soft)] cursor-pointer hover:bg-[color:var(--color-bg-subtle)] ds-focus-ring transition-colors"
               >
                 Cancel
               </button>
@@ -212,10 +212,10 @@ export default function RewardManagementTab() {
           {rewards.map((reward) => (
             <div
               key={reward.id}
-              className={`flex items-center justify-between gap-4 p-4 rounded-[var(--radius-lg)] border ${
+              className={`flex items-center justify-between gap-4 p-4 rounded-[var(--radius-lg)] border bg-[color:var(--color-card-surface)] shadow-[var(--shadow-soft-sm)] ${
                 editingRewardId === reward.id
                   ? 'border-[color:var(--color-brand)] bg-[color:var(--color-primary-50)]'
-                  : 'border-[color:var(--color-border)]'
+                  : 'border-[color:var(--color-border-soft)]'
               }`}
             >
               <div>

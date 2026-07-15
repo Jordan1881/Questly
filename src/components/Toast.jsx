@@ -6,8 +6,8 @@ const STYLES = {
     className: 'text-white',
   },
   error: {
-    background: '#fef2f2',
-    className: 'text-[#b91c1c] border border-[#fecaca]',
+    background: 'var(--color-error-50)',
+    className: 'text-[color:var(--color-error-700)] border border-[color:var(--color-error-200)]',
   },
 }
 
@@ -21,7 +21,7 @@ export default function Toast() {
 
   return (
     <div
-      className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-[10px] text-[14px] font-semibold shadow-lg ${style.className}`}
+      className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-[var(--radius-lg)] text-[14px] font-semibold shadow-[var(--shadow-soft-md)] ${style.className}`}
       style={{ background: style.background }}
       role={type === 'error' ? 'alert' : 'status'}
     >
