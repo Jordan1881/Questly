@@ -8,7 +8,7 @@ function authErrorMessage(err) {
   return err instanceof ApiError || err instanceof Error ? err.message : 'Request failed'
 }
 
-function membershipPatch(payload) {
+function membershipPatch(payload, preferredWorkspaceId = null) {
   if (!payload || !Object.prototype.hasOwnProperty.call(payload, 'memberships')) {
     return {
       memberships: undefined,
@@ -18,11 +18,21 @@ function membershipPatch(payload) {
   }
 
   const memberships = payload.memberships || []
-  const activeWorkspaceId = payload.active_workspace_id ?? null
-  const activeMembership =
+  let activeWorkspaceId = payload.active_workspace_id ?? null
+  let activeMembership =
     payload.active_membership ||
     memberships.find((m) => m.workspace_id === activeWorkspaceId) ||
     null
+
+  // Prefer the client's current workspace when still an active membership so
+  // /workspaces/mine (and similar) cannot flip the switcher mid-session.
+  if (preferredWorkspaceId) {
+    const kept = memberships.find((m) => m.workspace_id === preferredWorkspaceId)
+    if (kept) {
+      activeWorkspaceId = preferredWorkspaceId
+      activeMembership = kept
+    }
+  }
 
   const shellRole = getShellRole({
     memberships,
@@ -58,17 +68,21 @@ export const useAuthStore = create(
       clearSessionExpired: () => set({ sessionExpired: false }),
 
       applyMembershipPayload: (payload) => {
-        const patch = membershipPatch(payload)
+        const patch = membershipPatch(payload, get().activeWorkspaceId)
         set(patch)
         return patch
       },
 
       setActiveWorkspace: (workspaceId) => {
-        const { memberships } = get()
+        const { memberships, activeWorkspaceId } = get()
         if (!Array.isArray(memberships)) return null
         const membership = memberships.find((m) => m.workspace_id === workspaceId) || null
         if (!membership) return null
         const shellRole = membership.role === 'admin' ? 'admin' : 'developer'
+        // No-op state write when already active — avoids re-render churn / UI twitch.
+        if (activeWorkspaceId === workspaceId) {
+          return roleHomePath(shellRole, workspaceId)
+        }
         set({
           activeWorkspaceId: workspaceId,
           activeMembership: membership,
@@ -86,21 +100,7 @@ export const useAuthStore = create(
         try {
           const payload = await apiFetch('/api/auth/me')
           const { user } = payload
-          const patch = membershipPatch(payload)
-
-          // Defense: if server ignored X-Workspace-Id, keep the client's active preference.
-          if (
-            Array.isArray(patch.memberships) &&
-            preferredId &&
-            patch.activeWorkspaceId !== preferredId
-          ) {
-            const kept = patch.memberships.find((m) => m.workspace_id === preferredId)
-            if (kept) {
-              patch.activeWorkspaceId = preferredId
-              patch.activeMembership = kept
-              patch.userRole = kept.role === 'admin' ? 'admin' : 'developer'
-            }
-          }
+          const patch = membershipPatch(payload, preferredId)
 
           const nextUser = {
             ...user,

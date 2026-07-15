@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useParams } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
 import { useAuthStore } from '../stores/authStore'
+import { pagePath } from '../lib/workspaceNav'
 import JoinRequestsTab from '../components/JoinRequestsTab'
 import XpApprovalsTab from '../components/XpApprovalsTab'
 import WorkspaceInviteCode from '../components/WorkspaceInviteCode'
@@ -407,7 +408,11 @@ function UsersTab({ developers, isLoading }) {
 
 export default function Admin() {
   useWorkspaceJiraOAuthCallback()
+  const { workspaceId: routeWorkspaceId } = useParams()
   const userRole = useAuthStore((s) => s.userRole)
+  const memberships = useAuthStore((s) => s.memberships)
+  const activeWorkspaceId = useAuthStore((s) => s.activeWorkspaceId)
+  const multiWorkspace = Array.isArray(memberships)
   const workspace = useWorkspaceStore((s) => s.workspace)
   const members = useWorkspaceStore((s) => s.members)
   const fetchMine = useWorkspaceStore((s) => s.fetchMine)
@@ -417,14 +422,18 @@ export default function Admin() {
   const fetchPendingXpApprovals = useWorkspaceStore((s) => s.fetchPendingXpApprovals)
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeTab, setActiveTab] = useState('team')
-  const [membersLoading, setMembersLoading] = useState(true)
+  const [membersLoading, setMembersLoading] = useState(
+    () => useWorkspaceStore.getState().members.length === 0,
+  )
+  const homePath = pagePath('admin', multiWorkspace ? (routeWorkspaceId || activeWorkspaceId) : null)
 
   const developers = members.map(mapMemberToDeveloper)
   const totalJoinPending = pendingJoinRequests.length
   const totalXpPending = pendingXpApprovals.length
 
-  const loadMembers = () => {
-    setMembersLoading(true)
+  const loadMembers = (options = {}) => {
+    const { showSkeleton = true } = options
+    if (showSkeleton) setMembersLoading(true)
     fetchMine()
       .then((ws) => {
         if (!ws?.id) return []
@@ -438,12 +447,15 @@ export default function Admin() {
   }
 
   useEffect(() => {
-    if (userRole === 'admin') loadMembers()
-  }, [userRole])
-
-  useEffect(() => {
-    if (activeTab === 'team' || activeTab === 'users') loadMembers()
-  }, [activeTab, pendingJoinRequests.length])
+    if (userRole !== 'admin') return
+    if (activeTab !== 'team' && activeTab !== 'users') return
+    // Wait until URL workspace matches session context so /mine is not called with a stale header.
+    if (routeWorkspaceId && activeWorkspaceId && routeWorkspaceId !== activeWorkspaceId) return
+    // Skeleton only when we have nothing yet — avoids Admin panel "twitch" on re-fetch.
+    loadMembers({ showSkeleton: members.length === 0 })
+    // Intentionally not keyed on pendingJoinRequests / members updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRole, activeTab, routeWorkspaceId, activeWorkspaceId])
 
   const TABS = [
     { id: 'team',    label: 'Team'           },
@@ -470,7 +482,7 @@ export default function Admin() {
 
       <main className="ds-page-main">
         <Link
-          to="/dashboard"
+          to={homePath}
           className="inline-block mb-4 ds-focus-ring rounded-[var(--radius-md)]"
         >
           <img src={logoHorizontal} alt="Questly" className="h-8" />
@@ -479,8 +491,20 @@ export default function Admin() {
         <h1 className="ds-page-title mb-6">Admin Panel</h1>
 
         {workspace?.code && (
-          <div className="mb-8">
+          <div className="mb-8 flex flex-col gap-3">
             <WorkspaceInviteCode code={workspace.code} workspaceName={workspace.name} />
+            {multiWorkspace && (
+              <p className="ds-body-sm text-[color:var(--color-text-muted)]">
+                Need another team? Open the workspace menu in the header (▾), or{' '}
+                <Link
+                  to="/workspace/create"
+                  className="font-semibold text-[color:var(--color-brand)] hover:underline ds-focus-ring rounded-[var(--radius-sm)]"
+                >
+                  create a workspace
+                </Link>
+                .
+              </p>
+            )}
           </div>
         )}
 
