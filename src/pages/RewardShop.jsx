@@ -68,13 +68,15 @@ export default function RewardShop() {
         <AnimatedReveal className="flex flex-col gap-6 max-w-6xl">
           <div data-motion-reveal>
             <h1 className="ds-page-title">Reward Shop</h1>
-            <p className="ds-body mt-1">Spend coins on workspace rewards. Coins are earned automatically from XP (10 XP = 1 Coin).</p>
+            <p className="ds-body mt-1">
+              Spend coins on workspace rewards. Earn coins from XP (100 XP = 10 coins). Season score ranks the board — it does not spend here.
+            </p>
           </div>
 
           <div data-motion-reveal className="ds-card ds-card-pad-lg flex items-center justify-between">
             <div>
               <p className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-500)] mb-2">
-                Your coins
+                Spendable coins
               </p>
               <span className="text-[length:var(--text-h2)] font-bold leading-none text-[color:var(--color-brand)]">
                 {userCoins}
@@ -98,7 +100,9 @@ export default function RewardShop() {
             </div>
           )}
           {!workspaceId && (
-            <p data-motion-reveal className="ds-body">Join a workspace to browse rewards.</p>
+            <p data-motion-reveal className="ds-body">
+              Join a workspace to earn coins from quests and spend them on team rewards.
+            </p>
           )}
 
           {isLoading && (
@@ -109,9 +113,9 @@ export default function RewardShop() {
 
           {!isLoading && workspaceId && rewards.length === 0 && (
             <div data-motion-reveal className="ds-card ds-card-pad py-10 text-center">
-              <p className="ds-subsection-title">No rewards available yet</p>
+              <p className="ds-subsection-title">No rewards in the shop yet</p>
               <p className="ds-body mt-2">
-                Your admin can add rewards from the Admin panel.
+                Keep completing quests to earn coins — your admin can add coupons from the Admin panel.
               </p>
             </div>
           )}

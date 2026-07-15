@@ -1,3 +1,5 @@
+import { ECONOMY } from '../lib/economyCopy'
+
 function formatDate(value) {
   if (!value) return '—'
   const date = new Date(value)
@@ -9,7 +11,7 @@ function statusBadge(status) {
   if (status === 'active') {
     return (
       <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#dcfce7] text-[#166534]">
-        Active
+        Current season
       </span>
     )
   }
@@ -31,8 +33,8 @@ export default function SprintStatusWidget({ sprint, className = '' }) {
   if (!sprint) {
     return (
       <div className={`rounded-[12px] border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-5 ${className}`}>
-        <p className="text-[14px] font-medium text-[#374151] mb-1">No active sprint</p>
-        <p className="text-[12px] text-[#6b7280]">Your admin can start a new sprint from the admin panel.</p>
+        <p className="text-[14px] font-medium text-[#374151] mb-1">No active season</p>
+        <p className="text-[12px] text-[#6b7280]">{ECONOMY.noSeason}</p>
       </div>
     )
   }
@@ -56,6 +58,9 @@ export default function SprintStatusWidget({ sprint, className = '' }) {
           <p>
             <span className="text-[#374151] font-medium">Days remaining:</span> {daysRemaining}
           </p>
+        )}
+        {sprint.status === 'active' && (
+          <p className="text-[12px] text-[#6b7280] mt-1">{ECONOMY.seasonSpendHint}</p>
         )}
       </div>
     </div>

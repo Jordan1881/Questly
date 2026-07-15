@@ -89,7 +89,7 @@ Built as a final-year Information Systems capstone, Questly runs in production o
 - **Jira-backed quests** — assigned issues sync with difficulty, XP, due dates, and priority badges
 - **XP & leveling** — lifetime XP drives levels; sprint XP resets each sprint for fair reward-shop spending
 - **Dual economy** — XP for progression, Coins for purchases (default: 100 XP → 10 Coins)
-- **Reward Shop** — spend sprint XP on real-world coupon rewards (admin approval flow)
+- **Reward Shop** — spend coins on real-world coupon rewards (admin approval flow)
 - **Task completion** — mark quests done in Questly to earn XP; Jira status is display-only until sync
 - **Team Jira banner** — after join approval, UI shows the admin's Jira site hostname for guided connect
 - **OAuth or API token** — personal Jira connect via Atlassian 3LO or classic API token

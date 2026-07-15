@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
+import { Link } from 'react-router'
 import { apiFetch } from '../lib/api'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
@@ -11,12 +12,14 @@ import { useTaskStore } from '../stores/taskStore'
 import { useDashboardStore } from '../stores/dashboardStore'
 import XPProgressBar from '../components/XPProgressBar'
 import SprintStatusWidget from '../components/SprintStatusWidget'
+import TeamStandings from '../components/TeamStandings'
 import { useXP } from '../hooks/useXP'
 import XPHistory from '../components/XPHistory'
 import { SkeletonCard, SkeletonList } from '../components/Skeleton'
 import MetricStatCard from '../design-system/components/MetricStatCard'
 import AnimatedReveal from '../components/motion/AnimatedReveal'
 import { useTaskCompleteMotion } from '../hooks/useTaskCompleteMotion'
+import { ECONOMY, streakMilestoneCopy, streakPercent } from '../lib/economyCopy'
 
 // ── Icons (local — not shared with other pages) ─────────────
 
@@ -140,7 +143,7 @@ const StatBar = ({ label, value, percent, color }) => (
 export default function Dashboard() {
   const user = useAuthStore((s) => s.user)
   const userRole = useAuthStore((s) => s.userRole)
-  const { lifetimeXP } = useXP()
+  const { lifetimeXP, sprintXP, coins } = useXP()
   const tasks = useTaskStore((s) => s.tasks)
   const tasksLoading = useTaskStore((s) => s.isLoading)
   const fetchTasks = useTaskStore((s) => s.fetchTasks)
@@ -193,7 +196,10 @@ export default function Dashboard() {
 
   const priorityTasks = dashboardData?.highPriorityTasks ?? []
   const activeSprint = dashboardData?.activeSprint ?? null
+  const teamStandings = dashboardData?.teamStandings ?? []
   const streakDays = dashboardData?.streak ?? user?.streak_days ?? 0
+  const seasonScore = dashboardData?.xp?.current_sprint_xp ?? sprintXP
+  const spendableCoins = dashboardData?.xp?.coin_balance ?? coins
 
   const displayName = user?.username || 'Developer'
   const isInitialLoading = hasWorkspace && dashboardLoading && !dashboardData
@@ -249,27 +255,55 @@ export default function Dashboard() {
             ) : (
               <div className="ds-card ds-card-pad-sm">
                 <p className="text-[length:var(--text-body)] font-semibold text-[color:var(--color-gray-800)] mb-4">
-                  Active Sprint
+                  Current season
                 </p>
                 <SprintStatusWidget sprint={activeSprint} />
               </div>
             )}
 
             <div className="ds-card ds-card-pad">
+              <h3 className="ds-subsection-title mb-2">Economy</h3>
+              <p className="ds-caption mb-5 leading-relaxed">{ECONOMY.economySentence}</p>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="ds-body-sm">{ECONOMY.seasonScore}</span>
+                  <span className="text-[length:var(--text-body-sm)] font-semibold text-[color:var(--color-gray-800)]">
+                    {seasonScore.toLocaleString()} XP
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="ds-body-sm">{ECONOMY.coinsSpendable}</span>
+                  <span className="text-[length:var(--text-body-sm)] font-semibold text-[color:var(--color-brand)]">
+                    {spendableCoins.toLocaleString()}
+                  </span>
+                </div>
+                <Link
+                  to="/rewards"
+                  className="text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-brand)] hover:underline ds-focus-ring rounded"
+                >
+                  Spend coins in Reward Shop
+                </Link>
+              </div>
+            </div>
+
+            <div className="ds-card ds-card-pad">
               <h3 className="ds-subsection-title mb-6">User Stats</h3>
               <div className="flex flex-col gap-5">
                 <StatBar
-                  label="Tasks Completed"
+                  label="Quests completed"
                   value={`${stats.completed}/${stats.total}`}
                   percent={stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}
                   color="var(--color-primary-400)"
                 />
-                <StatBar
-                  label="Current Streak"
-                  value={`${streakDays} day${streakDays === 1 ? '' : 's'}`}
-                  percent={Math.min(100, streakDays * 10)}
-                  color="var(--color-primary-300)"
-                />
+                <div>
+                  <StatBar
+                    label="Quest streak"
+                    value={`${streakDays} day${streakDays === 1 ? '' : 's'}`}
+                    percent={streakPercent(streakDays)}
+                    color="var(--color-primary-300)"
+                  />
+                  <p className="ds-caption mt-1.5">{streakMilestoneCopy(streakDays)}</p>
+                </div>
                 <StatBar
                   label="Completion Rate"
                   value={`${stats.completionRate}%`}
@@ -283,6 +317,20 @@ export default function Dashboard() {
                   color="var(--color-warning-400)"
                 />
               </div>
+            </div>
+
+            <div className="ds-card ds-card-pad">
+              <div className="flex items-start justify-between gap-2 mb-4">
+                <div>
+                  <h3 className="ds-subsection-title">Team standings</h3>
+                  <p className="ds-caption mt-1">Season score this sprint</p>
+                </div>
+              </div>
+              {isInitialLoading ? (
+                <SkeletonList count={3} />
+              ) : (
+                <TeamStandings standings={teamStandings} currentUserId={user?.id} />
+              )}
             </div>
 
           </div>
@@ -325,17 +373,18 @@ export default function Dashboard() {
               <MetricStatCard
                 value={streakDays}
                 suffix="days"
-                label="Tasking Streak"
+                label="Quest streak"
                 tone="warning"
                 icon={<LightningBoltIcon />}
               />
               <MetricStatCard
                 value={stats.completed}
                 suffix={`/ ${stats.total}`}
-                label="Active Quests completed"
+                label="Quests completed"
                 icon={<QuestCountIcon count={stats.total} />}
               />
             </div>
+            <p className="ds-caption -mt-2 px-1">{streakMilestoneCopy(streakDays)}</p>
 
             <div className="ds-card ds-card-pad">
               <h2 className="ds-subsection-title mb-6">High Priority Tasks</h2>
@@ -346,9 +395,17 @@ export default function Dashboard() {
                 <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-5 py-8 text-center">
                   <p className="ds-body-sm">
                     {stats.total === 0 && !tasksLoading
-                      ? 'No tasks yet. Ask your admin to sync Jira tasks.'
-                      : 'No high-priority tasks right now.'}
+                      ? 'No quests yet. Ask your admin to sync Jira issues, then complete quests to earn XP, coins, and climb the season board.'
+                      : 'No high-priority quests right now — open your Task List to keep the season going.'}
                   </p>
+                  {stats.total === 0 && !tasksLoading ? null : (
+                    <Link
+                      to="/tasks"
+                      className="inline-block mt-3 text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-brand)] hover:underline"
+                    >
+                      Open Task List
+                    </Link>
+                  )}
                 </div>
               )}
 
@@ -361,12 +418,9 @@ export default function Dashboard() {
               <div className="mt-6 border-t border-[color:var(--color-border)] pt-6">
                 <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] p-4">
                   <p className="text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-gray-700)] mb-2">
-                    💡 How XP Works
+                    How the loop works
                   </p>
-                  <p className="ds-caption leading-relaxed">
-                    Complete tasks to earn XP based on difficulty. Easy = 20XP, Medium = 40XP, Hard = 70XP.
-                    Accumulate 1000 XP to level up and unlock new rewards.
-                  </p>
+                  <p className="ds-caption leading-relaxed">{ECONOMY.howXpWorks}</p>
                 </div>
               </div>
 
