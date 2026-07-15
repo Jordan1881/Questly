@@ -150,18 +150,23 @@ async function purchase(req, res, next) {
     const reward = await RewardModel.findById(req.params.id)
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
+    const workspaceId = req.workspaceId ?? req.user.workspace_id
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || req.user.workspace_id !== workspace.id) {
+    if (!workspace || workspaceId !== workspace.id) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
-    if (req.user.role !== 'developer') {
+    const membershipRole = req.membership?.role
+    const canPurchase =
+      membershipRole === 'developer' || (!req.membership && req.user.role === 'developer')
+    if (!canPurchase) {
       return res.status(403).json({ error: 'Only developers can purchase rewards' })
     }
 
     const result = await rewardPurchase.purchaseReward({
       userId: req.user.id,
       rewardId: reward.id,
+      workspaceId,
     })
 
     res.status(201).json(result)

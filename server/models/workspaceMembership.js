@@ -125,6 +125,46 @@ async function ensureMembershipFromUser(user, { workspace_id, role, copyProgress
   }, trx)
 }
 
+async function touchLastUsed(membershipId, trx = db) {
+  await trx(TABLE).where({ id: membershipId }).update({
+    last_used_at: trx.fn.now(),
+    updated_at: trx.fn.now(),
+  })
+}
+
+async function listActiveMembersWithProgress(workspace_id) {
+  return db(`${TABLE} as m`)
+    .join('users as u', 'm.user_id', 'u.id')
+    .where({ 'm.workspace_id': workspace_id, 'm.status': 'active' })
+    .select(
+      'u.id',
+      'u.email',
+      'u.username',
+      'u.avatar_url',
+      'u.role',
+      'm.workspace_id',
+      'm.role as membership_role',
+      'm.current_sprint_xp',
+      'm.lifetime_xp',
+      'm.coin_balance',
+      'm.last_used_at'
+    )
+    .orderBy('u.username', 'asc')
+}
+
+async function resetSprintXpForWorkspace(workspace_id, trx = db) {
+  const members = await trx(TABLE)
+    .where({ workspace_id, status: 'active' })
+    .where('current_sprint_xp', '>', 0)
+    .select('id', 'user_id', 'current_sprint_xp')
+
+  for (const member of members) {
+    await trx(TABLE).where({ id: member.id }).update({ current_sprint_xp: 0 })
+  }
+
+  return members
+}
+
 module.exports = {
   findByUserAndWorkspace,
   listActiveByUser,
@@ -134,4 +174,7 @@ module.exports = {
   toPublicMembership,
   ensureMembership,
   ensureMembershipFromUser,
+  touchLastUsed,
+  listActiveMembersWithProgress,
+  resetSprintXpForWorkspace,
 }

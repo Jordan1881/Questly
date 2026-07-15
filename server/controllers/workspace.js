@@ -162,6 +162,23 @@ async function listMembers(req, res, next) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
+    if (isMultiWorkspaceEnabled()) {
+      const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(workspace.id)
+      return res.json({
+        members: members.map((row) => ({
+          id: row.id,
+          email: row.email,
+          username: row.username,
+          avatar_url: row.avatar_url,
+          role: row.membership_role,
+          workspace_id: row.workspace_id,
+          current_sprint_xp: row.current_sprint_xp,
+          lifetime_xp: row.lifetime_xp,
+          coin_balance: row.coin_balance,
+        })),
+      })
+    }
+
     const members = await UserModel.listByWorkspace(workspace.id)
     res.json({ members })
   } catch (err) {

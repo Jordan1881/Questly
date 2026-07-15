@@ -1,10 +1,12 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const config = require('../config')
+const db = require('../config/db')
 const UserModel = require('../models/user')
 const WorkspaceModel = require('../models/workspace')
 const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const jiraClient = require('../services/jiraClient')
+const taskRewards = require('../services/taskRewards')
 const { developerJiraContext } = require('../lib/jiraSiteContext')
 const { formatDeveloperConnectError } = require('../lib/jiraConnectErrors')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
@@ -134,7 +136,22 @@ async function me(req, res, next) {
     }
 
     if (isMultiWorkspaceEnabled()) {
-      Object.assign(payload, await WorkspaceMembershipModel.buildMembershipContext(req.user))
+      const context = await WorkspaceMembershipModel.buildMembershipContext(req.user)
+      Object.assign(payload, context)
+      if (context.active_membership) {
+        const balances = await taskRewards.getUserBalances(
+          req.user.id,
+          db,
+          context.active_workspace_id
+        )
+        payload.user = {
+          ...payload.user,
+          current_sprint_xp: balances.current_sprint_xp,
+          lifetime_xp: balances.lifetime_xp,
+          coin_balance: balances.coin_balance,
+          workspace_id: context.active_workspace_id,
+        }
+      }
     }
 
     res.json(payload)

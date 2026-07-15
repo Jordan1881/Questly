@@ -6,6 +6,7 @@ const request = require('supertest')
 const createApp = require('../app')
 const db = require('../config/db')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
+const { cleanupCoreTables } = require('./helpers/cleanup')
 
 const app = createApp()
 
@@ -15,10 +16,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   process.env.MULTI_WORKSPACE = 'true'
-  await db('join_requests').del()
-  await db('workspace_memberships').del()
-  await db('users').del()
-  await db('workspaces').del()
+  await cleanupCoreTables(db)
 })
 
 afterEach(() => {
