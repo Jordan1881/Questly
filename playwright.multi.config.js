@@ -1,8 +1,10 @@
 import { defineConfig } from '@playwright/test'
 
+/** E2E config for MULTI_WORKSPACE=true journeys (see docs/MULTI_WORKSPACE.md). */
 export default defineConfig({
   testDir: './e2e',
-  timeout: 60000,
+  testMatch: '**/multi-workspace.spec.js',
+  timeout: 90000,
   workers: 1,
   use: {
     baseURL: 'http://localhost:5173',
@@ -13,9 +15,12 @@ export default defineConfig({
       command: 'node --require dotenv/config index.js',
       cwd: './server',
       port: 3001,
-      reuseExistingServer: true,
-      timeout: 10000,
-      env: { E2E_SEED_ENABLED: 'true' },
+      reuseExistingServer: false,
+      timeout: 15000,
+      env: {
+        E2E_SEED_ENABLED: 'true',
+        MULTI_WORKSPACE: 'true',
+      },
     },
     {
       command: 'npm run build && npx serve -s dist -l 5173',
