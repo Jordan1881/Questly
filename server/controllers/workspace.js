@@ -1,5 +1,6 @@
 const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const jiraClient = require('../services/jiraClient')
 const { publicWorkspaceLookup } = require('../lib/jiraSiteContext')
 const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
@@ -12,6 +13,12 @@ async function create(req, res, next) {
     }
 
     const workspace = await WorkspaceModel.create({ name, admin_id: req.user.id })
+    const owner = await UserModel.findByIdInternal(req.user.id)
+    await WorkspaceMembershipModel.ensureMembershipFromUser(owner, {
+      workspace_id: workspace.id,
+      role: 'admin',
+      copyProgress: !owner?.workspace_id,
+    })
     res.status(201).json({ workspace: WorkspaceModel.sanitize(workspace) })
   } catch (err) {
     next(err)
