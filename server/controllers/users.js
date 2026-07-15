@@ -5,6 +5,7 @@ const { formatTask } = require('./tasks')
 const db = require('../config/db')
 const SprintModel = require('../models/sprint')
 const TaskAssignmentModel = require('../models/taskAssignment')
+const taskRewards = require('../services/taskRewards')
 const { mergePreferences } = require('../lib/userPreferences')
 const avatarStorage = require('../lib/avatarStorage')
 
@@ -49,16 +50,18 @@ async function dashboard(req, res, next) {
       return res.status(404).json({ error: 'User not found' })
     }
 
+    const workspaceId = req.workspaceId ?? user.workspace_id
+    const balances = await taskRewards.getUserBalances(req.user.id, db, workspaceId)
+
     let activeSprint = null
-    if (user.workspace_id) {
-      const sprint = await SprintModel.findActiveByWorkspace(user.workspace_id)
+    if (workspaceId) {
+      const sprint = await SprintModel.findActiveByWorkspace(workspaceId)
       activeSprint = SprintModel.formatSprint(sprint)
     }
 
-    const assignmentRows = await TaskAssignmentModel.listForUser(
-      req.user.id,
-      user.workspace_id,
-    )
+    const assignmentRows = workspaceId
+      ? await TaskAssignmentModel.listForUser(req.user.id, workspaceId)
+      : []
     const highPriorityTasks = assignmentRows
       .filter((row) => row.high_priority && !row.completed_at && row.status !== 'done')
       .slice(0, 5)
@@ -66,10 +69,10 @@ async function dashboard(req, res, next) {
 
     res.json({
       xp: {
-        current_sprint_xp: user.current_sprint_xp ?? 0,
-        lifetime_xp: user.lifetime_xp ?? 0,
-        coin_balance: user.coin_balance ?? 0,
-        level: computeLevel(user.lifetime_xp),
+        current_sprint_xp: balances.current_sprint_xp,
+        lifetime_xp: balances.lifetime_xp,
+        coin_balance: balances.coin_balance,
+        level: computeLevel(balances.lifetime_xp),
       },
       streak: user.streak_days ?? 0,
       activeSprint,

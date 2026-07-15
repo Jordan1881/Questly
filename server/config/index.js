@@ -1,4 +1,5 @@
 // Reads and validates environment variables. Does NOT call dotenv.config() — that's done in index.js.
+// Feature flags: read via lib/featureFlags at call time (e.g. isMultiWorkspaceEnabled).
 
 const required = ['JWT_SECRET']
 

@@ -1,5 +1,12 @@
 import { create } from 'zustand'
 import { apiFetch } from '../lib/api'
+import { useAuthStore } from './authStore'
+
+function syncMembershipsFromPayload(payload) {
+  if (payload && Object.prototype.hasOwnProperty.call(payload, 'memberships')) {
+    useAuthStore.getState().applyMembershipPayload(payload)
+  }
+}
 
 export const useWorkspaceStore = create((set) => ({
   workspace: null,
@@ -14,12 +21,19 @@ export const useWorkspaceStore = create((set) => ({
 
   clearError: () => set({ error: null }),
 
+  fetchMemberships: async () => {
+    const payload = await apiFetch('/api/workspaces/memberships')
+    syncMembershipsFromPayload(payload)
+    return payload.memberships || []
+  },
+
   fetchMine: async () => {
     set({ isLoading: true, error: null })
     try {
-      const { workspace } = await apiFetch('/api/workspaces/mine')
-      set({ workspace, isLoading: false })
-      return workspace
+      const payload = await apiFetch('/api/workspaces/mine')
+      syncMembershipsFromPayload(payload)
+      set({ workspace: payload.workspace, isLoading: false })
+      return payload.workspace
     } catch (err) {
       set({ workspace: null, isLoading: false, error: err.message })
       throw err
@@ -29,12 +43,16 @@ export const useWorkspaceStore = create((set) => ({
   createWorkspace: async (name) => {
     set({ isLoading: true, error: null })
     try {
-      const { workspace } = await apiFetch('/api/workspaces', {
+      const payload = await apiFetch('/api/workspaces', {
         method: 'POST',
         body: JSON.stringify({ name }),
       })
-      set({ workspace, isLoading: false })
-      return workspace
+      syncMembershipsFromPayload(payload)
+      if (payload.workspace?.id) {
+        useAuthStore.getState().setActiveWorkspace(payload.workspace.id)
+      }
+      set({ workspace: payload.workspace, isLoading: false })
+      return payload.workspace
     } catch (err) {
       set({ isLoading: false, error: err.message })
       throw err

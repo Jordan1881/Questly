@@ -3,14 +3,7 @@ const RewardModel = require('../models/reward')
 const RewardCouponModel = require('../models/rewardCoupon')
 const rewardPurchase = require('../services/rewardPurchase')
 const { defaultExpiresAt } = require('../services/coupon')
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
-}
+const { userCanAccessWorkspace, userCanAdminWorkspace } = require('../lib/workspaceAuth')
 
 function parseCouponCodes(body) {
   const raw = body.couponCodes ?? body.codes ?? body.coupon_codes
@@ -30,7 +23,9 @@ async function createForWorkspace(req, res, next) {
   try {
     const workspace = await WorkspaceModel.findById(req.params.id)
     if (!workspace) return res.status(404).json({ error: 'Workspace not found' })
-    if (!isWorkspaceAdmin(req.user, workspace)) return res.status(403).json({ error: 'Forbidden' })
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
 
     const { title, description, coinCost, imageUrl } = req.body
     if (!title || !String(title).trim()) {
@@ -61,9 +56,11 @@ async function listForWorkspace(req, res, next) {
   try {
     const workspace = await WorkspaceModel.findById(req.params.id)
     if (!workspace) return res.status(404).json({ error: 'Workspace not found' })
-    if (!canAccessWorkspace(req.user, workspace)) return res.status(403).json({ error: 'Forbidden' })
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
 
-    const includeUnavailable = isWorkspaceAdmin(req.user, workspace)
+    const includeUnavailable = await userCanAdminWorkspace(req.user, workspace)
     const rewards = await RewardModel.listByWorkspace(workspace.id, { includeUnavailable })
     res.json({ rewards })
   } catch (err) {
@@ -77,7 +74,7 @@ async function updateReward(req, res, next) {
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -102,7 +99,7 @@ async function deleteReward(req, res, next) {
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -124,7 +121,7 @@ async function addCoupons(req, res, next) {
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -157,18 +154,23 @@ async function purchase(req, res, next) {
     const reward = await RewardModel.findById(req.params.id)
     if (!reward) return res.status(404).json({ error: 'Reward not found' })
 
+    const workspaceId = req.workspaceId ?? req.user.workspace_id
     const workspace = await WorkspaceModel.findById(reward.workspace_id)
-    if (!workspace || req.user.workspace_id !== workspace.id) {
+    if (!workspace || workspaceId !== workspace.id) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
-    if (req.user.role !== 'developer') {
+    const membershipRole = req.membership?.role
+    const canPurchase =
+      membershipRole === 'developer' || (!req.membership && req.user.role === 'developer')
+    if (!canPurchase) {
       return res.status(403).json({ error: 'Only developers can purchase rewards' })
     }
 
     const result = await rewardPurchase.purchaseReward({
       userId: req.user.id,
       rewardId: reward.id,
+      workspaceId,
     })
 
     res.status(201).json(result)

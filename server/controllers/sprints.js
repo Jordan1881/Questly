@@ -2,14 +2,12 @@ const db = require('../config/db')
 const WorkspaceModel = require('../models/workspace')
 const SprintModel = require('../models/sprint')
 const UserModel = require('../models/user')
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
-}
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
+const {
+  userCanAccessWorkspace,
+  userCanAdminWorkspace,
+} = require('../lib/workspaceAuth')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 function mapDateField(value, fieldName) {
   if (value === undefined) return undefined
@@ -28,7 +26,7 @@ async function createForWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -66,7 +64,7 @@ async function listForWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!canAccessWorkspace(req.user, workspace)) {
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -84,7 +82,7 @@ async function getActiveForWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!canAccessWorkspace(req.user, workspace)) {
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -103,7 +101,7 @@ async function updateSprint(req, res, next) {
     }
 
     const workspace = await WorkspaceModel.findById(sprint.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -146,27 +144,42 @@ async function closeSprint(req, res, next) {
     }
 
     const workspace = await WorkspaceModel.findById(sprint.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
     await db.transaction(async (trx) => {
-      const members = await UserModel.listDevelopersByWorkspace(workspace.id)
+      if (isMultiWorkspaceEnabled()) {
+        const members = await WorkspaceMembershipModel.resetSprintXpForWorkspace(
+          workspace.id,
+          trx
+        )
+        for (const member of members) {
+          await trx('xp_transactions').insert({
+            user_id: member.user_id,
+            sprint_id: sprint.id,
+            amount: -member.current_sprint_xp,
+            reason: 'sprint_reset',
+          })
+        }
+      } else {
+        const members = await UserModel.listDevelopersByWorkspace(workspace.id)
 
-      for (const member of members) {
-        const xpAmount = member.current_sprint_xp ?? 0
-        if (xpAmount === 0) continue
+        for (const member of members) {
+          const xpAmount = member.current_sprint_xp ?? 0
+          if (xpAmount === 0) continue
 
-        await trx('users')
-          .where({ id: member.id })
-          .update({ current_sprint_xp: 0 })
+          await trx('users')
+            .where({ id: member.id })
+            .update({ current_sprint_xp: 0 })
 
-        await trx('xp_transactions').insert({
-          user_id: member.id,
-          sprint_id: sprint.id,
-          amount: -xpAmount,
-          reason: 'sprint_reset',
-        })
+          await trx('xp_transactions').insert({
+            user_id: member.id,
+            sprint_id: sprint.id,
+            amount: -xpAmount,
+            reason: 'sprint_reset',
+          })
+        }
       }
 
       await trx(SprintModel.TABLE)
