@@ -81,15 +81,34 @@ export const useAuthStore = create(
       },
 
       fetchMe: async () => {
-        const { token } = get()
+        const { token, activeWorkspaceId: preferredId } = get()
         if (!token) return null
         try {
           const payload = await apiFetch('/api/auth/me')
           const { user } = payload
           const patch = membershipPatch(payload)
-          set({ user, ...patch })
-          useXpStore.getState().syncFromUser(user)
-          return user
+
+          // Defense: if server ignored X-Workspace-Id, keep the client's active preference.
+          if (
+            Array.isArray(patch.memberships) &&
+            preferredId &&
+            patch.activeWorkspaceId !== preferredId
+          ) {
+            const kept = patch.memberships.find((m) => m.workspace_id === preferredId)
+            if (kept) {
+              patch.activeWorkspaceId = preferredId
+              patch.activeMembership = kept
+              patch.userRole = kept.role === 'admin' ? 'admin' : 'developer'
+            }
+          }
+
+          const nextUser = {
+            ...user,
+            workspace_id: patch.activeWorkspaceId ?? user.workspace_id,
+          }
+          set({ user: nextUser, ...patch })
+          useXpStore.getState().syncFromUser(nextUser)
+          return nextUser
         } catch {
           return null
         }

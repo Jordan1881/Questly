@@ -160,6 +160,52 @@ describe('X-Workspace-Id context + membership XP', () => {
     expect(dashB.body.xp.lifetime_xp).toBe(0)
   })
 
+  test('GET /me honors X-Workspace-Id and syncs legacy users.workspace_id', async () => {
+    const owner = await register('me-switch-owner@test.com', 'meswitchowner')
+    const wsA = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .send({ name: 'Me A' })
+    const wsB = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .send({ name: 'Me B' })
+
+    // Create B activates B as primary; request A via header should stick.
+    const meA = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .set('X-Workspace-Id', wsA.body.workspace.id)
+    expect(meA.status).toBe(200)
+    expect(meA.body.active_workspace_id).toBe(wsA.body.workspace.id)
+    expect(meA.body.user.workspace_id).toBe(wsA.body.workspace.id)
+    expect(meA.body.active_membership).toMatchObject({
+      workspace_id: wsA.body.workspace.id,
+      role: 'admin',
+    })
+
+    const rowA = await db('users').where({ id: owner.user.id }).first()
+    expect(rowA.workspace_id).toBe(wsA.body.workspace.id)
+
+    const meB = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${owner.token}`)
+      .set('X-Workspace-Id', wsB.body.workspace.id)
+    expect(meB.status).toBe(200)
+    expect(meB.body.active_workspace_id).toBe(wsB.body.workspace.id)
+    expect(meB.body.user.workspace_id).toBe(wsB.body.workspace.id)
+
+    const rowB = await db('users').where({ id: owner.user.id }).first()
+    expect(rowB.workspace_id).toBe(wsB.body.workspace.id)
+
+    // Subsequent /me without header follows the synced primary.
+    const meDefault = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${owner.token}`)
+    expect(meDefault.status).toBe(200)
+    expect(meDefault.body.active_workspace_id).toBe(wsB.body.workspace.id)
+  })
+
   test('flag off: tasks still work without X-Workspace-Id', async () => {
     delete process.env.MULTI_WORKSPACE
 

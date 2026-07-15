@@ -51,8 +51,12 @@ async function listActivePublicByUser(user_id) {
   return result
 }
 
-function pickActiveMembership(memberships, user) {
+function pickActiveMembership(memberships, user, preferredWorkspaceId = null) {
   if (!memberships.length) return null
+  if (preferredWorkspaceId) {
+    const preferred = memberships.find((m) => m.workspace_id === preferredWorkspaceId)
+    if (preferred) return preferred
+  }
   if (user?.workspace_id) {
     const byWorkspace = memberships.find((m) => m.workspace_id === user.workspace_id)
     if (byWorkspace) return byWorkspace
@@ -60,9 +64,15 @@ function pickActiveMembership(memberships, user) {
   return memberships[0]
 }
 
-async function buildMembershipContext(user) {
+/**
+ * @param {object} user
+ * @param {{ preferredWorkspaceId?: string|null }} [options]
+ *   When preferredWorkspaceId matches an active membership, it wins over
+ *   users.workspace_id / last_used ordering (used by GET /me + X-Workspace-Id).
+ */
+async function buildMembershipContext(user, { preferredWorkspaceId = null } = {}) {
   const memberships = await listActivePublicByUser(user.id)
-  const active = pickActiveMembership(memberships, user)
+  const active = pickActiveMembership(memberships, user, preferredWorkspaceId)
   return {
     memberships,
     active_workspace_id: active?.workspace_id ?? null,

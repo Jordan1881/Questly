@@ -92,28 +92,60 @@ async function login(req, res, next) {
     const payload = { user: buildSessionUser(row), token }
 
     if (isMultiWorkspaceEnabled()) {
-      const context = await WorkspaceMembershipModel.buildMembershipContext(row)
-      Object.assign(payload, context)
-      if (context.active_membership) {
-        const balances = await taskRewards.getUserBalances(
-          row.id,
-          db,
-          context.active_workspace_id
-        )
-        payload.user = {
-          ...payload.user,
-          current_sprint_xp: balances.current_sprint_xp,
-          lifetime_xp: balances.lifetime_xp,
-          coin_balance: balances.coin_balance,
-          workspace_id: context.active_workspace_id,
-        }
-      }
+      await attachMultiWorkspaceSession(payload, row)
     }
 
     res.status(200).json(payload)
   } catch (err) {
     next(err)
   }
+}
+
+/**
+ * Prefer X-Workspace-Id when it names an active membership, touch last_used,
+ * and keep users.workspace_id aligned so legacy helpers + pickActiveMembership stay correct.
+ */
+async function attachMultiWorkspaceSession(payload, user, preferredWorkspaceId = null) {
+  let preferred = preferredWorkspaceId ? String(preferredWorkspaceId).trim() : null
+  let sessionUser = user
+
+  if (preferred) {
+    const membership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+      user.id,
+      preferred
+    )
+    if (!membership || membership.status !== 'active') {
+      preferred = null
+    } else {
+      await WorkspaceMembershipModel.touchLastUsed(membership.id)
+      if (user.workspace_id !== preferred) {
+        await UserModel.assignWorkspace(user.id, preferred)
+        sessionUser = { ...user, workspace_id: preferred }
+      }
+    }
+  }
+
+  const context = await WorkspaceMembershipModel.buildMembershipContext(sessionUser, {
+    preferredWorkspaceId: preferred,
+  })
+  Object.assign(payload, context)
+
+  if (context.active_membership) {
+    const balances = await taskRewards.getUserBalances(
+      user.id,
+      db,
+      context.active_workspace_id
+    )
+    payload.user = {
+      ...payload.user,
+      current_sprint_xp: balances.current_sprint_xp,
+      lifetime_xp: balances.lifetime_xp,
+      coin_balance: balances.coin_balance,
+      workspace_id: context.active_workspace_id,
+    }
+  }
+
+  return payload
 }
 
 async function me(req, res, next) {
@@ -156,22 +188,8 @@ async function me(req, res, next) {
     }
 
     if (isMultiWorkspaceEnabled()) {
-      const context = await WorkspaceMembershipModel.buildMembershipContext(req.user)
-      Object.assign(payload, context)
-      if (context.active_membership) {
-        const balances = await taskRewards.getUserBalances(
-          req.user.id,
-          db,
-          context.active_workspace_id
-        )
-        payload.user = {
-          ...payload.user,
-          current_sprint_xp: balances.current_sprint_xp,
-          lifetime_xp: balances.lifetime_xp,
-          coin_balance: balances.coin_balance,
-          workspace_id: context.active_workspace_id,
-        }
-      }
+      const preferred = (req.get('X-Workspace-Id') || '').trim() || null
+      await attachMultiWorkspaceSession(payload, req.user, preferred)
     }
 
     res.json(payload)

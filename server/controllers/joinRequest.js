@@ -116,7 +116,8 @@ async function review(req, res, next) {
       const copyProgress =
         !priorMembership && (!isMultiWorkspaceEnabled() || existingMemberships.length === 0)
 
-      // Keep legacy primary workspace_id: set when unset, or always when flag off.
+      // Legacy primary: always set when flag off. When flag on, only set when unset
+      // so create-first users keep their created workspace (not the later join).
       if (!isMultiWorkspaceEnabled() || !developer.workspace_id) {
         await UserModel.assignWorkspace(joinRequest.user_id, workspace.id)
       }

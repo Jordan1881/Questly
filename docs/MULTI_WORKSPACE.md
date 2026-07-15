@@ -29,6 +29,8 @@ Questly’s Jira-like multi-workspace memberships ship behind a dual-path featur
 | Off (default) | Role required | `users.workspace_id` / `workspaces.admin_id` | User columns | Single-workspace shell |
 | On | Role-less | `workspace_memberships` + `X-Workspace-Id` | Per membership | Workspace switcher |
 
+When the flag is on, `GET /api/auth/me` honors `X-Workspace-Id` (active membership only), updates `last_used_at`, and syncs `users.workspace_id` so legacy helpers (e.g. developer Jira site) stay aligned with the switcher.
+
 ## Rollback
 
 Set `MULTI_WORKSPACE=false` (or unset) and restart the API. Membership rows remain in Postgres but are unused; legacy single-workspace paths resume.
