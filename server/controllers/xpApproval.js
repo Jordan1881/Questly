@@ -6,7 +6,7 @@ const XpApprovalRequestModel = require('../models/xpApprovalRequest')
 const taskRewards = require('../services/taskRewards')
 const { applyStreakUpdate } = require('../services/streak')
 const { formatTask } = require('./tasks')
-const { isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const { userCanAdminWorkspace } = require('../lib/workspaceAuth')
 
 async function listPending(req, res, next) {
   try {
@@ -15,7 +15,7 @@ async function listPending(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -38,7 +38,7 @@ async function review(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 

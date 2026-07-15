@@ -31,6 +31,10 @@ describe('workspaceAuth', () => {
         { workspace_id: 'ws-1', status: 'active', role: 'admin' }
       )
     ).toBe(true)
+    // Stale primary workspace_id must not grant access without active membership
+    expect(
+      canAccessWorkspace({ id: 'left-user', workspace_id: 'ws-1' }, workspace, null)
+    ).toBe(false)
     if (prev === undefined) delete process.env.MULTI_WORKSPACE
     else process.env.MULTI_WORKSPACE = prev
   })

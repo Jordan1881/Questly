@@ -3,7 +3,10 @@ const WorkspaceModel = require('../models/workspace')
 const SprintModel = require('../models/sprint')
 const UserModel = require('../models/user')
 const WorkspaceMembershipModel = require('../models/workspaceMembership')
-const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const {
+  userCanAccessWorkspace,
+  userCanAdminWorkspace,
+} = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 function mapDateField(value, fieldName) {
@@ -23,7 +26,7 @@ async function createForWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!isWorkspaceAdmin(req.user, workspace)) {
+    if (!(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -61,7 +64,7 @@ async function listForWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!canAccessWorkspace(req.user, workspace)) {
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -79,7 +82,7 @@ async function getActiveForWorkspace(req, res, next) {
       return res.status(404).json({ error: 'Workspace not found' })
     }
 
-    if (!canAccessWorkspace(req.user, workspace)) {
+    if (!(await userCanAccessWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -98,7 +101,7 @@ async function updateSprint(req, res, next) {
     }
 
     const workspace = await WorkspaceModel.findById(sprint.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
@@ -141,7 +144,7 @@ async function closeSprint(req, res, next) {
     }
 
     const workspace = await WorkspaceModel.findById(sprint.workspace_id)
-    if (!workspace || !isWorkspaceAdmin(req.user, workspace)) {
+    if (!workspace || !(await userCanAdminWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
