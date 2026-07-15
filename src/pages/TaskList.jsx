@@ -221,8 +221,8 @@ export default function TaskList() {
       <main className="ds-page-main">
         {!hasWorkspace ? (
           <NoWorkspacePrompt
-            title="Join a team to see your tasks"
-            description="Tasks are synced from Jira after you join a workspace. Ask your admin for a join code."
+            title="Join a team to see your quests"
+            description="Quests sync from Jira after you join a workspace. Ask your admin for a join code, then complete quests to earn XP, coins, and season score."
             showJiraHint
           />
         ) : (
@@ -232,7 +232,7 @@ export default function TaskList() {
               <div>
                 <h1 className="ds-page-title leading-tight">Task List</h1>
                 <p className="text-[length:var(--text-body-lg)] text-[color:var(--color-text-muted)] mt-1">
-                  Manage and track your Questly tasks
+                  Your Jira-backed quests — complete them for XP, coins, and season score
                 </p>
               </div>
               <div
@@ -296,7 +296,9 @@ export default function TaskList() {
               ) : (
                 <div data-motion-reveal className="ds-card ds-card-pad py-12 text-center">
                   <p className="text-[length:var(--text-body-lg)] text-[color:var(--color-text-subtle)]">
-                    No tasks match this filter.
+                    {tasks.length === 0
+                      ? 'No quests assigned yet. Ask your admin to sync Jira, then check back to earn XP and climb the season board.'
+                      : 'No quests match this filter.'}
                   </p>
                 </div>
               )}

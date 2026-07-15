@@ -15,8 +15,8 @@ Estimated total: **~15 minutes** for all five E2E journeys.
 
 ## Journey 2 — Earn XP, purchase reward (~3 min)
 
-1. Complete a task to earn sprint XP.
-2. Open **Reward Shop** → **Buy** → confirm purchase.
+1. Complete a quest to earn XP, season score, and coins.
+2. Open **Reward Shop** → **Buy** (spend coins) → confirm purchase.
 3. **Profile → My Rewards** shows coupon with expiry date.
 
 **Expected UI:** Purchase confirmation; masked coupon code with reveal.

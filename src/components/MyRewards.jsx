@@ -27,7 +27,7 @@ export default function MyRewards({ purchases, onDelete, isLoading }) {
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
         <p className="text-[length:var(--text-body-lg)] font-semibold text-[color:var(--color-gray-800)]">No rewards yet</p>
-        <p className="ds-body-sm">Visit the Reward Shop to spend sprint XP on coupons.</p>
+        <p className="ds-body-sm">Visit the Reward Shop to spend coins on coupons.</p>
         <button
           type="button"
           onClick={() => navigate('/rewards')}

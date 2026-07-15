@@ -5,17 +5,26 @@ const { formatTask } = require('./tasks')
 const db = require('../config/db')
 const SprintModel = require('../models/sprint')
 const TaskAssignmentModel = require('../models/taskAssignment')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const taskRewards = require('../services/taskRewards')
 const { mergePreferences } = require('../lib/userPreferences')
 const avatarStorage = require('../lib/avatarStorage')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
+const { buildTeamStandings, computeLevel } = require('../lib/teamStandings')
 
 const SALT_ROUNDS = 12
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const LEVEL_SIZE = 1000
+async function loadTeamStandings(workspaceId) {
+  if (!workspaceId) return []
 
-function computeLevel(lifetimeXp) {
-  return Math.floor(Math.max(0, lifetimeXp ?? 0) / LEVEL_SIZE) + 1
+  if (isMultiWorkspaceEnabled()) {
+    const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(workspaceId)
+    return buildTeamStandings(members)
+  }
+
+  const members = await UserModel.listByWorkspace(workspaceId)
+  return buildTeamStandings(members)
 }
 
 async function xpHistory(req, res, next) {
@@ -67,6 +76,8 @@ async function dashboard(req, res, next) {
       .slice(0, 5)
       .map(formatTask)
 
+    const teamStandings = await loadTeamStandings(workspaceId)
+
     res.json({
       xp: {
         current_sprint_xp: balances.current_sprint_xp,
@@ -77,6 +88,7 @@ async function dashboard(req, res, next) {
       streak: user.streak_days ?? 0,
       activeSprint,
       highPriorityTasks,
+      teamStandings,
     })
   } catch (err) {
     next(err)

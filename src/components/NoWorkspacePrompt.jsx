@@ -3,7 +3,7 @@ import FormButton from '../design-system/components/FormButton'
 
 export default function NoWorkspacePrompt({
   title = 'Join a team to get started',
-  description = 'You need an admin to approve you into a workspace before tasks, XP, and Jira sync are available.',
+  description = 'Join a workspace to turn Jira issues into quests, earn XP and coins, climb the season board, and spend rewards with your team.',
   showJiraHint = false,
 }) {
   const navigate = useNavigate()
