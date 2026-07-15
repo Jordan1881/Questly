@@ -55,7 +55,7 @@ test('pre-workspace developer sees empty states on dashboard and tasks', async (
   await expect(page.getByText(/connect your Jira account on Profile/i)).toBeVisible()
 
   await page.goto('/tasks')
-  await expect(page.getByText('Join a team to see your tasks')).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText('Join a team to see your quests')).toBeVisible({ timeout: 10000 })
   await expect(page.getByText(/Ask your admin for a join code/i)).toBeVisible()
 })
 
