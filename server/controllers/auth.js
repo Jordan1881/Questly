@@ -3,10 +3,11 @@ const jwt = require('jsonwebtoken')
 const config = require('../config')
 const UserModel = require('../models/user')
 const WorkspaceModel = require('../models/workspace')
+const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const jiraClient = require('../services/jiraClient')
 const { developerJiraContext } = require('../lib/jiraSiteContext')
 const { formatDeveloperConnectError } = require('../lib/jiraConnectErrors')
-
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 const { parsePreferences } = require('../lib/userPreferences')
 
 const SALT_ROUNDS = 12
@@ -30,9 +31,26 @@ function buildSessionUser(internal) {
 async function register(req, res, next) {
   try {
     const { email, username, password, role } = req.body
-    if (!email || !username || !password || !role) {
+    const multiWorkspace = isMultiWorkspaceEnabled()
+
+    if (!email || !username || !password) {
+      return res.status(400).json({
+        error: multiWorkspace
+          ? 'email, username and password are required'
+          : 'email, username, password and role are required',
+      })
+    }
+
+    if (!multiWorkspace && !role) {
       return res.status(400).json({ error: 'email, username, password and role are required' })
     }
+
+    if (!multiWorkspace && role && !['admin', 'developer'].includes(role)) {
+      return res.status(400).json({ error: 'role must be admin or developer' })
+    }
+
+    // Flag on: ignore client role — authority comes from memberships after create/join.
+    const storedRole = multiWorkspace ? 'developer' : role
 
     const existing = await UserModel.findByEmail(email)
     if (existing) {
@@ -40,10 +58,16 @@ async function register(req, res, next) {
     }
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS)
-    const user = await UserModel.create({ email, username, password_hash, role })
+    const user = await UserModel.create({ email, username, password_hash, role: storedRole })
     const token = signToken(user)
 
-    res.status(201).json({ user: { ...user, jira_connected: false }, token })
+    const payload = { user: { ...user, jira_connected: false }, token }
+    if (multiWorkspace) {
+      payload.memberships = []
+      payload.active_workspace_id = null
+    }
+
+    res.status(201).json(payload)
   } catch (err) {
     next(err)
   }
@@ -90,7 +114,7 @@ async function me(req, res, next) {
 
     const jiraContext = await developerJiraContext(req.user)
 
-    res.json({
+    const payload = {
       user: {
         id,
         email,
@@ -107,7 +131,13 @@ async function me(req, res, next) {
         jira_connected: UserModel.isJiraConnected(internal),
         ...jiraContext,
       },
-    })
+    }
+
+    if (isMultiWorkspaceEnabled()) {
+      Object.assign(payload, await WorkspaceMembershipModel.buildMembershipContext(req.user))
+    }
+
+    res.json(payload)
   } catch (err) {
     next(err)
   }

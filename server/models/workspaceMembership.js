@@ -1,5 +1,7 @@
 const db = require('../config/db')
+const WorkspaceModel = require('./workspace')
 const { ensureMembershipRow } = require('../lib/backfillWorkspaceMemberships')
+const { jiraSiteHostname } = require('../lib/jiraSiteContext')
 
 const TABLE = 'workspace_memberships'
 
@@ -8,7 +10,70 @@ async function findByUserAndWorkspace(user_id, workspace_id) {
 }
 
 async function listActiveByUser(user_id) {
-  return db(TABLE).where({ user_id, status: 'active' }).orderBy('last_used_at', 'desc')
+  return db(TABLE)
+    .where({ user_id, status: 'active' })
+    .orderByRaw('last_used_at DESC NULLS LAST')
+    .orderBy('created_at', 'asc')
+}
+
+function toPublicMembership(membership, workspace) {
+  const siteUrl = workspace?.jira_site_url || null
+  return {
+    id: membership.id,
+    workspace_id: membership.workspace_id,
+    role: membership.role,
+    status: membership.status,
+    is_owner: Boolean(workspace && workspace.admin_id === membership.user_id),
+    current_sprint_xp: membership.current_sprint_xp,
+    lifetime_xp: membership.lifetime_xp,
+    coin_balance: membership.coin_balance,
+    last_used_at: membership.last_used_at,
+    workspace: workspace
+      ? {
+          id: workspace.id,
+          name: workspace.name,
+          code: workspace.code,
+          jira_project_key: workspace.jira_project_key || null,
+          team_jira_site_host: jiraSiteHostname(siteUrl),
+          team_jira_connected: WorkspaceModel.isJiraConnected(workspace),
+        }
+      : null,
+  }
+}
+
+async function listActivePublicByUser(user_id) {
+  const rows = await listActiveByUser(user_id)
+  const result = []
+  for (const membership of rows) {
+    const workspace = await WorkspaceModel.findById(membership.workspace_id)
+    result.push(toPublicMembership(membership, workspace))
+  }
+  return result
+}
+
+function pickActiveMembership(memberships, user) {
+  if (!memberships.length) return null
+  if (user?.workspace_id) {
+    const byWorkspace = memberships.find((m) => m.workspace_id === user.workspace_id)
+    if (byWorkspace) return byWorkspace
+  }
+  return memberships[0]
+}
+
+async function buildMembershipContext(user) {
+  const memberships = await listActivePublicByUser(user.id)
+  const active = pickActiveMembership(memberships, user)
+  return {
+    memberships,
+    active_workspace_id: active?.workspace_id ?? null,
+    active_membership: active
+      ? {
+          workspace_id: active.workspace_id,
+          role: active.role,
+          is_owner: active.is_owner,
+        }
+      : null,
+  }
 }
 
 /**
@@ -63,6 +128,10 @@ async function ensureMembershipFromUser(user, { workspace_id, role, copyProgress
 module.exports = {
   findByUserAndWorkspace,
   listActiveByUser,
+  listActivePublicByUser,
+  pickActiveMembership,
+  buildMembershipContext,
+  toPublicMembership,
   ensureMembership,
   ensureMembershipFromUser,
 }

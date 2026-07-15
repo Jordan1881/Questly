@@ -6,6 +6,7 @@ const { buildWorkspaceJiraOverrides } = require('../services/jiraSync')
 const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const { jiraSiteHostname } = require('../lib/jiraSiteContext')
 const { isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 async function submit(req, res, next) {
   try {
@@ -100,6 +101,13 @@ async function review(req, res, next) {
     const payload = { join_request: updated }
     if (status === 'approved') {
       payload.workspace = WorkspaceModel.sanitize(workspace)
+      if (isMultiWorkspaceEnabled()) {
+        const membership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+          joinRequest.user_id,
+          workspace.id
+        )
+        payload.membership = WorkspaceMembershipModel.toPublicMembership(membership, workspace)
+      }
     }
 
     res.json(payload)

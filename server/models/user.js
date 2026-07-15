@@ -189,6 +189,11 @@ async function updatePassword(user_id, password_hash) {
   return user
 }
 
+async function updateRole(user_id, role) {
+  const [user] = await db(TABLE).where({ id: user_id }).update({ role }).returning('*')
+  return strip(user)
+}
+
 module.exports = {
   findByEmail,
   findById,
@@ -210,5 +215,6 @@ module.exports = {
   findByUsername,
   updateProfile,
   updatePassword,
+  updateRole,
   strip,
 }

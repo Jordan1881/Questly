@@ -4,6 +4,7 @@ const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const jiraClient = require('../services/jiraClient')
 const { publicWorkspaceLookup } = require('../lib/jiraSiteContext')
 const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
+const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
 async function create(req, res, next) {
   try {
@@ -19,7 +20,21 @@ async function create(req, res, next) {
       role: 'admin',
       copyProgress: !owner?.workspace_id,
     })
-    res.status(201).json({ workspace: WorkspaceModel.sanitize(workspace) })
+
+    // Dual-path: keep users.role aligned so remaining requireRole('admin') routes work
+    // until membership-based auth lands in later tickets.
+    if (isMultiWorkspaceEnabled() && owner?.role !== 'admin') {
+      await UserModel.updateRole(req.user.id, 'admin')
+    }
+
+    const payload = { workspace: WorkspaceModel.sanitize(workspace) }
+    if (isMultiWorkspaceEnabled()) {
+      const memberships = await WorkspaceMembershipModel.listActivePublicByUser(req.user.id)
+      payload.memberships = memberships
+      payload.active_workspace_id = workspace.id
+    }
+
+    res.status(201).json(payload)
   } catch (err) {
     next(err)
   }
@@ -101,6 +116,19 @@ async function getByCode(req, res, next) {
 
 async function getMine(req, res, next) {
   try {
+    if (isMultiWorkspaceEnabled()) {
+      const context = await WorkspaceMembershipModel.buildMembershipContext(req.user)
+      if (!context.memberships.length) {
+        return res.status(404).json({ error: 'Workspace not found' })
+      }
+
+      const workspace = await WorkspaceModel.findById(context.active_workspace_id)
+      return res.json({
+        workspace: WorkspaceModel.sanitize(workspace),
+        ...context,
+      })
+    }
+
     const workspace = await WorkspaceModel.findByAdminId(req.user.id)
     if (!workspace) {
       return res.status(404).json({ error: 'Workspace not found' })
