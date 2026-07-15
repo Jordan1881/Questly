@@ -2,14 +2,7 @@ const WorkspaceModel = require('../models/workspace')
 const UserModel = require('../models/user')
 const jiraClient = require('../services/jiraClient')
 const { publicWorkspaceLookup } = require('../lib/jiraSiteContext')
-
-function canAccessWorkspace(user, workspace) {
-  return workspace.admin_id === user.id || user.workspace_id === workspace.id
-}
-
-function isWorkspaceAdmin(user, workspace) {
-  return workspace.admin_id === user.id
-}
+const { canAccessWorkspace, isWorkspaceAdmin } = require('../lib/workspaceAuth')
 
 async function create(req, res, next) {
   try {
