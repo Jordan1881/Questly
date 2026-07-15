@@ -96,8 +96,8 @@
   --color-bg-muted:         var(--color-gray-100);
   --color-bg-brand-subtle:  #F5EEFD;
 
-  /* Soft-depth canvas (surface polish) — calm neutral, not lilac wash */
-  --color-bg-canvas:        #F7F6F9;
+  /* Soft-depth canvas — lilac whisper (not a full page wash) */
+  --color-bg-canvas:        #F3F0F8;
   --color-card-surface:     #FFFFFF;
 
   --color-text:             var(--color-gray-900);
@@ -214,6 +214,6 @@
   --focus-ring-soft: 0 0 0 2px var(--color-card-surface), 0 0 0 4px rgba(148, 47, 205, 0.35);
 
   /* Chrome brand tint helpers (header/sidebar) */
-  --color-chrome-tint:      rgba(148, 47, 205, 0.04);
+  --color-chrome-tint:      rgba(148, 47, 205, 0.06);
   --color-chrome-surface:   color-mix(in srgb, var(--color-card-surface) 92%, var(--color-primary-50));
 }

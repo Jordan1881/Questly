@@ -12,13 +12,15 @@ export async function resolvePostAuthPath() {
   if (isMultiWorkspaceMode(state)) {
     const list = state.memberships || []
     if (!list.length) {
+      // Hub owns first-time create/join. Avoid /workspace/create — that route
+      // immediately bounces multi-workspace users back to /workspace.
       try {
         const pending = await apiFetch('/api/join-requests/me')
         if (pending?.join_request) return '/workspace/join'
       } catch {
         // fall through
       }
-      return '/workspace/create'
+      return '/workspace'
     }
 
     const workspaceId = state.activeWorkspaceId || list[0].workspace_id
