@@ -19,9 +19,23 @@ describe('LevelUp overlay', () => {
 
     expect(screen.getByText('Level Up!')).toBeInTheDocument()
     expect(screen.getByText(/Level 3/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /visit reward shop/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /keep questing/i })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /keep questing/i }))
     expect(onContinue).toHaveBeenCalled()
+  })
+
+  it('uses soft-depth surface classes on the loop-peak panel', () => {
+    const { container } = render(<LevelUp level={5} onContinue={() => {}} />)
+
+    const panel = container.querySelector('.ds-card')
+    expect(panel).toBeTruthy()
+    expect(panel.className).toMatch(/border-\[color:var\(--color-border-soft\)\]/)
+    expect(panel.style.boxShadow).toContain('var(--shadow-soft-md)')
+
+    const badge = panel.querySelector('.ds-brand-gradient')
+    expect(badge?.style.boxShadow).toBe('var(--shadow-primary-sm)')
   })
 
   it('navigates to Reward Shop from primary CTA', async () => {

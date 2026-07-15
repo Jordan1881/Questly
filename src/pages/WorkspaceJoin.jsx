@@ -58,7 +58,7 @@ export default function WorkspaceJoin() {
   if (joinRequest) {
     return (
       <AuthLayout centered>
-        <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-4 text-center shadow-[var(--shadow-lg)]">
+        <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-4 text-center shadow-[var(--shadow-soft-md)]">
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center mx-auto ds-brand-gradient text-white text-[length:var(--text-h4)] font-bold"
             aria-hidden
@@ -99,7 +99,7 @@ export default function WorkspaceJoin() {
 
   return (
     <AuthLayout centered>
-      <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-8 shadow-[var(--shadow-lg)]">
+      <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-8 shadow-[var(--shadow-soft-md)]">
         <div>
           <h1 className="text-[32px] font-medium text-[color:var(--color-gray-900)]">Join a Workspace</h1>
           <p className="ds-body mt-2">Enter the workspace code shared by your admin.</p>
@@ -127,7 +127,7 @@ export default function WorkspaceJoin() {
           </form>
         ) : (
           <div className="flex flex-col gap-6">
-            <div className="rounded-[12px] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-5 py-4">
+            <div className="rounded-[12px] bg-[color:var(--color-bg-canvas)] border border-[color:var(--color-border-soft)] px-5 py-4">
               <p className="ds-body-sm">You are requesting to join</p>
               <p className="text-[20px] font-semibold text-[color:var(--color-gray-800)]">{targetWorkspace.name}</p>
               <p className="text-[13px] text-[color:var(--color-brand)] font-medium mt-1">Code: {targetWorkspace.code}</p>

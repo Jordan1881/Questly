@@ -12,7 +12,7 @@ export function LegalPageShell({ title, children }) {
         <img src={logoHorizontal} alt="Questly" className="w-[160px] h-auto" />
       </Link>
 
-      <div className="ds-card ds-card-pad w-full max-w-[720px] flex flex-col gap-6 shadow-[var(--shadow-lg)]">
+      <div className="ds-card ds-card-pad w-full max-w-[720px] flex flex-col gap-6 shadow-[var(--shadow-soft-md)]">
         <div className="flex items-center justify-between gap-4">
           <h1 className="ds-section-title text-[length:var(--text-h4)]">{title}</h1>
           <Link
@@ -23,7 +23,7 @@ export function LegalPageShell({ title, children }) {
           </Link>
         </div>
         <div className="ds-body leading-relaxed flex flex-col gap-4">{children}</div>
-        <p className="ds-caption pt-2 border-t border-[color:var(--color-border)]">
+        <p className="ds-caption pt-2 border-t border-[color:var(--color-border-soft)]">
           Last updated: June 6, 2026 · Contact your workspace administrator or the Questly support
           email listed in the Atlassian app Distribution settings.
         </p>

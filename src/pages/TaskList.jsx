@@ -161,7 +161,7 @@ function CalendarCard({ tasks }) {
         })}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-[color:var(--color-border)] flex flex-col gap-2">
+      <div className="mt-4 pt-4 border-t border-[color:var(--color-border-soft)] flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[color:var(--color-brand)] shrink-0" />
           <span className="ds-caption">Task due</span>

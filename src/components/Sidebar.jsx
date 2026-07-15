@@ -173,10 +173,10 @@ export default function Sidebar({ isOpen, onClose }) {
       />
 
       <div
-        className="ds-nav-drawer fixed left-0 top-0 h-full w-[259px] z-50 flex flex-col transition-transform duration-300 ease-in-out"
+        className="ds-nav-drawer ds-chrome fixed left-0 top-0 h-full w-[259px] z-50 flex flex-col transition-transform duration-300 ease-in-out border-r border-[color:var(--color-border-soft)] shadow-[var(--shadow-soft-md)]"
         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(-100%)' }}
       >
-        <div className="h-[88px] border-b border-[color:var(--color-border)] flex items-center px-6 shrink-0">
+        <div className="h-[88px] border-b border-[color:var(--color-border-soft)] flex items-center px-6 shrink-0 ds-chrome-tint">
           <div className="flex items-center gap-3 flex-1">
             <img src={logoIcon} alt="Questly" className="h-[38px] w-[38px] shrink-0" />
             <img src={logoHorizental} alt="" className="h-[26px] w-auto shrink-0" aria-hidden />
@@ -186,7 +186,7 @@ export default function Sidebar({ isOpen, onClose }) {
             type="button"
             onClick={onClose}
             aria-label="Close menu"
-            className="ds-focus-ring w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center cursor-pointer shrink-0 bg-[color:var(--color-bg)] border border-[color:var(--color-border-strong)] shadow-[var(--shadow-sm)] hover:bg-[color:var(--color-bg-subtle)] transition-colors duration-200"
+            className="ds-focus-ring w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center cursor-pointer shrink-0 bg-[color:var(--color-card-surface)] border border-[color:var(--color-border-soft)] shadow-[var(--shadow-soft-sm)] hover:bg-[color:var(--color-bg-canvas)] transition-colors duration-200"
           >
             <CloseIcon />
           </button>

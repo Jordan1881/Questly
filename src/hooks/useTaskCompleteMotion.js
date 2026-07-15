@@ -5,12 +5,20 @@ registerGsap()
 
 const { taskComplete: TC } = MOTION
 const CARD_GLOW = 'var(--shadow-primary-sm)'
-const CARD_SHADOW_DEFAULT = 'var(--shadow-sm)'
+const CARD_SHADOW_DEFAULT = 'var(--shadow-soft-sm)'
 
+function isXpBarOnScreen(bar) {
+  if (!bar) return false
+  const rect = bar.getBoundingClientRect()
+  return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight
+}
+
+/** Prefer explicit ref; only tick a Level progress bar that is currently on-screen. */
 function resolveXpBar(xpBarRef) {
-  if (xpBarRef?.current) return xpBarRef.current
-  if (typeof document === 'undefined') return null
-  return document.querySelector('[data-xp-progress-bar]')
+  const bar =
+    xpBarRef?.current ??
+    (typeof document !== 'undefined' ? document.querySelector('[data-xp-progress-bar]') : null)
+  return isXpBarOnScreen(bar) ? bar : null
 }
 
 /**

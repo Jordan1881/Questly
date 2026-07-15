@@ -74,7 +74,7 @@ export default function JoinRequestsTab() {
         <div className="ds-card overflow-hidden">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[color:var(--color-bg-muted)]">
+              <tr className="border-b border-[color:var(--color-border-soft)]">
                 <th className={TH}>Developer</th>
                 <th className={TH}>Email</th>
                 <th className={TH}>Requested</th>
@@ -90,7 +90,7 @@ export default function JoinRequestsTab() {
                   ? 'bg-[color:var(--color-error-50)]'
                   : 'hover:bg-[color:var(--color-bg-subtle)]'
                 return (
-                  <tr key={request.id} className={`border-b border-[color:var(--color-bg-subtle)] transition-colors ${rowBg}`}>
+                  <tr key={request.id} className={`border-b border-[color:var(--color-border-soft)] transition-colors ${rowBg}`}>
                     <td className={`${TD} font-medium text-[color:var(--color-gray-800)]`}>{request.username}</td>
                     <td className={TD}>{request.email}</td>
                     <td className={TD}>{new Date(request.created_at).toLocaleDateString()}</td>

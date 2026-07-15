@@ -80,6 +80,102 @@ describe('useTaskCompleteMotion', () => {
     expect(timelineMock.to).toHaveBeenCalled()
   })
 
+  it('resolves card glow to soft-depth default shadow', async () => {
+    const card = document.createElement('div')
+    const checkbox = document.createElement('button')
+    const cardRef = { current: card }
+    const checkboxRef = { current: checkbox }
+
+    const { result } = renderHook(() =>
+      useTaskCompleteMotion({ cardRef, checkboxRef }),
+    )
+
+    timelineMock.to.mockClear()
+
+    await act(async () => {
+      await result.current.playCompleteJuice({ xp: 40 })
+    })
+
+    const cardShadowCalls = timelineMock.to.mock.calls.filter(([target]) => target === card)
+    const softDefaultCall = cardShadowCalls.find(
+      ([, vars]) => vars?.boxShadow === 'var(--shadow-soft-sm)',
+    )
+    expect(softDefaultCall).toBeDefined()
+  })
+
+  it('omits XP bar tick when the progress bar is off-screen', async () => {
+    const bar = document.createElement('div')
+    bar.setAttribute('data-xp-progress-bar', '')
+    const fill = document.createElement('div')
+    fill.setAttribute('data-xp-bar-fill', '')
+    bar.appendChild(fill)
+    document.body.appendChild(bar)
+
+    bar.getBoundingClientRect = () => ({
+      width: 200,
+      height: 40,
+      top: window.innerHeight + 100,
+      bottom: window.innerHeight + 140,
+      left: 0,
+      right: 200,
+    })
+
+    const cardRef = { current: document.createElement('div') }
+    const checkboxRef = { current: document.createElement('button') }
+
+    const { result } = renderHook(() =>
+      useTaskCompleteMotion({ cardRef, checkboxRef }),
+    )
+
+    timelineMock.to.mockClear()
+
+    await act(async () => {
+      await result.current.playCompleteJuice({ xp: 40 })
+    })
+
+    const barTickCalls = timelineMock.to.mock.calls.filter(([target]) => target === fill)
+    expect(barTickCalls).toHaveLength(0)
+
+    document.body.removeChild(bar)
+  })
+
+  it('ticks XP bar fill when the progress bar is on-screen', async () => {
+    const bar = document.createElement('div')
+    bar.setAttribute('data-xp-progress-bar', '')
+    const fill = document.createElement('div')
+    fill.setAttribute('data-xp-bar-fill', '')
+    bar.appendChild(fill)
+    document.body.appendChild(bar)
+
+    bar.getBoundingClientRect = () => ({
+      width: 200,
+      height: 40,
+      top: 80,
+      bottom: 120,
+      left: 0,
+      right: 200,
+    })
+
+    const cardRef = { current: document.createElement('div') }
+    const checkboxRef = { current: document.createElement('button') }
+    const xpBarRef = { current: bar }
+
+    const { result } = renderHook(() =>
+      useTaskCompleteMotion({ cardRef, checkboxRef, xpBarRef }),
+    )
+
+    timelineMock.to.mockClear()
+
+    await act(async () => {
+      await result.current.playCompleteJuice({ xp: 40 })
+    })
+
+    const barTickCalls = timelineMock.to.mock.calls.filter(([target]) => target === fill)
+    expect(barTickCalls.length).toBeGreaterThan(0)
+
+    document.body.removeChild(bar)
+  })
+
   it('omits XP bar tick when compressed mode is enabled', async () => {
     const bar = document.createElement('div')
     bar.setAttribute('data-xp-progress-bar', '')
