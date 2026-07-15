@@ -89,10 +89,20 @@ export default function Workspace() {
   const active = activeMembership
     || (memberships || []).find((m) => m.workspace_id === activeWorkspaceId)
     || null
-  const otherMemberships = sortMemberships(memberships || []).filter(
-    (m) => m.workspace_id !== active?.workspace_id,
-  )
-  const showJoin = multi || !activeWorkspaceId
+  const allMemberships = sortMemberships(memberships || [])
+  const hasAnyMembership = multi
+    ? allMemberships.length > 0
+    : Boolean(activeWorkspaceId || workspace?.id)
+  // Admins (and users with no membership yet) can create. Developers only join.
+  const canCreate = isAdminShell || !hasAnyMembership
+  const showJoin = multi || !hasAnyMembership
+
+  const switchTo = async (workspaceId) => {
+    if (!workspaceId || workspaceId === activeWorkspaceId) return
+    const path = setActiveWorkspace(workspaceId)
+    await fetchMe().catch(() => {})
+    if (path) navigate(path)
+  }
 
   return (
     <div className="ds-page">
@@ -102,9 +112,11 @@ export default function Workspace() {
       <main className="ds-page-main max-w-[720px]">
         <h1 className="ds-page-title mb-2">Workspace</h1>
         <p className="ds-body-sm mb-8 text-[color:var(--color-text-muted)]">
-          {multi
-            ? 'See your teams, create a new workspace, or join another with a code.'
-            : 'Create or join a workspace to get started.'}
+          {isAdminShell
+            ? 'Switch teams here, create another workspace, or join one with a code.'
+            : hasAnyMembership
+              ? 'Switch between your teams here, or join another workspace with a code.'
+              : 'Create a workspace for your team, or join one with a code from your admin.'}
         </p>
 
         {error && (
@@ -139,83 +151,103 @@ export default function Workspace() {
         ) : (
           <section className="mb-10 rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-bg-subtle)] px-5 py-4">
             <p className="ds-body-sm">
-              You are not in a workspace yet. Create one below or join with a code from your admin.
+              You are not in a workspace yet.
+              {canCreate
+                ? ' Create one below or join with a code from your admin.'
+                : ' Join with a code from your admin.'}
             </p>
           </section>
         )}
 
-        {multi && otherMemberships.length > 0 && (
+        {multi && allMemberships.length > 0 && (
           <section className="mb-10">
-            <h2 className="ds-subsection-title mb-3">Your other workspaces</h2>
-            <ul className="flex flex-col gap-2">
-              {otherMemberships.map((m) => (
-                <li key={m.workspace_id}>
-                  <button
-                    type="button"
-                    className={`${ghostBtn} w-full max-w-[480px] text-left flex flex-col items-start gap-0.5 !h-auto py-3`}
-                    onClick={async () => {
-                      const path = setActiveWorkspace(m.workspace_id)
-                      await fetchMe().catch(() => {})
-                      if (path) navigate(path)
-                    }}
-                  >
-                    <span className="font-semibold">{m.workspace?.name || 'Workspace'}</span>
-                    <span className="text-[12px] text-[color:var(--color-text-muted)]">
-                      {m.role === 'admin' ? 'Admin' : 'Developer'}
-                      {m.is_owner ? ' · Owner' : ''}
-                      {' · '}
-                      {jiraIdentityCue(m.workspace)}
-                    </span>
-                  </button>
-                </li>
-              ))}
+            <h2 className="ds-subsection-title mb-3">Your workspaces</h2>
+            <p className="ds-body-sm mb-3 text-[color:var(--color-text-muted)]">
+              Choose a team to make it active.
+            </p>
+            <ul className="flex flex-col gap-2" data-testid="workspace-switch-list">
+              {allMemberships.map((m) => {
+                const isCurrent = m.workspace_id === activeWorkspaceId
+                return (
+                  <li key={m.workspace_id}>
+                    <button
+                      type="button"
+                      aria-current={isCurrent ? 'true' : undefined}
+                      disabled={isCurrent}
+                      className={`${ghostBtn} w-full max-w-[480px] text-left flex flex-col items-start gap-0.5 !h-auto py-3 ${
+                        isCurrent
+                          ? 'border-[color:var(--color-brand)] bg-[color:var(--color-bg-brand-subtle)] disabled:opacity-100'
+                          : ''
+                      }`}
+                      onClick={() => switchTo(m.workspace_id)}
+                    >
+                      <span className="font-semibold flex items-center gap-2">
+                        {m.workspace?.name || 'Workspace'}
+                        {isCurrent && (
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--color-brand)]">
+                            Current
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[12px] text-[color:var(--color-text-muted)]">
+                        {m.role === 'admin' ? 'Admin' : 'Developer'}
+                        {m.is_owner ? ' · Owner' : ''}
+                        {' · '}
+                        {jiraIdentityCue(m.workspace)}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </section>
         )}
 
-        <section className="mb-10">
-          <h2 className="ds-subsection-title mb-1">
-            {active || workspace?.id ? 'Create another workspace' : 'Create workspace'}
-          </h2>
-          <p className="ds-body-sm mb-4 text-[color:var(--color-text-muted)]">
-            Become the owner/admin of a new team with its own invite code and Jira link.
-          </p>
+        {canCreate && (
+          <section className="mb-10">
+            <h2 className="ds-subsection-title mb-1">
+              {hasAnyMembership ? 'Create another workspace' : 'Create workspace'}
+            </h2>
+            <p className="ds-body-sm mb-4 text-[color:var(--color-text-muted)]">
+              Become the owner/admin of a new team with its own invite code and Jira link.
+            </p>
 
-          {created ? (
-            <div className="ds-card ds-card-pad flex flex-col gap-4">
-              <p className="ds-body">
-                <strong>{created.name}</strong> is ready. Share this code with developers:
-              </p>
-              <WorkspaceInviteCode code={created.code} workspaceName={created.name} />
-              <div className="flex flex-wrap gap-3">
-                <button type="button" className={primaryBtn} onClick={() => activateCreated(created.id)}>
-                  Open as admin
-                </button>
-                <button type="button" className={ghostBtn} onClick={() => setCreated(null)}>
-                  Create another
-                </button>
+            {created ? (
+              <div className="ds-card ds-card-pad flex flex-col gap-4">
+                <p className="ds-body">
+                  <strong>{created.name}</strong> is ready. Share this code with developers:
+                </p>
+                <WorkspaceInviteCode code={created.code} workspaceName={created.name} />
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" className={primaryBtn} onClick={() => activateCreated(created.id)}>
+                    Open as admin
+                  </button>
+                  <button type="button" className={ghostBtn} onClick={() => setCreated(null)}>
+                    Create another
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <form onSubmit={handleCreate} className="flex flex-col gap-4 max-w-[480px]">
-              <div className="flex flex-col gap-2">
-                <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">
-                  Workspace name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Acme Engineering"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                  className={authInputClass}
-                />
-              </div>
-              <button type="submit" className={primaryBtn} disabled={isLoading || !createName.trim()}>
-                {isLoading ? 'Creating…' : 'Create workspace'}
-              </button>
-            </form>
-          )}
-        </section>
+            ) : (
+              <form onSubmit={handleCreate} className="flex flex-col gap-4 max-w-[480px]">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">
+                    Workspace name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Acme Engineering"
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    className={authInputClass}
+                  />
+                </div>
+                <button type="submit" className={primaryBtn} disabled={isLoading || !createName.trim()}>
+                  {isLoading ? 'Creating…' : 'Create workspace'}
+                </button>
+              </form>
+            )}
+          </section>
+        )}
 
         {showJoin && (
           <section className="mb-6">
@@ -293,11 +325,6 @@ export default function Workspace() {
           </section>
         )}
 
-        {multi && activeWorkspaceId && (
-          <p className="ds-body-sm text-[color:var(--color-text-muted)]">
-            Tip: use the workspace menu in the header to switch between teams you already belong to.
-          </p>
-        )}
       </main>
     </div>
   )

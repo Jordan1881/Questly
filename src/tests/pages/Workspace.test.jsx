@@ -82,8 +82,8 @@ describe('Workspace hub page', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Workspace' })).toBeInTheDocument()
-    expect(screen.getByText(/Create another workspace/i)).toBeInTheDocument()
-    expect(screen.getByText(/Join another workspace/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Create another workspace/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Join another workspace/i })).toBeInTheDocument()
 
     fireEvent.change(screen.getByPlaceholderText(/Acme Engineering/i), {
       target: { value: 'Second Team' },
@@ -97,7 +97,7 @@ describe('Workspace hub page', () => {
     expect(screen.getAllByTestId('workspace-invite-code').length).toBeGreaterThanOrEqual(2)
   })
 
-  it('shows join/create hub for a developer without calling /mine invite UI', async () => {
+  it('lets developers join another workspace but not create one', async () => {
     authState.userRole = 'developer'
     authState.activeMembership = {
       workspace_id: 'ws-1',
@@ -106,6 +106,7 @@ describe('Workspace hub page', () => {
       workspace: { name: 'questly', jira_project_key: 'SCRUM' },
     }
     authState.memberships = [authState.activeMembership]
+    authState.activeWorkspaceId = 'ws-1'
 
     render(
       <MemoryRouter>
@@ -114,8 +115,10 @@ describe('Workspace hub page', () => {
     )
 
     expect(screen.getByText(/Your role: Developer/i)).toBeInTheDocument()
-    expect(screen.getByText(/Create another workspace/i)).toBeInTheDocument()
-    expect(screen.getByText(/Join another workspace/i)).toBeInTheDocument()
+    expect(screen.getByTestId('workspace-switch-list')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Join another workspace/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Create another workspace/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Create workspace$/i })).not.toBeInTheDocument()
     expect(fetchMine).not.toHaveBeenCalled()
   })
 })

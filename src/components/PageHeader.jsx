@@ -1,7 +1,6 @@
 import { useNavigate, useLocation, Link } from 'react-router'
 import { BurgerIcon } from './icons'
 import ProfileAvatar from './ProfileAvatar'
-import WorkspaceSwitcher from './WorkspaceSwitcher'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import logoIcon from '../assets/LOGO.svg'
 import { useAuthStore } from '../stores/authStore'
@@ -85,8 +84,6 @@ export default function PageHeader({ onOpenSidebar }) {
               className="h-9 w-9 md:hidden"
             />
           </Link>
-
-          <WorkspaceSwitcher />
 
           <nav className="flex items-stretch gap-6 lg:gap-10 h-full min-w-0 overflow-x-auto" aria-label="Main">
             {NAV_LINKS.map(({ id, label }) => (
