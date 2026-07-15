@@ -330,7 +330,7 @@ export default function JiraSyncTab() {
           </p>
         </div>
 
-        <div className="rounded-[var(--radius-lg)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-4 py-3 ds-body-sm leading-relaxed">
+        <div className="rounded-[var(--radius-lg)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border-soft)] px-4 py-3 ds-body-sm leading-relaxed">
           Difficulty and XP come from <strong>Jira story points</strong>: 1–2 pts → Easy (20 XP),
           3–5 → Medium (40 XP), 8+ → Hard (70 XP). Coins are awarded when developers complete tasks.
         </div>
@@ -346,7 +346,7 @@ export default function JiraSyncTab() {
             ].map(({ label, value }) => (
               <div
                 key={label}
-                className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-primary-100)] px-3 py-2 text-center"
+                className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-border-brand)] shadow-[var(--shadow-soft-sm)] px-3 py-2 text-center"
               >
                 <p className="text-[length:var(--text-h5)] font-bold text-[color:var(--color-brand)]">{value ?? 0}</p>
                 <p className="ds-caption">{label}</p>

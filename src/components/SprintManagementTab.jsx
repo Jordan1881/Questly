@@ -138,7 +138,7 @@ export default function SprintManagementTab() {
               <button
                 type="button"
                 onClick={() => setConfirmCloseId(null)}
-                className="h-10 px-4 rounded-[var(--radius-md)] border border-[color:var(--color-border)] ds-body-sm cursor-pointer hover:bg-[color:var(--color-bg-subtle)] ds-focus-ring transition-colors"
+                className="h-10 px-4 rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] ds-body-sm cursor-pointer hover:bg-[color:var(--color-bg-subtle)] ds-focus-ring transition-colors"
               >
                 Cancel
               </button>
@@ -162,7 +162,7 @@ export default function SprintManagementTab() {
         ) : (
           <div className="flex flex-col gap-3">
             {sprints.map((sprint) => (
-              <div key={sprint.id} className="border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-4 py-3">
+              <div key={sprint.id} className="border border-[color:var(--color-border-soft)] rounded-[var(--radius-md)] px-4 py-3 bg-[color:var(--color-card-surface)] shadow-[var(--shadow-soft-sm)]">
                 <SprintStatusWidget sprint={sprint} />
               </div>
             ))}

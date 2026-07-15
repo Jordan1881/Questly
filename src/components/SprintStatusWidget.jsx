@@ -32,9 +32,11 @@ function statusBadge(status) {
 export default function SprintStatusWidget({ sprint, className = '' }) {
   if (!sprint) {
     return (
-      <div className={`rounded-[12px] border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-5 ${className}`}>
-        <p className="text-[14px] font-medium text-[#374151] mb-1">No active season</p>
-        <p className="text-[12px] text-[#6b7280]">{ECONOMY.noSeason}</p>
+      <div
+        className={`rounded-[12px] border border-dashed border-[color:var(--color-border-soft)] bg-[color:var(--color-bg-subtle)] p-5 shadow-[var(--shadow-soft-sm)] ${className}`}
+      >
+        <p className="text-[14px] font-medium text-[color:var(--color-gray-700)] mb-1">No active season</p>
+        <p className="text-[12px] text-[color:var(--color-text-muted)]">{ECONOMY.noSeason}</p>
       </div>
     )
   }

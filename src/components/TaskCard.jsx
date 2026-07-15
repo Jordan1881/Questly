@@ -60,7 +60,6 @@ export default function TaskCard({ task, onToggle }) {
       className={`ds-card ds-card-pad ds-card-lift w-full relative overflow-hidden transition-opacity duration-200 ${
         isCompleted ? 'opacity-60 bg-[color:var(--color-bg-subtle)]' : ''
       }`}
-      style={{ boxShadow: 'var(--shadow-sm)' }}
     >
       <span
         ref={xpGhostRef}

@@ -53,7 +53,7 @@ export default function WorkspaceInviteCode({ code, workspaceName, compact = fal
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <div className="rounded-[var(--radius-lg)] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-primary-100)] px-5 py-3 text-center min-w-[160px]">
+        <div className="rounded-[var(--radius-lg)] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-border-brand)] px-5 py-3 text-center min-w-[160px] shadow-[var(--shadow-soft-sm)]">
           <p className="ds-caption uppercase tracking-wide text-[color:var(--color-brand)] font-semibold mb-1">Workspace Code</p>
           <p className="font-mono text-[length:var(--text-h4)] font-bold tracking-[0.2em] text-[color:var(--color-gray-800)]">{code}</p>
         </div>

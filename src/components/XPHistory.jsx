@@ -28,7 +28,7 @@ export default function XPHistory({ transactions = [], isLoading = false, error 
 
   if (!transactions.length) {
     return (
-      <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-5 py-8 text-center">
+      <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-canvas)] border border-[color:var(--color-border-soft)] px-5 py-8 text-center">
         <p className="ds-body">No XP transactions yet. Complete a task to earn your first XP.</p>
       </div>
     )
@@ -41,7 +41,7 @@ export default function XPHistory({ transactions = [], isLoading = false, error 
         return (
           <div
             key={tx.id}
-            className="ds-card-lift flex items-center justify-between border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-4 py-3 bg-[color:var(--color-bg)]"
+            className="ds-card-lift flex items-center justify-between border border-[color:var(--color-border-soft)] rounded-[var(--radius-md)] px-4 py-3 bg-[color:var(--color-card-surface)]"
           >
             <div className="flex flex-col gap-0.5">
               <span className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-800)]">{formatReason(tx.reason)}</span>

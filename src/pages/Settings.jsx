@@ -9,7 +9,7 @@ import { parsePreferences } from '../lib/userPreferences'
 import AnimatedReveal from '../components/motion/AnimatedReveal'
 
 const fieldClass =
-  'mt-1 w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-body-sm)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand)]/30'
+  'mt-1 w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] text-[length:var(--text-body-sm)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand)]/30'
 
 function PasswordSection() {
   const changePassword = useAuthStore((s) => s.changePassword)

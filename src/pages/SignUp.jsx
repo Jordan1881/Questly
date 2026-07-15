@@ -140,7 +140,7 @@ export default function SignUp() {
           />
         }
       >
-        <div className="ds-card ds-card-pad w-[440px] flex flex-col gap-8 shrink-0 shadow-[var(--shadow-lg)]">
+        <div className="ds-card ds-card-pad w-[440px] flex flex-col gap-8 shrink-0 shadow-[var(--shadow-soft-md)]">
           <div className="flex flex-col gap-2">
             <h2 className="text-[32px] font-medium text-[color:var(--color-gray-900)] leading-tight">Create Your Account</h2>
             <p className="ds-body-sm">Start your journey with Questly today</p>
@@ -166,8 +166,8 @@ export default function SignUp() {
                     onClick={() => setSelectedRole(role)}
                     className={`flex-1 flex flex-col items-center gap-2 rounded-[12px] py-4 px-3 border-2 text-center cursor-pointer transition-all duration-200 ds-focus-ring ${
                       active
-                        ? 'border-[color:var(--color-brand)] bg-[color:var(--color-bg-brand-subtle)] shadow-[var(--focus-ring)]'
-                        : 'border-[color:var(--color-border)] bg-[color:var(--color-bg)]'
+                        ? 'border-[color:var(--color-brand)] bg-[color:var(--color-bg-brand-subtle)] shadow-[var(--focus-ring-soft)]'
+                        : 'border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)]'
                     }`}
                   >
                     <div className={active ? 'text-[color:var(--color-brand)]' : 'text-[color:var(--color-text-muted)]'}>

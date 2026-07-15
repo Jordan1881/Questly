@@ -9,7 +9,7 @@ export default function NoWorkspacePrompt({
   const navigate = useNavigate()
 
   return (
-    <div className="ds-card ds-card-pad w-full max-w-[560px] flex flex-col gap-4 text-center mx-auto shadow-[var(--shadow-lg)]">
+    <div className="ds-card ds-card-pad w-full max-w-[560px] flex flex-col gap-4 text-center mx-auto">
       <div className="w-14 h-14 rounded-full bg-[color:var(--color-bg-brand-subtle)] text-[color:var(--color-brand)] flex items-center justify-center mx-auto text-2xl">
         👋
       </div>

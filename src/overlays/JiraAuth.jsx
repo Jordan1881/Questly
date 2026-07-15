@@ -74,7 +74,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
       >
 
         <div
-          className="ds-card w-[640px] pt-[56px] px-[56px] pb-[56px] relative flex flex-col items-center gap-8 shadow-[var(--shadow-lg)]"
+          className="ds-card w-[640px] pt-[56px] px-[56px] pb-[56px] relative flex flex-col items-center gap-8 shadow-[var(--shadow-soft-md)]"
         >
           <img
             src={logo}
@@ -103,13 +103,13 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
 
           <div className="flex flex-col items-center gap-3 text-center">
             <h2
-              className="text-[36px] font-semibold text-black leading-tight"
+              className="text-[36px] font-semibold text-[color:var(--color-gray-900)] leading-tight"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
               Connect your Jira account
             </h2>
             <p
-              className="text-[18px] text-[#6b7280]"
+              className="text-[18px] text-[color:var(--color-gray-500)]"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
               Optional now — join your team first, then connect your personal Jira on Profile after
@@ -127,7 +127,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
                   <CheckIcon />
                 </div>
                 <span
-                  className="text-[16px] font-medium text-[#1f2937]"
+                  className="text-[16px] font-medium text-[color:var(--color-gray-800)]"
                   style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
                   {feature}
@@ -137,7 +137,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
           </div>
 
           {error && (
-            <p className="text-[13px] text-[#ef4444] -mt-4">{error}</p>
+            <p className="text-[13px] text-[color:var(--color-error-500)] -mt-4">{error}</p>
           )}
 
           <div className="flex flex-col items-center gap-3 w-[400px]">
@@ -151,7 +151,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
               <button
                 type="button"
                 onClick={() => setShowManual(true)}
-                className="text-[13px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+                className="text-[13px] text-[color:var(--color-gray-500)] hover:text-[color:var(--color-gray-700)] cursor-pointer"
               >
                 Advanced: use API token
               </button>
@@ -163,14 +163,14 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
                   <button
                     type="button"
                     onClick={() => setShowManual(false)}
-                    className="self-start text-[12px] text-[#6b7280] hover:text-[#374151] cursor-pointer mb-1"
+                    className="self-start text-[12px] text-[color:var(--color-gray-500)] hover:text-[color:var(--color-gray-700)] cursor-pointer mb-1"
                   >
                     Back to OAuth
                   </button>
                 )}
                 <label
                   htmlFor="jira-access-token"
-                  className="text-[14px] font-medium text-[#374151]"
+                  className="text-[14px] font-medium text-[color:var(--color-gray-700)]"
                   style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
                   Jira API token
@@ -181,14 +181,14 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
                   value={accessToken}
                   onChange={(e) => setAccessToken(e.target.value)}
                   placeholder="Paste your Atlassian API token"
-                  className="ds-input-field ds-focus-ring w-full px-4 py-3 rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-brand-subtle)] text-[15px]"
+                  className="ds-input-field ds-focus-ring w-full px-4 py-3 rounded-[var(--radius-lg)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-bg-brand-subtle)] text-[15px]"
                 />
-                <p className="text-[12px] text-[#9ca3af]">
+                <p className="text-[12px] text-[color:var(--color-gray-400)]">
                   <a
                     href={ATLASSIAN_TOKEN_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#942fcd] hover:underline"
+                    className="text-[color:var(--color-brand)] hover:underline"
                   >
                     Create an API token at Atlassian
                   </a>
@@ -203,7 +203,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
             <button
               type="button"
               onClick={onSkip || onClose}
-              className="text-[14px] text-[#6b7280] hover:text-[#374151] cursor-pointer"
+              className="text-[14px] text-[color:var(--color-gray-500)] hover:text-[color:var(--color-gray-700)] cursor-pointer"
             >
               Skip for now
             </button>
@@ -212,7 +212,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
         </div>
 
         <p
-          className="text-[14px] text-[#9ca3af] text-center max-w-[611px] leading-[1.6]"
+          className="text-[14px] text-[color:var(--color-gray-400)] text-center max-w-[611px] leading-[1.6]"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
           {oauthAvailable
