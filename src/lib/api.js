@@ -44,11 +44,14 @@ export function notifyApiError(error) {
 export async function apiFetch(path, options = {}) {
   const { skipSessionExpiry = false, ...fetchOptions } = options
   const { useAuthStore } = await import('../stores/authStore')
-  const { token, logout } = useAuthStore.getState()
+  const { token, logout, activeWorkspaceId, memberships } = useAuthStore.getState()
 
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(Array.isArray(memberships) && activeWorkspaceId
+      ? { 'X-Workspace-Id': activeWorkspaceId }
+      : {}),
     ...fetchOptions.headers,
   }
 
@@ -100,10 +103,13 @@ export async function apiFetch(path, options = {}) {
 export async function apiUpload(path, formData, options = {}) {
   const { skipSessionExpiry = false } = options
   const { useAuthStore } = await import('../stores/authStore')
-  const { token, logout } = useAuthStore.getState()
+  const { token, logout, activeWorkspaceId, memberships } = useAuthStore.getState()
 
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(Array.isArray(memberships) && activeWorkspaceId
+      ? { 'X-Workspace-Id': activeWorkspaceId }
+      : {}),
     ...options.headers,
   }
 

@@ -4,6 +4,7 @@ import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import { useAuthStore } from '../stores/authStore'
+import { roleHomePath } from '../lib/workspaceNav'
 
 const codeInputClass = `${authInputClass} uppercase tracking-widest text-center`
 
@@ -11,6 +12,8 @@ export default function WorkspaceJoin() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const fetchMe = useAuthStore((s) => s.fetchMe)
+  const memberships = useAuthStore((s) => s.memberships)
+  const activeWorkspaceId = useAuthStore((s) => s.activeWorkspaceId)
   const {
     lookupByCode,
     submitJoinRequest,
@@ -23,10 +26,20 @@ export default function WorkspaceJoin() {
   const [code, setCode] = useState('')
   const [targetWorkspace, setTargetWorkspace] = useState(null)
 
+  const goDeveloperHome = (workspaceId) => {
+    const id = workspaceId || activeWorkspaceId || user?.workspace_id
+    navigate(roleHomePath('developer', Array.isArray(memberships) ? id : null), { replace: true })
+  }
+
   useEffect(() => {
     fetchMyJoinRequest().catch(() => {})
-    if (user?.workspace_id) navigate('/dashboard', { replace: true })
-  }, [user?.workspace_id, navigate, fetchMyJoinRequest])
+    // Flag-off legacy: developers with a workspace skip join.
+    // Flag-on: allow joining additional workspaces from the switcher.
+    if (!Array.isArray(memberships) && user?.workspace_id) {
+      goDeveloperHome(user.workspace_id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.workspace_id, memberships, navigate, fetchMyJoinRequest])
 
   const handleLookup = async (e) => {
     e.preventDefault()
@@ -70,7 +83,12 @@ export default function WorkspaceJoin() {
           </p>
           <FormButton type="button" className="w-full mt-4" onClick={async () => {
             const refreshed = await fetchMe()
-            if (refreshed?.workspace_id) navigate('/dashboard')
+            const state = useAuthStore.getState()
+            if (Array.isArray(state.memberships) && state.activeWorkspaceId) {
+              goDeveloperHome(state.activeWorkspaceId)
+            } else if (refreshed?.workspace_id) {
+              goDeveloperHome(refreshed.workspace_id)
+            }
           }}>
             Check Status
           </FormButton>

@@ -8,7 +8,14 @@ vi.mock('../../stores/authStore', () => ({
     selector({
       userRole: 'developer',
       user: { username: 'Yarden', workspace_id: 'ws-1', lifetime_xp: 0 },
+      memberships: undefined,
+      activeWorkspaceId: null,
+      activeMembership: null,
     }),
+}))
+
+vi.mock('../../components/WorkspaceSwitcher', () => ({
+  default: () => null,
 }))
 
 describe('PageHeader', () => {

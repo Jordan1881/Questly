@@ -1,20 +1,12 @@
 import { useNavigate, useLocation, Link } from 'react-router'
 import { BurgerIcon } from './icons'
 import ProfileAvatar from './ProfileAvatar'
+import WorkspaceSwitcher from './WorkspaceSwitcher'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import logoIcon from '../assets/LOGO.svg'
 import { useAuthStore } from '../stores/authStore'
 import { getAvatarUrl, getDisplayUsername } from '../lib/displayUser'
-
-const PAGE_PATHS = {
-  dashboard:       '/dashboard',
-  profile:         '/profile',
-  tasklist:        '/tasks',
-  rewardshop:      '/rewards',
-  admin:           '/admin',
-  workspacecreate: '/workspace/create',
-  workspacejoin:   '/workspace/join',
-}
+import { getShellRole, pagePath, pathMatchesPage } from '../lib/workspaceNav'
 
 const DEV_NAV_LINKS = [
   { id: 'dashboard',  label: 'Dashboard'   },
@@ -33,22 +25,37 @@ const ADMIN_NAV_LINKS = [
 export default function PageHeader({ onOpenSidebar }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const userRole = useAuthStore((s) => s.userRole)
   const user = useAuthStore((s) => s.user)
+  const memberships = useAuthStore((s) => s.memberships)
+  const activeWorkspaceId = useAuthStore((s) => s.activeWorkspaceId)
+  const activeMembership = useAuthStore((s) => s.activeMembership)
+  const userRole = useAuthStore((s) => s.userRole)
 
-  const devLinks = !user?.workspace_id
+  const shellRole = getShellRole({
+    memberships,
+    activeMembership,
+    userRole,
+  })
+  const multi = Array.isArray(memberships)
+  const workspaceId = multi ? activeWorkspaceId : null
+  const homePath = pagePath(shellRole === 'admin' ? 'admin' : 'dashboard', workspaceId)
+
+  const hasWorkspace = multi
+    ? Boolean(activeWorkspaceId)
+    : Boolean(user?.workspace_id)
+
+  const devLinks = !hasWorkspace
     ? [...DEV_NAV_LINKS, { id: 'workspacejoin', label: 'Join Workspace' }]
     : DEV_NAV_LINKS
-  const NAV_LINKS = userRole === 'admin' ? ADMIN_NAV_LINKS : devLinks
-  const isActive = (id) => pathname === PAGE_PATHS[id]
-  const displayName = getDisplayUsername(user, userRole)
+  const NAV_LINKS = shellRole === 'admin' ? ADMIN_NAV_LINKS : devLinks
+  const displayName = getDisplayUsername(user, shellRole)
   const avatarUrl = getAvatarUrl(user)
 
   return (
     <header className="bg-[color:var(--color-bg)] border-b border-[color:var(--color-border)] px-[var(--space-2xl)] h-[79px] flex items-stretch">
-      <div className="w-full flex items-center justify-between">
+      <div className="w-full flex items-center justify-between gap-3">
 
-        <div className="flex items-stretch gap-6 h-full min-w-0">
+        <div className="flex items-stretch gap-4 md:gap-6 h-full min-w-0">
           <button
             type="button"
             onClick={onOpenSidebar}
@@ -59,7 +66,7 @@ export default function PageHeader({ onOpenSidebar }) {
           </button>
 
           <Link
-            to="/dashboard"
+            to={homePath}
             className="ds-focus-ring flex items-center shrink-0 self-center rounded-[var(--radius-sm)]"
             aria-label="Questly home"
           >
@@ -75,13 +82,15 @@ export default function PageHeader({ onOpenSidebar }) {
             />
           </Link>
 
-          <nav className="flex items-stretch gap-10 h-full min-w-0 overflow-x-auto" aria-label="Main">
+          <WorkspaceSwitcher />
+
+          <nav className="flex items-stretch gap-6 lg:gap-10 h-full min-w-0 overflow-x-auto" aria-label="Main">
             {NAV_LINKS.map(({ id, label }) => (
               <button
                 key={id}
                 type="button"
-                onClick={() => navigate(PAGE_PATHS[id])}
-                className={`ds-header-nav ds-focus-ring ${isActive(id) ? 'ds-header-nav--active' : ''}`}
+                onClick={() => navigate(pagePath(id, workspaceId))}
+                className={`ds-header-nav ds-focus-ring ${pathMatchesPage(pathname, id, workspaceId) ? 'ds-header-nav--active' : ''}`}
               >
                 {label}
               </button>
@@ -91,14 +100,14 @@ export default function PageHeader({ onOpenSidebar }) {
 
         <button
           type="button"
-          onClick={() => navigate('/profile')}
-          className="ds-focus-ring flex items-center gap-3 rounded-[var(--radius-md)] px-2 py-1 cursor-pointer hover:bg-[color:var(--color-bg-subtle)] transition-colors duration-200"
+          onClick={() => navigate(pagePath('profile', workspaceId))}
+          className="ds-focus-ring flex items-center gap-3 rounded-[var(--radius-md)] px-2 py-1 cursor-pointer hover:bg-[color:var(--color-bg-subtle)] transition-colors duration-200 shrink-0"
           aria-label="Go to profile"
         >
-          <span className="text-[length:var(--text-body-lg)] font-semibold text-[color:var(--color-gray-800)]">{displayName}</span>
+          <span className="hidden sm:inline text-[length:var(--text-body-lg)] font-semibold text-[color:var(--color-gray-800)]">{displayName}</span>
           <ProfileAvatar
             avatarUrl={avatarUrl}
-            variant={userRole === 'admin' ? 'admin' : 'developer'}
+            variant={shellRole === 'admin' ? 'admin' : 'developer'}
             size={48}
           />
         </button>

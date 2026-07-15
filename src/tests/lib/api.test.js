@@ -134,4 +134,29 @@ describe('apiFetch', () => {
       status: 0,
     })
   })
+
+  it('sends X-Workspace-Id when multi-workspace context is active', async () => {
+    useAuthStore.setState({
+      token: 'tok',
+      memberships: [{ workspace_id: 'ws-42' }],
+      activeWorkspaceId: 'ws-42',
+    })
+    fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true }),
+    })
+
+    await apiFetch('/api/tasks')
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/tasks'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer tok',
+          'X-Workspace-Id': 'ws-42',
+        }),
+      }),
+    )
+  })
 })

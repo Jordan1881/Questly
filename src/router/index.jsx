@@ -13,6 +13,28 @@ import WorkspaceJoin from '../pages/WorkspaceJoin'
 import PrivacyPolicy from '../pages/PrivacyPolicy'
 import TermsOfService from '../pages/TermsOfService'
 import ProtectedRoute from '../components/ProtectedRoute'
+import WorkspaceScopedRoute from '../components/WorkspaceScopedRoute'
+import MultiWorkspaceRedirect from '../components/MultiWorkspaceRedirect'
+
+function scoped(pageId, element, requiredRole) {
+  return (
+    <ProtectedRoute requiredRole={requiredRole}>
+      <WorkspaceScopedRoute>
+        {element}
+      </WorkspaceScopedRoute>
+    </ProtectedRoute>
+  )
+}
+
+function flat(pageId, element, requiredRole) {
+  return (
+    <ProtectedRoute requiredRole={requiredRole}>
+      <MultiWorkspaceRedirect pageId={pageId}>
+        {element}
+      </MultiWorkspaceRedirect>
+    </ProtectedRoute>
+  )
+}
 
 export const router = createBrowserRouter([
   { path: '/', element: <Hero /> },
@@ -22,64 +44,64 @@ export const router = createBrowserRouter([
   { path: '/signup', element: <SignUp /> },
   {
     path: '/dashboard',
-    element: (
-      <ProtectedRoute requiredRole="developer">
-        <Dashboard />
-      </ProtectedRoute>
-    ),
+    element: flat('dashboard', <Dashboard />, 'developer'),
   },
   {
     path: '/tasks',
-    element: (
-      <ProtectedRoute requiredRole="developer">
-        <TaskList />
-      </ProtectedRoute>
-    ),
+    element: flat('tasklist', <TaskList />, 'developer'),
   },
   {
     path: '/shop',
-    element: (
-      <ProtectedRoute>
-        <RewardShop />
-      </ProtectedRoute>
-    ),
+    element: flat('shop', <RewardShop />),
   },
   {
     path: '/rewards',
-    element: (
-      <ProtectedRoute>
-        <RewardShop />
-      </ProtectedRoute>
-    ),
+    element: flat('rewardshop', <RewardShop />),
   },
   {
     path: '/profile',
-    element: (
-      <ProtectedRoute>
-        <Profile />
-      </ProtectedRoute>
-    ),
+    element: flat('profile', <Profile />),
   },
   {
     path: '/settings',
-    element: (
-      <ProtectedRoute>
-        <Settings />
-      </ProtectedRoute>
-    ),
+    element: flat('settings', <Settings />),
   },
   {
     path: '/admin',
-    element: (
-      <ProtectedRoute requiredRole="admin">
-        <Admin />
-      </ProtectedRoute>
-    ),
+    element: flat('admin', <Admin />, 'admin'),
+  },
+  {
+    path: '/w/:workspaceId/dashboard',
+    element: scoped('dashboard', <Dashboard />, 'developer'),
+  },
+  {
+    path: '/w/:workspaceId/tasks',
+    element: scoped('tasklist', <TaskList />, 'developer'),
+  },
+  {
+    path: '/w/:workspaceId/shop',
+    element: scoped('shop', <RewardShop />),
+  },
+  {
+    path: '/w/:workspaceId/rewards',
+    element: scoped('rewardshop', <RewardShop />),
+  },
+  {
+    path: '/w/:workspaceId/profile',
+    element: scoped('profile', <Profile />),
+  },
+  {
+    path: '/w/:workspaceId/settings',
+    element: scoped('settings', <Settings />),
+  },
+  {
+    path: '/w/:workspaceId/admin',
+    element: scoped('admin', <Admin />, 'admin'),
   },
   {
     path: '/workspace/create',
     element: (
-      <ProtectedRoute requiredRole="admin">
+      <ProtectedRoute requiredRole="admin" skipRoleWhenMulti>
         <WorkspaceCreate />
       </ProtectedRoute>
     ),
@@ -87,7 +109,7 @@ export const router = createBrowserRouter([
   {
     path: '/workspace/join',
     element: (
-      <ProtectedRoute requiredRole="developer">
+      <ProtectedRoute requiredRole="developer" skipRoleWhenMulti>
         <WorkspaceJoin />
       </ProtectedRoute>
     ),

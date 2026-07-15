@@ -89,8 +89,28 @@ async function login(req, res, next) {
     }
 
     const token = signToken(row)
+    const payload = { user: buildSessionUser(row), token }
 
-    res.status(200).json({ user: buildSessionUser(row), token })
+    if (isMultiWorkspaceEnabled()) {
+      const context = await WorkspaceMembershipModel.buildMembershipContext(row)
+      Object.assign(payload, context)
+      if (context.active_membership) {
+        const balances = await taskRewards.getUserBalances(
+          row.id,
+          db,
+          context.active_workspace_id
+        )
+        payload.user = {
+          ...payload.user,
+          current_sprint_xp: balances.current_sprint_xp,
+          lifetime_xp: balances.lifetime_xp,
+          coin_balance: balances.coin_balance,
+          workspace_id: context.active_workspace_id,
+        }
+      }
+    }
+
+    res.status(200).json(payload)
   } catch (err) {
     next(err)
   }
