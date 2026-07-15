@@ -13,7 +13,7 @@ async function multiWorkspaceEnabled(token) {
   }
 }
 
-test('multi-workspace switch lands on role home with shell context', async ({ page }) => {
+test('multi-workspace switch via Workspace tab lands on role home', async ({ page }) => {
   const email = `mw_owner_${ts}@e2e.test`
   const { token } = await register({
     email,
@@ -42,20 +42,19 @@ test('multi-workspace switch lands on role home with shell context', async ({ pa
     timeout: 15000,
   })
 
-  const openSwitcher = async () => {
-    const trigger = page.getByRole('button', { name: /Alpha MW|Beta MW|No workspace/i }).first()
-    await expect(trigger).toBeVisible({ timeout: 10000 })
-    await trigger.click()
+  const openWorkspaceTab = async () => {
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Workspace' }).click()
+    await expect(page).toHaveURL(/\/workspace/, { timeout: 10000 })
+    await expect(page.getByTestId('workspace-switch-list')).toBeVisible()
   }
 
-  // Switch away then back so we assert a landing, not a no-op on the current workspace.
-  await openSwitcher()
-  await page.getByRole('option', { name: new RegExp(`Alpha MW ${ts}`) }).click()
+  await openWorkspaceTab()
+  await page.getByRole('button', { name: new RegExp(`Alpha MW ${ts}`) }).click()
   await expect(page).toHaveURL(new RegExp(`/w/${alpha.id}/admin`), { timeout: 15000 })
 
-  await openSwitcher()
-  await page.getByRole('option', { name: new RegExp(`Beta MW ${ts}`) }).click()
+  await openWorkspaceTab()
+  await page.getByRole('button', { name: new RegExp(`Beta MW ${ts}`) }).click()
   await expect(page).toHaveURL(new RegExp(`/w/${beta.id}/admin`), { timeout: 15000 })
   await expect(page.getByRole('navigation', { name: 'Main' }).getByText('Admin')).toBeVisible()
-  await expect(page.getByRole('button', { name: new RegExp(`Beta MW ${ts}`) })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Main' }).getByText('Workspace')).toBeVisible()
 })
