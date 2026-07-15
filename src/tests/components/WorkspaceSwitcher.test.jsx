@@ -71,8 +71,9 @@ describe('WorkspaceSwitcher', () => {
     expect(screen.getByText('ALP')).toBeInTheDocument()
     expect(screen.getByText('Owner')).toBeInTheDocument()
     expect(screen.getByText('Not connected')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Create workspace/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Join workspace/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Manage workspaces/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Create workspace/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Join workspace/i })).not.toBeInTheDocument()
   })
 
   it('switches workspace and navigates to role home', async () => {
