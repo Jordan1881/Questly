@@ -81,7 +81,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
   const statusLabel = isConnected ? 'Connected' : hasWorkspace ? 'Not connected' : 'Awaiting team'
 
   return (
-    <div className="p-4 bg-[color:var(--color-bg-brand-subtle)] rounded-[10px] border border-[color:var(--color-border-brand)] mb-4">
+    <div className="p-4 bg-[color:var(--color-bg-brand-subtle)] rounded-[var(--radius-lg)] border border-[color:var(--color-border-brand)] shadow-[var(--shadow-soft-sm)] mb-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <img src={jiraLogo} alt="Jira" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
@@ -183,7 +183,7 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
                 value={accessToken}
                 onChange={(e) => setAccessToken(e.target.value)}
                 placeholder="Jira API token"
-                className="w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border)] text-[length:var(--text-caption)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand)]/30"
+                className="w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] text-[length:var(--text-caption)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand)]/30"
               />
               <a
                 href={ATLASSIAN_TOKEN_URL}

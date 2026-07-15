@@ -66,7 +66,7 @@ export default function SignIn() {
           </>
         }
       >
-        <div className="ds-card ds-card-pad w-[440px] flex flex-col gap-8 shrink-0 shadow-[var(--shadow-lg)]">
+        <div className="ds-card ds-card-pad w-[440px] flex flex-col gap-8 shrink-0 shadow-[var(--shadow-soft-md)]">
           <h2 className="text-[32px] font-medium text-[color:var(--color-gray-900)] leading-tight">Sign in</h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-8">

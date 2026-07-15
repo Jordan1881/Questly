@@ -122,7 +122,7 @@ function TeamTab({ developers }) {
               onClick={() => setView(id)}
               className={`ds-focus-ring flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] text-[length:var(--text-body-sm)] font-medium transition-all duration-150 cursor-pointer ${
                 view === id
-                  ? 'bg-[color:var(--color-bg)] text-[color:var(--color-gray-800)] shadow-sm'
+                  ? 'bg-[color:var(--color-bg)] text-[color:var(--color-gray-800)] shadow-[var(--shadow-soft-sm)]'
                   : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-gray-700)]'
               }`}
             >
@@ -138,7 +138,7 @@ function TeamTab({ developers }) {
         <div className="ds-card overflow-hidden">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[color:var(--color-gray-100)]">
+              <tr className="border-b border-[color:var(--color-border-soft)]">
                 <th className={TH}>Rank</th>
                 <th className={TH}>Developer</th>
                 <th className={TH}>Level</th>
@@ -150,7 +150,7 @@ function TeamTab({ developers }) {
             </thead>
             <tbody>
               {sorted.map((dev, i) => (
-                <tr key={dev.id} className="border-b border-[color:var(--color-gray-50)] hover:bg-[color:var(--color-gray-50)] transition-colors">
+                <tr key={dev.id} className="border-b border-[color:var(--color-border-soft)] hover:bg-[color:var(--color-gray-50)] transition-colors">
                   <td className={`${TD} w-16`}>
                     <span className="text-[length:var(--text-h6)]">{i < 3 ? MEDALS[i] : `#${i + 1}`}</span>
                   </td>
@@ -209,7 +209,7 @@ function TeamTab({ developers }) {
                     <div className="ds-progress-gradient h-full rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-[color:var(--color-gray-100)]">
+                <div className="flex items-center justify-between pt-1 border-t border-[color:var(--color-border-soft)]">
                   <div className="flex items-center gap-1">
                     <CoinIcon size={13} />
                     <span className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">{dev.coins} Coins</span>
@@ -323,7 +323,7 @@ function XPSettingsTab() {
           ))}
         </div>
 
-        <div className="pt-4 border-t border-[color:var(--color-gray-100)]">
+        <div className="pt-4 border-t border-[color:var(--color-border-soft)]">
           <h3 className="ds-section-title mb-1">XP → Coins Conversion</h3>
           <p className="ds-body-sm mb-2">
             Coins are awarded with approved XP at <strong>10 XP = 1 Coin</strong> (e.g. 170 XP → 17 Coins).
@@ -366,7 +366,7 @@ function UsersTab({ developers, isLoading }) {
     <div className="ds-card overflow-hidden">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-[color:var(--color-gray-100)]">
+          <tr className="border-b border-[color:var(--color-border-soft)]">
             <th className={TH}>Developer</th>
             <th className={TH}>Status</th>
             <th className={TH}>Season score</th>
@@ -375,7 +375,7 @@ function UsersTab({ developers, isLoading }) {
         </thead>
         <tbody>
           {developers.map((dev) => (
-            <tr key={dev.id} className="border-b border-[color:var(--color-gray-50)] hover:bg-[color:var(--color-gray-50)] transition-colors">
+            <tr key={dev.id} className="border-b border-[color:var(--color-border-soft)] hover:bg-[color:var(--color-gray-50)] transition-colors">
               <td className={TD}>
                 <div className="flex items-center gap-2.5 pt-0.5">
                   <DevAvatar idx={dev.avatarIdx ?? 0} size={32} />
@@ -509,7 +509,7 @@ export default function Admin() {
         )}
 
         {/* Sub-tab bar */}
-        <div className="flex gap-0 border-b border-[color:var(--color-border)] mb-8">
+        <div className="flex gap-0 border-b border-[color:var(--color-border-soft)] mb-8">
           {TABS.map(({ id, label }) => (
             <button
               key={id}

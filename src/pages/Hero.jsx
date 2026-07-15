@@ -13,17 +13,17 @@ export default function Hero() {
       ref={rootRef}
       className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden"
       style={{
-        background: 'linear-gradient(145deg, #c4b5fd 0%, #ddd6fe 35%, #f5d0fe 65%, #fce7f3 95%)',
+        background: 'linear-gradient(160deg, var(--color-bg-canvas) 0%, var(--color-primary-50) 45%, var(--color-bg-canvas) 100%)',
       }}
     >
-      {/* Background blobs — GSAP ambient drift via data-motion-blob */}
+      {/* Soft brand atmosphere — keep structure; no full lilac wash */}
       <div
         data-motion-blob
         className="absolute rounded-full pointer-events-none"
         style={{
           width: '520px', height: '520px',
           top: '-120px', right: '-100px',
-          background: 'radial-gradient(circle, rgba(168,85,247,0.35), transparent 70%)',
+          background: 'radial-gradient(circle, rgba(148,47,205,0.14), transparent 70%)',
           filter: 'blur(60px)',
         }}
       />
@@ -33,7 +33,7 @@ export default function Hero() {
         style={{
           width: '420px', height: '420px',
           bottom: '-80px', left: '-80px',
-          background: 'radial-gradient(circle, rgba(232,121,249,0.3), transparent 70%)',
+          background: 'radial-gradient(circle, rgba(148,47,205,0.10), transparent 70%)',
           filter: 'blur(60px)',
         }}
       />
@@ -43,7 +43,7 @@ export default function Hero() {
         style={{
           width: '300px', height: '300px',
           top: '30%', left: '15%',
-          background: 'radial-gradient(circle, rgba(129,140,248,0.25), transparent 70%)',
+          background: 'radial-gradient(circle, rgba(181,101,228,0.12), transparent 70%)',
           filter: 'blur(50px)',
         }}
       />

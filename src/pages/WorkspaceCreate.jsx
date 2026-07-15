@@ -58,12 +58,12 @@ export default function WorkspaceCreate() {
   if (created) {
     return (
       <AuthLayout centered>
-        <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-6 shadow-[var(--shadow-lg)]">
+        <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-6 shadow-[var(--shadow-soft-md)]">
           <h1 className="text-[32px] font-medium text-[color:var(--color-gray-900)]">Workspace Created</h1>
           <p className="ds-body">
             Share this code with developers so they can request to join <strong>{created.name}</strong>.
           </p>
-          <div className="rounded-[12px] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-border-brand)] px-6 py-5 text-center">
+          <div className="rounded-[var(--radius-md)] bg-[color:var(--color-bg-brand-subtle)] border border-[color:var(--color-border-brand)] px-6 py-5 text-center shadow-[var(--shadow-soft-sm)]">
             <p className="text-[13px] uppercase tracking-wide text-[color:var(--color-brand)] font-semibold mb-2">Workspace Code</p>
             <p className="text-[36px] font-bold tracking-[0.2em] text-[color:var(--color-gray-800)]">{created.code}</p>
           </div>
@@ -78,7 +78,7 @@ export default function WorkspaceCreate() {
 
   return (
     <AuthLayout centered>
-      <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-8 shadow-[var(--shadow-lg)]">
+      <div className="ds-card ds-card-pad w-full max-w-[520px] flex flex-col gap-8 shadow-[var(--shadow-soft-md)]">
         <div>
           <h1 className="text-[32px] font-medium text-[color:var(--color-gray-900)]">Create Workspace</h1>
           <p className="ds-body mt-2">Set up your team workspace and get a shareable join code.</p>

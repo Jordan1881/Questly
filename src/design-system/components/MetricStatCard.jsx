@@ -26,7 +26,7 @@ export default function MetricStatCard({
 
   return (
     <div
-      className={`${toneClass} border-2 flex flex-col items-center gap-3 px-1 py-6 rounded-[40px] shadow-[0px_4px_2px_rgba(0,0,0,0.25)] ${className}`}
+      className={`${toneClass} border-2 flex flex-col items-center gap-3 px-1 py-6 rounded-[40px] shadow-[var(--shadow-soft-sm)] ${className}`}
     >
       {icon !== false && (
         <div className={`${iconWrapClass} w-10 h-10 rounded-full flex items-center justify-center shrink-0`}>

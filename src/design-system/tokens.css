@@ -96,6 +96,10 @@
   --color-bg-muted:         var(--color-gray-100);
   --color-bg-brand-subtle:  #F5EEFD;
 
+  /* Soft-depth canvas — lilac whisper (not a full page wash) */
+  --color-bg-canvas:        #F3F0F8;
+  --color-card-surface:     #FFFFFF;
+
   --color-text:             var(--color-gray-900);
   --color-text-muted:       var(--color-gray-500);
   --color-text-subtle:      var(--color-gray-400);
@@ -104,6 +108,8 @@
   --color-border-strong:    var(--color-gray-300);
   --color-border-subtle:    rgba(0, 0, 0, 0.10);
   --color-border-brand:     rgba(148, 47, 205, 0.20);
+  /* Quieter card edge for soft-depth surfaces */
+  --color-border-soft:      rgba(31, 41, 55, 0.08);
 
   /* ----------------------------------------------------------
      TYPOGRAPHY — Font Families
@@ -177,6 +183,13 @@
   --shadow-lg:      0px 8px 24px 0px rgba(0, 0, 0, 0.12);
   --shadow-primary: 0px 4px 16px 0px rgba(148, 47, 205, 0.30);
   --shadow-primary-sm: 0px 4px 16px 0px rgba(148, 47, 205, 0.24);
+  /* Soft-depth layered shadows (surface polish) */
+  --shadow-soft-sm:
+    0 1px 2px rgba(31, 41, 55, 0.04),
+    0 4px 12px rgba(31, 41, 55, 0.06);
+  --shadow-soft-md:
+    0 2px 4px rgba(31, 41, 55, 0.04),
+    0 8px 24px rgba(31, 41, 55, 0.08);
 
   /* ----------------------------------------------------------
      COMPONENT DIMENSIONS
@@ -197,4 +210,10 @@
   --transition-fast: 150ms ease;
   --transition-ui:   200ms ease;
   --focus-ring:      0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary-300);
+  /* Refined focus for soft-depth chrome (still clearly visible) */
+  --focus-ring-soft: 0 0 0 2px var(--color-card-surface), 0 0 0 4px rgba(148, 47, 205, 0.35);
+
+  /* Chrome brand tint helpers (header/sidebar) */
+  --color-chrome-tint:      rgba(148, 47, 205, 0.06);
+  --color-chrome-surface:   color-mix(in srgb, var(--color-card-surface) 92%, var(--color-primary-50));
 }

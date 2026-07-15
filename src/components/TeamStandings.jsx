@@ -4,7 +4,7 @@
 export default function TeamStandings({ standings = [], currentUserId, className = '' }) {
   if (!standings.length) {
     return (
-      <div className={`rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border)] px-5 py-6 text-center ${className}`}>
+      <div className={`rounded-[var(--radius-md)] bg-[color:var(--color-bg-subtle)] border border-[color:var(--color-border-soft)] px-5 py-6 text-center ${className}`}>
         <p className="ds-body-sm">No teammates on the board yet. Complete quests to take the lead this season.</p>
       </div>
     )

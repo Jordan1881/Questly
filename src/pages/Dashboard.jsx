@@ -46,11 +46,11 @@ const QuestCountIcon = ({ count = 0 }) => (
   <span className="text-[length:var(--text-h6)] font-bold text-[color:var(--color-brand)]">{count}</span>
 )
 
-function PriorityTaskRow({ task, onToggle }) {
+function PriorityTaskRow({ task, onToggle, xpBarRef }) {
   const cardRef = useRef(null)
   const checkboxRef = useRef(null)
   const xpGhostRef = useRef(null)
-  const { playCompleteJuice } = useTaskCompleteMotion({ cardRef, checkboxRef, xpGhostRef })
+  const { playCompleteJuice } = useTaskCompleteMotion({ cardRef, checkboxRef, xpGhostRef, xpBarRef })
 
   const handleToggle = async () => {
     if (task.done) {
@@ -68,8 +68,7 @@ function PriorityTaskRow({ task, onToggle }) {
   return (
     <div
       ref={cardRef}
-      className="relative overflow-hidden border border-[color:var(--color-border)] rounded-[var(--radius-md)] px-5 py-5"
-      style={{ boxShadow: 'var(--shadow-sm)' }}
+      className="ds-card relative overflow-hidden px-5 py-5"
     >
       <span
         ref={xpGhostRef}
@@ -152,6 +151,7 @@ export default function Dashboard() {
   const dashboardLoading = useDashboardStore((s) => s.isLoading)
   const fetchDashboard = useDashboardStore((s) => s.fetchDashboard)
   const [showSidebar, setShowSidebar] = useState(false)
+  const xpBarRef = useRef(null)
   const [xpHistory, setXpHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState(null)
@@ -246,7 +246,7 @@ export default function Dashboard() {
               <SkeletonCard />
             ) : (
               <div className="ds-card ds-card-pad-sm">
-                <XPProgressBar xp={lifetimeXP} />
+                <XPProgressBar ref={xpBarRef} xp={lifetimeXP} />
               </div>
             )}
 
@@ -411,7 +411,7 @@ export default function Dashboard() {
 
               <div className="flex flex-col gap-4">
                 {priorityTasks.map((task) => (
-                  <PriorityTaskRow key={task.id} task={task} onToggle={toggleTask} />
+                  <PriorityTaskRow key={task.id} task={task} onToggle={toggleTask} xpBarRef={xpBarRef} />
                 ))}
               </div>
 

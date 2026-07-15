@@ -1,3 +1,4 @@
+import { forwardRef } from 'react'
 import { xpLevelInfo } from '../lib/xpLevel'
 import { ECONOMY } from '../lib/economyCopy'
 
@@ -7,11 +8,11 @@ const ArrowUpIcon = () => (
   </svg>
 )
 
-export default function XPProgressBar({ xp = 0, className = '' }) {
+const XPProgressBar = forwardRef(function XPProgressBar({ xp = 0, className = '' }, ref) {
   const { level, xpInLevel, levelMax, percent, xpToNext, nextLevel } = xpLevelInfo(xp)
 
   return (
-    <div className={className} data-xp-progress-bar>
+    <div ref={ref} className={className} data-xp-progress-bar>
       <div className="flex items-center justify-between mb-4">
         <span className="text-[14px] font-semibold text-[#1f2937]">{ECONOMY.levelProgress}</span>
         <div className="flex items-center gap-1.5 bg-[rgba(99,102,241,0.1)] px-3 py-[5px] rounded-full">
@@ -61,4 +62,6 @@ export default function XPProgressBar({ xp = 0, className = '' }) {
       </div>
     </div>
   )
-}
+})
+
+export default XPProgressBar

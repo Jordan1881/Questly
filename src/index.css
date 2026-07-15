@@ -5,7 +5,7 @@
 @layer components {
   .ds-page {
     min-height: 100vh;
-    background: var(--color-bg-subtle);
+    background: var(--color-bg-canvas);
     font-family: var(--font-heading);
   }
 
@@ -14,10 +14,19 @@
   }
 
   .ds-card {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border-subtle);
+    background: var(--color-card-surface);
+    border: 1px solid var(--color-border-soft);
     border-radius: var(--card-radius);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-soft-sm);
+  }
+
+  .ds-chrome {
+    background: var(--color-chrome-surface);
+    border-color: var(--color-border-soft);
+  }
+
+  .ds-chrome-tint {
+    background-color: var(--color-chrome-tint);
   }
 
   .ds-card-pad-sm {
@@ -91,7 +100,7 @@
 
   .ds-focus-ring:focus-visible {
     outline: none;
-    box-shadow: var(--focus-ring);
+    box-shadow: var(--focus-ring-soft);
   }
 
   .ds-card-lift {
@@ -100,7 +109,7 @@
 
   @media (hover: hover) {
     .ds-card-lift:hover {
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-soft-md);
       border-color: var(--color-border-brand);
     }
   }
@@ -174,8 +183,8 @@
   }
 
   .ds-nav-drawer {
-    background: var(--color-bg);
-    border-right: 1px solid var(--color-border);
+    background: var(--color-chrome-surface);
+    border-right: 1px solid var(--color-border-soft);
     font-family: var(--font-heading);
   }
 
