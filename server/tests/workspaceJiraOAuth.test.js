@@ -18,6 +18,8 @@ const { isEncrypted } = require('../lib/jiraTokenCrypto')
 
 const app = createApp()
 
+jest.setTimeout(30000)
+
 beforeAll(async () => {
   await db.migrate.latest()
 })
@@ -72,13 +74,11 @@ describe('GET /api/workspaces/jira/oauth/status', () => {
 })
 
 describe('GET /api/workspaces/:id/jira/oauth/start', () => {
-  test('returns authorize URL for workspace admin', async () => {
+  test('returns authorize URL for workspace admin without site or project', async () => {
     const { token, workspace, adminUser } = await createWorkspaceAsAdmin('ws-oauth-start')
 
     const res = await request(app)
-      .get(
-        `/api/workspaces/${workspace.id}/jira/oauth/start?jira_site_url=https://acme.atlassian.net&jira_project_key=QUEST&return_to=/admin`,
-      )
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/start?return_to=/admin`)
       .set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
@@ -90,8 +90,8 @@ describe('GET /api/workspaces/:id/jira/oauth/start', () => {
     const payload = jwt.verify(res.body.state, config.jwt.secret)
     expect(payload.sub).toBe(adminUser.id)
     expect(payload.workspaceId).toBe(workspace.id)
-    expect(payload.jiraSiteUrl).toBe('https://acme.atlassian.net')
-    expect(payload.jiraProjectKey).toBe('QUEST')
+    expect(payload.jiraSiteUrl == null || payload.jiraSiteUrl === '').toBe(true)
+    expect(payload.jiraProjectKey == null || payload.jiraProjectKey === '').toBe(true)
   })
 
   test('rejects non-admin users', async () => {
@@ -99,9 +99,7 @@ describe('GET /api/workspaces/:id/jira/oauth/start', () => {
     const { token: devToken } = await registerAndLogin('developer', 'ws-oauth-403')
 
     const res = await request(app)
-      .get(
-        `/api/workspaces/${workspace.id}/jira/oauth/start?jira_site_url=https://acme.atlassian.net&jira_project_key=QUEST`,
-      )
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/start`)
       .set('Authorization', `Bearer ${devToken}`)
 
     expect(res.status).toBe(403)
@@ -109,14 +107,12 @@ describe('GET /api/workspaces/:id/jira/oauth/start', () => {
 })
 
 describe('GET /api/workspaces/jira/oauth/callback', () => {
-  test('stores OAuth tokens and redirects with success', async () => {
+  test('exchanges code but does not finalize workspace Jira connect', async () => {
     const { workspace, adminUser } = await createWorkspaceAsAdmin('ws-oauth-cb')
     const state = createOAuthState({
       userId: adminUser.id,
       workspaceId: workspace.id,
       returnTo: '/admin',
-      jiraSiteUrl: 'https://acme.atlassian.net',
-      jiraProjectKey: 'QUEST',
     })
 
     nock('https://auth.atlassian.com')
@@ -133,24 +129,20 @@ describe('GET /api/workspaces/jira/oauth/callback', () => {
         account_id: 'atlassian-admin-123',
         email: 'adminws-oauth-cb@test.com',
       })
-      .get('/oauth/token/accessible-resources')
-      .reply(200, [{ id: 'cloud-acme', url: 'https://acme.atlassian.net' }])
 
     const res = await request(app)
       .get(`/api/workspaces/jira/oauth/callback?code=auth-code&state=${encodeURIComponent(state)}`)
       .expect(302)
 
     expect(res.headers.location).toContain('/admin')
-    expect(res.headers.location).toContain('workspace_jira_oauth=success')
+    expect(res.headers.location).toContain('workspace_jira_oauth=pending')
 
     const row = await db('workspaces').where({ id: workspace.id }).first()
-    expect(row.jira_auth_type).toBe('oauth')
-    expect(row.jira_cloud_id).toBe('cloud-acme')
-    expect(row.jira_site_url).toBe('https://acme.atlassian.net')
-    expect(row.jira_project_key).toBe('QUEST')
-    expect(isEncrypted(row.jira_access_token)).toBe(false)
-    expect(row.jira_access_token).toBe('workspace-oauth-access')
-    expect(row.jira_refresh_token).toBe('workspace-oauth-refresh')
+    expect(row.jira_access_token).toBeNull()
+    expect(row.jira_refresh_token).toBeNull()
+    expect(row.jira_site_url).toBeNull()
+    expect(row.jira_project_key).toBeNull()
+    expect(row.jira_cloud_id).toBeNull()
   })
 
   test('redirects when admin email mismatches Questly account', async () => {
@@ -159,8 +151,6 @@ describe('GET /api/workspaces/jira/oauth/callback', () => {
       userId: adminUser.id,
       workspaceId: workspace.id,
       returnTo: '/admin',
-      jiraSiteUrl: 'https://acme.atlassian.net',
-      jiraProjectKey: 'QUEST',
     })
 
     nock('https://auth.atlassian.com')
