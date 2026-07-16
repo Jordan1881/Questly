@@ -212,6 +212,40 @@ export const useAuthStore = create(
         }
       },
 
+      fetchPendingJiraOAuth: async () => {
+        try {
+          return await apiFetch('/api/auth/jira/oauth/pending')
+        } catch (err) {
+          if (err.status === 404 || err.status === 410) return null
+          throw err
+        }
+      },
+
+      fetchPendingJiraOAuthSites: async () => {
+        return apiFetch('/api/auth/jira/oauth/pending/sites')
+      },
+
+      confirmPendingJiraOAuthSite: async (siteUrl) => {
+        set({ isLoading: true, error: null })
+        try {
+          const result = await apiFetch('/api/auth/jira/oauth/pending/site', {
+            method: 'POST',
+            body: JSON.stringify({ site_url: siteUrl }),
+          })
+          if (result.user) set({ user: { ...get().user, ...result.user }, isLoading: false })
+          else set({ isLoading: false })
+          return result
+        } catch (err) {
+          set({ isLoading: false, error: authErrorMessage(err) })
+          throw err
+        }
+      },
+
+      cancelPendingJiraOAuth: async () => {
+        await apiFetch('/api/auth/jira/oauth/pending', { method: 'DELETE' })
+        return { ok: true }
+      },
+
       connectJira: async (accessToken) => {
         set({ isLoading: true, error: null })
         try {

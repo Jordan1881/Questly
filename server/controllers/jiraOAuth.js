@@ -3,11 +3,16 @@ const config = require('../config')
 const UserModel = require('../models/user')
 const WorkspaceModel = require('../models/workspace')
 const atlassianOAuth = require('../services/atlassianOAuth')
+const UserJiraOAuthPending = require('../models/userJiraOAuthPending')
 
 const STATE_PURPOSE = 'jira-oauth'
 
 function isSafeReturnPath(path) {
   return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//')
+}
+
+function normalizeSiteUrl(siteUrl) {
+  return (siteUrl || '').replace(/\/$/, '').toLowerCase()
 }
 
 function createOAuthState(userId, returnTo = '/dashboard') {
@@ -37,12 +42,11 @@ function redirectToFrontend(res, returnTo, params = {}) {
   res.redirect(url.toString())
 }
 
-async function resolveDeveloperJiraSiteUrl(user) {
-  if (user.workspace_id) {
-    const workspace = await WorkspaceModel.findById(user.workspace_id)
-    if (workspace?.jira_site_url) return workspace.jira_site_url
-  }
-  return config.jira.siteUrl
+/** Team workspace site only — no platform fallback (free-picker when absent). */
+async function resolveTeamJiraSiteUrl(user) {
+  if (!user?.workspace_id) return null
+  const workspace = await WorkspaceModel.findById(user.workspace_id)
+  return workspace?.jira_site_url || null
 }
 
 async function oauthStatus(_req, res) {
@@ -71,7 +75,7 @@ async function oauthStart(req, res, next) {
   }
 }
 
-async function oauthCallback(req, res, next) {
+async function oauthCallback(req, res) {
   let returnTo = '/dashboard'
 
   try {
@@ -135,15 +139,11 @@ async function oauthCallback(req, res, next) {
       })
     }
 
-    const siteUrl = await resolveDeveloperJiraSiteUrl(user)
-    if (siteUrl) {
-      const resources = await atlassianOAuth.fetchAccessibleResources(tokens.access_token)
-      if (!atlassianOAuth.siteUrlInResources(siteUrl, resources)) {
-        return redirectToFrontend(res, returnTo, {
-          jira_oauth: 'error',
-          jira_oauth_reason: 'site_not_granted',
-        })
-      }
+    if (!tokens?.access_token) {
+      return redirectToFrontend(res, returnTo, {
+        jira_oauth: 'error',
+        jira_oauth_reason: 'exchange_failed',
+      })
     }
 
     const accountId = profile.account_id || profile.accountId
@@ -154,13 +154,13 @@ async function oauthCallback(req, res, next) {
       })
     }
 
-    await UserModel.connectJira(userId, {
-      jira_access_token: tokens.access_token,
-      jira_refresh_token: tokens.refresh_token || null,
-      jira_account_id: accountId,
+    await UserJiraOAuthPending.upsert({
+      userId,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token || null,
     })
 
-    redirectToFrontend(res, returnTo, { jira_oauth: 'success' })
+    redirectToFrontend(res, returnTo, { jira_oauth: 'pending' })
   } catch (err) {
     redirectToFrontend(res, returnTo, {
       jira_oauth: 'error',
@@ -170,10 +170,157 @@ async function oauthCallback(req, res, next) {
   }
 }
 
+async function getPending(req, res, next) {
+  try {
+    if (req.user.role !== 'developer') {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const status = await UserJiraOAuthPending.getStatus(req.user.id)
+    if (status.status === 'missing') {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+    if (status.status === 'expired') {
+      return res.status(410).json({ error: 'Pending OAuth session expired' })
+    }
+
+    const teamSiteUrl = await resolveTeamJiraSiteUrl(req.user)
+    res.json({
+      pending: true,
+      expires_at: status.expires_at,
+      locked_site_url: teamSiteUrl,
+      site_locked: Boolean(teamSiteUrl),
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function cancelPending(req, res, next) {
+  try {
+    if (req.user.role !== 'developer') {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+    await UserJiraOAuthPending.deleteFor(req.user.id)
+    res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function listPendingSites(req, res, next) {
+  try {
+    if (req.user.role !== 'developer') {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const session = await UserJiraOAuthPending.findUsable(req.user.id)
+    if (!session) {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+
+    const teamSiteUrl = await resolveTeamJiraSiteUrl(req.user)
+    const resources = await atlassianOAuth.fetchAccessibleResources(session.accessToken)
+    const sites = (resources || []).map((resource) => ({
+      id: resource.id,
+      url: resource.url,
+      name: resource.name || resource.url,
+    }))
+
+    if (!sites.length) {
+      await UserJiraOAuthPending.deleteFor(req.user.id)
+      return res.status(422).json({
+        error: 'No Atlassian sites found for this account. Use Advanced API token connect, or authorize a different Atlassian account.',
+      })
+    }
+
+    if (teamSiteUrl) {
+      const locked = sites.find((s) => normalizeSiteUrl(s.url) === normalizeSiteUrl(teamSiteUrl))
+      if (!locked) {
+        await UserJiraOAuthPending.deleteFor(req.user.id)
+        return res.status(422).json({
+          error: 'Your Atlassian account does not include the team Jira site. Grant access to that site, or ask your admin.',
+        })
+      }
+      return res.json({
+        sites: [locked],
+        site_locked: true,
+        locked_site_url: teamSiteUrl,
+      })
+    }
+
+    res.json({ sites, site_locked: false, locked_site_url: null })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function confirmPendingSite(req, res, next) {
+  try {
+    if (req.user.role !== 'developer') {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const siteUrl = (req.body?.site_url || '').trim()
+    if (!siteUrl) {
+      return res.status(400).json({ error: 'site_url is required' })
+    }
+
+    const session = await UserJiraOAuthPending.findUsable(req.user.id)
+    if (!session) {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+
+    const teamSiteUrl = await resolveTeamJiraSiteUrl(req.user)
+    if (teamSiteUrl && normalizeSiteUrl(siteUrl) !== normalizeSiteUrl(teamSiteUrl)) {
+      return res.status(400).json({
+        error: 'Confirm the team Jira site — a different site cannot be selected',
+      })
+    }
+
+    const resources = await atlassianOAuth.fetchAccessibleResources(session.accessToken)
+    const resource = atlassianOAuth.findResourceForSiteUrl(siteUrl, resources)
+    if (!resource) {
+      return res.status(400).json({ error: 'Selected site is not in your accessible Atlassian sites' })
+    }
+
+    const profile = await atlassianOAuth.fetchAuthenticatedUser(session.accessToken)
+    const accountId = profile.account_id || profile.accountId
+    if (!accountId) {
+      return res.status(502).json({ error: 'Could not resolve Atlassian account id' })
+    }
+
+    const user = await UserModel.connectJira(req.user.id, {
+      jira_access_token: session.accessToken,
+      jira_refresh_token: session.refreshToken,
+      jira_account_id: accountId,
+      jira_site_url: resource.url,
+    })
+
+    await UserJiraOAuthPending.deleteFor(req.user.id)
+
+    res.json({
+      user: {
+        ...user,
+        jira_connected: UserModel.isJiraConnected(user),
+        jira_site_url: resource.url,
+      },
+      confirmed_site_url: resource.url,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   oauthStatus,
   oauthStart,
   oauthCallback,
+  getPending,
+  cancelPending,
+  listPendingSites,
+  confirmPendingSite,
   createOAuthState,
   verifyOAuthState,
+  resolveTeamJiraSiteUrl,
 }

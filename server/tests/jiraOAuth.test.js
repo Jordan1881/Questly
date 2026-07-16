@@ -21,6 +21,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   nock.cleanAll()
+  await db('user_jira_oauth_pending').del().catch(() => {})
   await db('join_requests').del()
   await db('sprints').del()
   await db('purchases').del()
@@ -80,14 +81,15 @@ describe('GET /api/auth/jira/oauth/start', () => {
     await request(app)
       .post('/api/auth/register')
       .send({
-        email: 'admin@test.com',
-        username: 'admin',
+        email: 'admin-oauth-role@test.com',
+        username: 'adminoauthrole',
         password: 'password123',
         role: 'admin',
       })
+    await db('users').where({ email: 'admin-oauth-role@test.com' }).update({ role: 'admin' })
     const login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'admin@test.com', password: 'password123' })
+      .send({ email: 'admin-oauth-role@test.com', password: 'password123' })
 
     const res = await request(app)
       .get('/api/auth/jira/oauth/start')
@@ -98,7 +100,7 @@ describe('GET /api/auth/jira/oauth/start', () => {
 })
 
 describe('GET /api/auth/jira/oauth/callback', () => {
-  test('stores OAuth tokens and redirects with success', async () => {
+  test('parks a pending session instead of finalizing connect', async () => {
     const { user } = await registerDeveloper('oauth-callback')
     const state = createOAuthState(user.id, '/dashboard')
 
@@ -118,22 +120,18 @@ describe('GET /api/auth/jira/oauth/callback', () => {
         email: 'devoauth-callback@test.com',
       })
 
-    const siteUrl = config.jira.siteUrl
-    nock('https://api.atlassian.com')
-      .get('/oauth/token/accessible-resources')
-      .reply(200, siteUrl ? [{ id: 'cloud-1', url: siteUrl }] : [])
-
     const res = await request(app)
       .get(`/api/auth/jira/oauth/callback?code=auth-code&state=${encodeURIComponent(state)}`)
       .expect(302)
 
     expect(res.headers.location).toContain('/dashboard')
-    expect(res.headers.location).toContain('jira_oauth=success')
+    expect(res.headers.location).toContain('jira_oauth=pending')
 
     const row = await db('users').where({ id: user.id }).first()
-    expect(row.jira_access_token).toBe('oauth-access-token')
-    expect(row.jira_refresh_token).toBe('oauth-refresh-token')
-    expect(row.jira_account_id).toBe('atlassian-account-123')
+    expect(row.jira_access_token).toBeNull()
+
+    const pending = await db('user_jira_oauth_pending').where({ user_id: user.id }).first()
+    expect(pending).toBeTruthy()
   })
 
   test('redirects when Atlassian account email mismatches Questly user', async () => {
@@ -177,5 +175,179 @@ describe('GET /api/auth/jira/oauth/callback', () => {
 
     expect(res.headers.location).toContain('/profile')
     expect(res.headers.location).toContain('jira_oauth_reason=denied')
+  })
+})
+
+async function seedDeveloperPending(user, email) {
+  const state = createOAuthState(user.id, '/settings')
+  nock('https://auth.atlassian.com')
+    .post('/oauth/token')
+    .reply(200, {
+      access_token: 'dev-pending-access',
+      refresh_token: 'dev-pending-refresh',
+      expires_in: 3600,
+    })
+  nock('https://api.atlassian.com')
+    .get('/me')
+    .reply(200, { account_id: 'atlassian-dev-1', email })
+  await request(app)
+    .get(`/api/auth/jira/oauth/callback?code=auth-code&state=${encodeURIComponent(state)}`)
+    .expect(302)
+}
+
+describe('developer pending OAuth confirm (T5)', () => {
+  test('locked confirm when team site exists', async () => {
+    const { token: adminToken } = await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: 'admin-t5-locked@test.com',
+        username: 'admint5locked',
+        password: 'password123',
+        role: 'admin',
+      })
+      .then(() =>
+        request(app)
+          .post('/api/auth/login')
+          .send({ email: 'admin-t5-locked@test.com', password: 'password123' }),
+      )
+      .then((res) => ({ token: res.body.token }))
+
+    const wsRes = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: 'Locked Team' })
+    const workspace = wsRes.body.workspace
+
+    const WorkspaceModel = require('../models/workspace')
+    await WorkspaceModel.connectJiraOAuth(workspace.id, {
+      jira_site_url: 'https://team.atlassian.net',
+      jira_project_key: 'TEAM',
+      jira_access_token: 'ws-access',
+      jira_refresh_token: 'ws-refresh',
+      jira_cloud_id: 'cloud-team',
+    })
+
+    const { token, user } = await registerDeveloper('t5-locked')
+    await db('users').where({ id: user.id }).update({ workspace_id: workspace.id })
+
+    await seedDeveloperPending(user, 'devt5-locked@test.com')
+
+    nock('https://api.atlassian.com')
+      .get('/oauth/token/accessible-resources')
+      .twice()
+      .reply(200, [
+        { id: 'cloud-other', url: 'https://other.atlassian.net', name: 'Other' },
+        { id: 'cloud-team', url: 'https://team.atlassian.net', name: 'Team' },
+      ])
+      .get('/me')
+      .reply(200, { account_id: 'atlassian-dev-1', email: 'devt5-locked@test.com' })
+
+    const listRes = await request(app)
+      .get('/api/auth/jira/oauth/pending/sites')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(listRes.status).toBe(200)
+    expect(listRes.body.site_locked).toBe(true)
+    expect(listRes.body.sites).toHaveLength(1)
+    expect(listRes.body.sites[0].url).toBe('https://team.atlassian.net')
+
+    const rejectRes = await request(app)
+      .post('/api/auth/jira/oauth/pending/site')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ site_url: 'https://other.atlassian.net' })
+    expect(rejectRes.status).toBe(400)
+
+    const confirmRes = await request(app)
+      .post('/api/auth/jira/oauth/pending/site')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ site_url: 'https://team.atlassian.net' })
+
+    expect(confirmRes.status).toBe(200)
+    expect(confirmRes.body.confirmed_site_url).toBe('https://team.atlassian.net')
+
+    const row = await db('users').where({ id: user.id }).first()
+    expect(row.jira_account_id).toBe('atlassian-dev-1')
+    expect(row.jira_site_url).toBe('https://team.atlassian.net')
+    expect(row.jira_access_token).toBeTruthy()
+
+    const pending = await db('user_jira_oauth_pending').where({ user_id: user.id }).first()
+    expect(pending).toBeFalsy()
+  })
+
+  test('free site picker when no team site', async () => {
+    const { token, user } = await registerDeveloper('t5-free')
+    await seedDeveloperPending(user, 'devt5-free@test.com')
+
+    nock('https://api.atlassian.com')
+      .get('/oauth/token/accessible-resources')
+      .twice()
+      .reply(200, [
+        { id: 'cloud-a', url: 'https://alpha.atlassian.net', name: 'Alpha' },
+        { id: 'cloud-b', url: 'https://beta.atlassian.net', name: 'Beta' },
+      ])
+      .get('/me')
+      .reply(200, { account_id: 'atlassian-dev-free', email: 'devt5-free@test.com' })
+
+    const listRes = await request(app)
+      .get('/api/auth/jira/oauth/pending/sites')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(listRes.status).toBe(200)
+    expect(listRes.body.site_locked).toBe(false)
+    expect(listRes.body.sites).toHaveLength(2)
+
+    const confirmRes = await request(app)
+      .post('/api/auth/jira/oauth/pending/site')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ site_url: 'https://beta.atlassian.net' })
+
+    expect(confirmRes.status).toBe(200)
+    expect(confirmRes.body.confirmed_site_url).toBe('https://beta.atlassian.net')
+
+    const row = await db('users').where({ id: user.id }).first()
+    expect(row.jira_site_url).toBe('https://beta.atlassian.net')
+  })
+
+  test('me reports personal_jira_site_mismatch after joining a different team site', async () => {
+    const { token, user } = await registerDeveloper('t5-mismatch')
+    await db('users').where({ id: user.id }).update({
+      jira_access_token: 'enc-token',
+      jira_account_id: 'acct-1',
+      jira_site_url: 'https://personal.atlassian.net',
+    })
+
+    const { token: adminToken } = await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: 'admin-t5-mm@test.com',
+        username: 'admint5mm',
+        password: 'password123',
+        role: 'admin',
+      })
+      .then(() =>
+        request(app)
+          .post('/api/auth/login')
+          .send({ email: 'admin-t5-mm@test.com', password: 'password123' }),
+      )
+      .then((res) => ({ token: res.body.token }))
+
+    const wsRes = await request(app)
+      .post('/api/workspaces')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: 'Mismatch Team' })
+    const WorkspaceModel = require('../models/workspace')
+    await WorkspaceModel.connectJiraOAuth(wsRes.body.workspace.id, {
+      jira_site_url: 'https://team.atlassian.net',
+      jira_project_key: 'TEAM',
+      jira_access_token: 'ws-access',
+      jira_refresh_token: 'ws-refresh',
+      jira_cloud_id: 'cloud-team',
+    })
+    await db('users').where({ id: user.id }).update({ workspace_id: wsRes.body.workspace.id })
+
+    const meRes = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`)
+    expect(meRes.status).toBe(200)
+    expect(meRes.body.user.personal_jira_site_mismatch).toBe(true)
+    expect(meRes.body.user.expected_jira_site_url).toBe('https://team.atlassian.net')
   })
 })
