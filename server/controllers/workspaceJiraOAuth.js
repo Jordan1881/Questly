@@ -211,6 +211,8 @@ async function getPending(req, res, next) {
     res.json({
       pending: true,
       expires_at: status.expires_at,
+      selected_site_url: status.selected_site_url || null,
+      selected_cloud_id: status.selected_cloud_id || null,
     })
   } catch (err) {
     next(err)
@@ -229,12 +231,87 @@ async function cancelPending(req, res, next) {
   }
 }
 
+function mapAccessibleSites(resources) {
+  return (resources || []).map((resource) => ({
+    id: resource.id,
+    url: resource.url,
+    name: resource.name || resource.url,
+  }))
+}
+
+async function listPendingSites(req, res, next) {
+  try {
+    const workspace = await assertAdminWorkspace(req, res)
+    if (!workspace) return
+
+    const session = await JiraOAuthPending.findUsable(req.user.id, workspace.id)
+    if (!session) {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+
+    const resources = await atlassianOAuth.fetchAccessibleResources(session.accessToken)
+    const sites = mapAccessibleSites(resources)
+    if (!sites.length) {
+      await JiraOAuthPending.deleteFor(req.user.id, workspace.id)
+      return res.status(422).json({
+        error: 'No Atlassian sites found for this account. Use Advanced API token connect, or authorize a different Atlassian account.',
+      })
+    }
+
+    res.json({ sites })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function confirmPendingSite(req, res, next) {
+  try {
+    const workspace = await assertAdminWorkspace(req, res)
+    if (!workspace) return
+
+    const siteUrl = (req.body?.site_url || '').trim()
+    if (!siteUrl) {
+      return res.status(400).json({ error: 'site_url is required' })
+    }
+
+    const session = await JiraOAuthPending.findUsable(req.user.id, workspace.id)
+    if (!session) {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+
+    const resources = await atlassianOAuth.fetchAccessibleResources(session.accessToken)
+    const resource = atlassianOAuth.findResourceForSiteUrl(siteUrl, resources)
+    if (!resource) {
+      return res.status(400).json({ error: 'Selected site is not in your accessible Atlassian sites' })
+    }
+
+    const updated = await JiraOAuthPending.selectSite(req.user.id, workspace.id, {
+      siteUrl: resource.url,
+      cloudId: resource.id,
+    })
+    if (!updated) {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+
+    res.json({
+      pending: true,
+      selected_site_url: updated.selectedSiteUrl,
+      selected_cloud_id: updated.selectedCloudId,
+      expires_at: new Date(updated.expiresAt).toISOString(),
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   oauthStatus,
   oauthStart,
   oauthCallback,
   getPending,
   cancelPending,
+  listPendingSites,
+  confirmPendingSite,
   createOAuthState,
   verifyOAuthState,
 }

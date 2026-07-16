@@ -180,6 +180,27 @@ describe('GET /api/workspaces/jira/oauth/callback', () => {
   })
 })
 
+
+async function seedPendingViaCallback(adminUser, workspace, email) {
+  const state = createOAuthState({
+    userId: adminUser.id,
+    workspaceId: workspace.id,
+    returnTo: '/admin',
+  })
+  nock('https://auth.atlassian.com')
+    .post('/oauth/token')
+    .reply(200, {
+      access_token: 'workspace-oauth-access',
+      refresh_token: 'workspace-oauth-refresh',
+    })
+  nock('https://api.atlassian.com')
+    .get('/me')
+    .reply(200, { account_id: 'atlassian-admin-123', email })
+  await request(app)
+    .get(`/api/workspaces/jira/oauth/callback?code=auth-code&state=${encodeURIComponent(state)}`)
+    .expect(302)
+}
+
 describe('pending OAuth session', () => {
   test('callback parks encrypted tokens in a pending session', async () => {
     const { workspace, adminUser } = await createWorkspaceAsAdmin('ws-pending-cb')
@@ -297,6 +318,73 @@ describe('pending OAuth session', () => {
 
     expect(getRes.status).toBe(410)
     expect(getRes.body.error).toMatch(/expired/i)
+
+    const row = await db('jira_oauth_pending')
+      .where({ user_id: adminUser.id, workspace_id: workspace.id })
+      .first()
+    expect(row).toBeFalsy()
+  })
+})
+
+describe('pending OAuth sites (T2)', () => {
+  test('lists accessible sites and confirms a site onto the pending session', async () => {
+    const { token, workspace, adminUser } = await createWorkspaceAsAdmin('ws-sites')
+    await seedPendingViaCallback(adminUser, workspace, 'adminws-sites@test.com')
+
+    // list + confirm each fetch accessible-resources
+    nock('https://api.atlassian.com')
+      .get('/oauth/token/accessible-resources')
+      .twice()
+      .reply(200, [
+        { id: 'cloud-acme', url: 'https://acme.atlassian.net', name: 'Acme' },
+        { id: 'cloud-beta', url: 'https://beta.atlassian.net', name: 'Beta' },
+      ])
+
+    const listRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/pending/sites`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(listRes.status).toBe(200)
+    expect(listRes.body.sites).toHaveLength(2)
+    expect(listRes.body.sites[0]).toEqual(
+      expect.objectContaining({ id: 'cloud-acme', url: 'https://acme.atlassian.net', name: 'Acme' }),
+    )
+
+    const confirmRes = await request(app)
+      .post(`/api/workspaces/${workspace.id}/jira/oauth/pending/site`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ site_url: 'https://acme.atlassian.net' })
+
+    expect(confirmRes.status).toBe(200)
+    expect(confirmRes.body.selected_site_url).toBe('https://acme.atlassian.net')
+    expect(confirmRes.body.selected_cloud_id).toBe('cloud-acme')
+    expect(confirmRes.body.pending).toBe(true)
+
+    const row = await db('jira_oauth_pending')
+      .where({ user_id: adminUser.id, workspace_id: workspace.id })
+      .first()
+    expect(row.selected_site_url).toBe('https://acme.atlassian.net')
+    expect(row.selected_cloud_id).toBe('cloud-acme')
+
+    const ws = await db('workspaces').where({ id: workspace.id }).first()
+    expect(ws.jira_site_url).toBeNull()
+    expect(ws.jira_access_token).toBeNull()
+  })
+
+  test('empty accessible-resources clears pending and returns an error', async () => {
+    const { token, workspace, adminUser } = await createWorkspaceAsAdmin('ws-sites-empty')
+    await seedPendingViaCallback(adminUser, workspace, 'adminws-sites-empty@test.com')
+
+    nock('https://api.atlassian.com')
+      .get('/oauth/token/accessible-resources')
+      .reply(200, [])
+
+    const listRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/pending/sites`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(listRes.status).toBe(422)
+    expect(listRes.body.error).toMatch(/no atlassian sites/i)
 
     const row = await db('jira_oauth_pending')
       .where({ user_id: adminUser.id, workspace_id: workspace.id })

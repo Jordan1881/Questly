@@ -40,11 +40,11 @@ export function useWorkspaceJiraOAuthCallback() {
       return
     }
 
-    // T0: OAuth validated but site/project confirm is not wired yet (#272+).
+    // T1+: OAuth validated; site/project confirm continues on this page.
     if (status === 'pending') {
       useWorkspaceStore.setState({ error: null })
       useToastStore.getState().showSuccess(
-        'Atlassian account linked. Site and project selection comes next.',
+        'Atlassian account linked. Confirm your Jira site below.',
       )
       return
     }
