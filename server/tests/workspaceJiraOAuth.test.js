@@ -392,3 +392,107 @@ describe('pending OAuth sites (T2)', () => {
     expect(row).toBeFalsy()
   })
 })
+
+async function seedPendingWithSelectedSite(
+  adminUser,
+  workspace,
+  email,
+  { siteUrl = 'https://acme.atlassian.net', cloudId = 'cloud-acme' } = {},
+) {
+  await seedPendingViaCallback(adminUser, workspace, email)
+  const JiraOAuthPending = require('../models/jiraOAuthPending')
+  await JiraOAuthPending.selectSite(adminUser.id, workspace.id, { siteUrl, cloudId })
+}
+
+describe('pending OAuth projects (T3)', () => {
+  test('lists projects for the confirmed site and finalizes with one sync', async () => {
+    const { token, workspace, adminUser } = await createWorkspaceAsAdmin('ws-projects')
+    await seedPendingWithSelectedSite(adminUser, workspace, 'adminws-projects@test.com')
+
+    nock('https://api.atlassian.com')
+      .get('/ex/jira/cloud-acme/rest/api/3/project')
+      .twice()
+      .reply(200, [
+        { id: '10000', key: 'QUEST', name: 'Questly' },
+        { id: '10001', key: 'OPS', name: 'Operations' },
+      ])
+
+    const listRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/pending/projects`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(listRes.status).toBe(200)
+    expect(listRes.body.projects).toEqual([
+      { key: 'QUEST', name: 'Questly' },
+      { key: 'OPS', name: 'Operations' },
+    ])
+
+    nock('https://auth.atlassian.com')
+      .post('/oauth/token')
+      .reply(200, {
+        access_token: 'fresh-workspace-access',
+        refresh_token: 'fresh-workspace-refresh',
+        expires_in: 3600,
+      })
+
+    nock('https://api.atlassian.com')
+      .get('/ex/jira/cloud-acme/rest/api/3/field')
+      .reply(200, [{ id: 'customfield_10016', name: 'Story point estimate' }])
+      .get('/ex/jira/cloud-acme/rest/api/3/search/jql')
+      .query(true)
+      .reply(200, {
+        issues: [
+          {
+            id: '20001',
+            key: 'QUEST-1',
+            fields: {
+              summary: 'First quest',
+              description: null,
+              status: { name: 'To Do' },
+              priority: { name: 'Medium' },
+              duedate: null,
+              customfield_10016: 2,
+            },
+          },
+        ],
+      })
+
+    const confirmRes = await request(app)
+      .post(`/api/workspaces/${workspace.id}/jira/oauth/pending/project`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ project_key: 'QUEST' })
+
+    expect(confirmRes.status).toBe(200)
+    expect(confirmRes.body.workspace.jira_connected).toBe(true)
+    expect(confirmRes.body.workspace.jira_site_url).toBe('https://acme.atlassian.net')
+    expect(confirmRes.body.workspace.jira_project_key).toBe('QUEST')
+    expect(confirmRes.body.workspace.jira_access_token).toBeUndefined()
+    expect(confirmRes.body.sync).toEqual(
+      expect.objectContaining({ synced: 1, created: 1 }),
+    )
+
+    const pending = await db('jira_oauth_pending')
+      .where({ user_id: adminUser.id, workspace_id: workspace.id })
+      .first()
+    expect(pending).toBeFalsy()
+
+    const ws = await db('workspaces').where({ id: workspace.id }).first()
+    expect(ws.jira_site_url).toBe('https://acme.atlassian.net')
+    expect(ws.jira_project_key).toBe('QUEST')
+    expect(ws.jira_cloud_id).toBe('cloud-acme')
+    expect(ws.jira_auth_type).toBe('oauth')
+    expect(ws.jira_access_token).toBeTruthy()
+  })
+
+  test('project list requires a confirmed site on the pending session', async () => {
+    const { token, workspace, adminUser } = await createWorkspaceAsAdmin('ws-projects-nosite')
+    await seedPendingViaCallback(adminUser, workspace, 'adminws-projects-nosite@test.com')
+
+    const listRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/pending/projects`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(listRes.status).toBe(400)
+    expect(listRes.body.error).toMatch(/site/i)
+  })
+})

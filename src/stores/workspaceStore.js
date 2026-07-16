@@ -231,6 +231,33 @@ export const useWorkspaceStore = create((set) => ({
     })
   },
 
+  fetchPendingJiraOAuthProjects: async (workspaceId) => {
+    return apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/projects`)
+  },
+
+  confirmPendingJiraOAuthProject: async (workspaceId, projectKey) => {
+    set({ isLoading: true, error: null })
+    try {
+      const result = await apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/project`, {
+        method: 'POST',
+        body: JSON.stringify({ project_key: projectKey }),
+      })
+      const patch = {
+        workspace: result.workspace,
+        isLoading: false,
+      }
+      if (result.sync) {
+        patch.lastJiraSyncAt = new Date().toISOString()
+        patch.lastJiraSyncResult = result.sync
+      }
+      set(patch)
+      return result
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
+
   cancelPendingJiraOAuth: async (workspaceId) => {
     await apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending`, { method: 'DELETE' })
     return { ok: true }

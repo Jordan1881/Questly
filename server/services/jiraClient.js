@@ -142,8 +142,8 @@ function getCredentials(overrides = {}) {
   const storyPointsFieldId =
     overrides.storyPointsFieldId || platform.storyPointsFieldId || null
 
-  if (bearerToken && cloudId && siteUrl && projectKey) {
-    return { siteUrl, projectKey, bearerToken, cloudId, storyPointsFieldId }
+  if (bearerToken && cloudId && siteUrl) {
+    return { siteUrl, projectKey: projectKey || null, bearerToken, cloudId, storyPointsFieldId }
   }
 
   if (!siteUrl || !email || !apiToken || !projectKey) {
@@ -248,6 +248,16 @@ async function validateCredentials({ siteUrl, email, apiToken, projectKey }) {
   return { accountId: myself.accountId || null }
 }
 
+async function listProjects(overrides = {}) {
+  const credentials = getCredentials(overrides)
+  const raw = await jiraGet('/rest/api/3/project', credentials)
+  const projects = Array.isArray(raw) ? raw : raw?.values || []
+  return projects.map((project) => ({
+    key: project.key,
+    name: project.name || project.key,
+  }))
+}
+
 async function lookupAccountIdByEmail(email, overrides = {}) {
   if (!email) return null
 
@@ -282,6 +292,7 @@ module.exports = {
   calculateXP,
   STORY_POINT_FIELD_NAMES,
   fetchProjectIssues,
+  listProjects,
   validateCredentials,
   lookupAccountIdByEmail,
   mapIssue,
