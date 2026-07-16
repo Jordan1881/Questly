@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useAuthStore } from '../stores/authStore'
+import { useToastStore } from '../stores/toastStore'
 
 const ERROR_MESSAGES = {
   denied: 'Jira connection was cancelled.',
@@ -34,6 +35,12 @@ export function useJiraOAuthCallback() {
 
     if (status === 'success') {
       fetchMe()
+      return
+    }
+
+    if (status === 'pending') {
+      useAuthStore.setState({ error: null })
+      useToastStore.getState().showSuccess('Atlassian account linked. Confirm your Jira site below.')
       return
     }
 

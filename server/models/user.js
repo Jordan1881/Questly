@@ -78,7 +78,7 @@ async function updateJiraAccountId(user_id, jira_account_id) {
 
 async function connectJira(
   user_id,
-  { jira_access_token, jira_account_id, jira_refresh_token = undefined },
+  { jira_access_token, jira_account_id, jira_refresh_token = undefined, jira_site_url = undefined },
 ) {
   const patch = {
     jira_access_token: encryptToken(jira_access_token),
@@ -87,6 +87,9 @@ async function connectJira(
   }
   if (jira_refresh_token !== undefined) {
     patch.jira_refresh_token = encryptToken(jira_refresh_token)
+  }
+  if (jira_site_url !== undefined) {
+    patch.jira_site_url = jira_site_url ? String(jira_site_url).replace(/\/$/, '') : null
   }
 
   const [user] = await db(TABLE).where({ id: user_id }).update(patch).returning('*')
@@ -100,6 +103,7 @@ async function disconnectJira(user_id) {
       jira_access_token: null,
       jira_refresh_token: null,
       jira_account_id: null,
+      jira_site_url: null,
       jira_personal_data_updated_at: null,
     })
     .returning('*')
