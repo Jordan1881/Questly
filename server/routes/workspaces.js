@@ -60,6 +60,8 @@ router.get('/:id/jira/oauth/pending', verifyToken, requireRoleUnlessMultiWorkspa
 router.delete('/:id/jira/oauth/pending', verifyToken, requireRoleUnlessMultiWorkspace('admin'), workspaceJiraOAuth.cancelPending)
 router.get('/:id/jira/oauth/pending/sites', verifyToken, requireRoleUnlessMultiWorkspace('admin'), workspaceJiraOAuth.listPendingSites)
 router.post('/:id/jira/oauth/pending/site', verifyToken, requireRoleUnlessMultiWorkspace('admin'), workspaceJiraOAuth.confirmPendingSite)
+router.get('/:id/jira/oauth/pending/projects', verifyToken, requireRoleUnlessMultiWorkspace('admin'), workspaceJiraOAuth.listPendingProjects)
+router.post('/:id/jira/oauth/pending/project', verifyToken, requireRoleUnlessMultiWorkspace('admin'), workspaceJiraOAuth.confirmPendingProject)
 router.post('/:id/jira/connect', verifyToken, requireRoleUnlessMultiWorkspace('admin'), connectJira)
 router.delete('/:id/jira/disconnect', verifyToken, requireRoleUnlessMultiWorkspace('admin'), disconnectJira)
 router.get('/:id', verifyToken, getById)

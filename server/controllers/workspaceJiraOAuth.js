@@ -3,6 +3,8 @@ const config = require('../config')
 const UserModel = require('../models/user')
 const WorkspaceModel = require('../models/workspace')
 const atlassianOAuth = require('../services/atlassianOAuth')
+const jiraClient = require('../services/jiraClient')
+const jiraSync = require('../services/jiraSync')
 const { userCanAdminWorkspace } = require('../lib/workspaceAuth')
 const JiraOAuthPending = require('../models/jiraOAuthPending')
 
@@ -304,6 +306,87 @@ async function confirmPendingSite(req, res, next) {
   }
 }
 
+async function listPendingProjects(req, res, next) {
+  try {
+    const workspace = await assertAdminWorkspace(req, res)
+    if (!workspace) return
+
+    const session = await JiraOAuthPending.findUsable(req.user.id, workspace.id)
+    if (!session) {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+    if (!session.selectedSiteUrl || !session.selectedCloudId) {
+      return res.status(400).json({ error: 'Confirm a Jira site before listing projects' })
+    }
+
+    const projects = await jiraClient.listProjects({
+      siteUrl: session.selectedSiteUrl,
+      cloudId: session.selectedCloudId,
+      bearerToken: session.accessToken,
+    })
+
+    res.json({ projects })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function confirmPendingProject(req, res, next) {
+  try {
+    const workspace = await assertAdminWorkspace(req, res)
+    if (!workspace) return
+
+    const projectKey = (req.body?.project_key || '').trim()
+    if (!projectKey) {
+      return res.status(400).json({ error: 'project_key is required' })
+    }
+
+    const session = await JiraOAuthPending.findUsable(req.user.id, workspace.id)
+    if (!session) {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+    if (!session.selectedSiteUrl || !session.selectedCloudId) {
+      return res.status(400).json({ error: 'Confirm a Jira site before confirming a project' })
+    }
+
+    const projects = await jiraClient.listProjects({
+      siteUrl: session.selectedSiteUrl,
+      cloudId: session.selectedCloudId,
+      bearerToken: session.accessToken,
+    })
+    const project = projects.find((p) => p.key.toUpperCase() === projectKey.toUpperCase())
+    if (!project) {
+      return res.status(400).json({ error: 'Selected project is not accessible on this Jira site' })
+    }
+
+    const connected = await WorkspaceModel.connectJiraOAuth(workspace.id, {
+      jira_site_url: session.selectedSiteUrl,
+      jira_project_key: project.key,
+      jira_access_token: session.accessToken,
+      jira_refresh_token: session.refreshToken,
+      jira_cloud_id: session.selectedCloudId,
+    })
+
+    await JiraOAuthPending.deleteFor(req.user.id, workspace.id)
+
+    let sync = null
+    let sync_error = null
+    try {
+      sync = await jiraSync.syncWorkspaceTasks(connected)
+    } catch (err) {
+      sync_error = err.message || 'Jira sync failed after connect'
+    }
+
+    res.json({
+      workspace: WorkspaceModel.sanitize(connected),
+      sync,
+      sync_error,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   oauthStatus,
   oauthStart,
@@ -312,6 +395,8 @@ module.exports = {
   cancelPending,
   listPendingSites,
   confirmPendingSite,
+  listPendingProjects,
+  confirmPendingProject,
   createOAuthState,
   verifyOAuthState,
 }
