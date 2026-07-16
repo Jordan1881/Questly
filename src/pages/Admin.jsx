@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import Sidebar from '../components/Sidebar'
 import PageHeader from '../components/PageHeader'
@@ -28,6 +28,18 @@ const AVATAR_GRADIENTS = [
   'linear-gradient(135deg, #ec4899, #be185d)',
   'linear-gradient(135deg, #14b8a6, #0d9488)',
 ]
+
+const ADMIN_TABS = [
+  { id: 'team', label: 'Team' },
+  { id: 'jira', label: 'Jira' },
+  { id: 'sprints', label: 'Sprints' },
+  { id: 'joins', label: 'Join Requests' },
+  { id: 'xp-approvals', label: 'XP Approvals' },
+  { id: 'rewards', label: 'Rewards' },
+  { id: 'xp', label: 'XP Settings' },
+  { id: 'users', label: 'Users' },
+]
+const ADMIN_TAB_IDS = new Set(ADMIN_TABS.map((t) => t.id))
 
 // ── Icons ──────────────────────────────────────────────────
 
@@ -420,12 +432,31 @@ export default function Admin() {
   const pendingJoinRequests = useWorkspaceStore((s) => s.pendingJoinRequests)
   const pendingXpApprovals = useWorkspaceStore((s) => s.pendingXpApprovals)
   const fetchPendingXpApprovals = useWorkspaceStore((s) => s.fetchPendingXpApprovals)
+  const [searchParams, setSearchParams] = useSearchParams()
   const [showSidebar, setShowSidebar] = useState(false)
-  const [activeTab, setActiveTab] = useState('team')
+  const initialTab = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(
+    () => (ADMIN_TAB_IDS.has(initialTab) ? initialTab : 'team'),
+  )
   const [membersLoading, setMembersLoading] = useState(
     () => useWorkspaceStore.getState().members.length === 0,
   )
   const homePath = pagePath('admin', multiWorkspace ? (routeWorkspaceId || activeWorkspaceId) : null)
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (ADMIN_TAB_IDS.has(tab) && tab !== activeTab) {
+      setActiveTab(tab)
+    }
+  }, [searchParams, activeTab])
+
+  const selectTab = (id) => {
+    setActiveTab(id)
+    const next = new URLSearchParams(searchParams)
+    if (id === 'team') next.delete('tab')
+    else next.set('tab', id)
+    setSearchParams(next, { replace: true })
+  }
 
   const developers = members.map(mapMemberToDeveloper)
   const totalJoinPending = pendingJoinRequests.length
@@ -457,16 +488,8 @@ export default function Admin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userRole, activeTab, routeWorkspaceId, activeWorkspaceId])
 
-  const TABS = [
-    { id: 'team',    label: 'Team'           },
-    { id: 'jira',    label: 'Jira'           },
-    { id: 'sprints', label: 'Sprints'        },
-    { id: 'joins',   label: 'Join Requests'  },
-    { id: 'xp-approvals', label: 'XP Approvals' },
-    { id: 'rewards', label: 'Rewards'        },
-    { id: 'xp',      label: 'XP Settings'    },
-    { id: 'users',   label: 'Users'          },
-  ]
+  const TABS = ADMIN_TABS
+
 
   return (
     <div className="ds-page">
@@ -514,7 +537,7 @@ export default function Admin() {
             <button
               key={id}
               type="button"
-              onClick={() => setActiveTab(id)}
+              onClick={() => selectTab(id)}
               className={`ds-focus-ring px-5 py-3 text-[length:var(--text-body)] font-medium transition-all duration-150 cursor-pointer relative ${
                 activeTab === id
                   ? 'text-[color:var(--color-brand)] font-semibold'

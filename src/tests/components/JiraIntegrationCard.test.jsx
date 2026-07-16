@@ -21,6 +21,14 @@ describe('JiraIntegrationCard', () => {
       isLoggedIn: true,
       isLoading: false,
       error: null,
+      fetchPendingJiraOAuth: vi.fn().mockResolvedValue(null),
+      fetchPendingJiraOAuthSites: vi.fn().mockResolvedValue({ sites: [] }),
+      fetchJiraOAuthStatus: vi.fn().mockResolvedValue({ available: false }),
+      startJiraOAuth: vi.fn(),
+      confirmPendingJiraOAuthSite: vi.fn(),
+      cancelPendingJiraOAuth: vi.fn(),
+      connectJira: vi.fn(),
+      disconnectJira: vi.fn(),
     })
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -33,7 +41,7 @@ describe('JiraIntegrationCard', () => {
     vi.restoreAllMocks()
   })
 
-  it('shows awaiting-team state without connect form when developer has no workspace', () => {
+  it('allows personal connect without a workspace', () => {
     useAuthStore.setState({
       user: { id: '1', email: 'dev@test.com', workspace_id: null, jira_connected: false },
     })
@@ -41,9 +49,8 @@ describe('JiraIntegrationCard', () => {
     renderCard()
 
     expect(screen.getByText('Awaiting team')).toBeInTheDocument()
-    expect(screen.getByText(/Join a team first/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Join a workspace' })).toHaveAttribute('href', '/workspace/join')
-    expect(screen.queryByPlaceholderText('Jira API token')).not.toBeInTheDocument()
+    expect(screen.getByText(/No team site yet/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'join a workspace' })).toHaveAttribute('href', '/workspace/join')
   })
 
   it('shows connect form when developer has workspace but is not connected', async () => {
@@ -56,14 +63,19 @@ describe('JiraIntegrationCard', () => {
         team_jira_connected: true,
         team_jira_site_host: 'acme.atlassian.net',
       },
+      fetchJiraOAuthStatus: vi.fn().mockResolvedValue({ available: true }),
+    })
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ available: true }),
     })
 
     renderCard()
 
     expect(screen.getByText('Not connected')).toBeInTheDocument()
-    expect(await screen.findByPlaceholderText('Jira API token')).toBeInTheDocument()
     expect(screen.getByText(/acme\.atlassian\.net/i)).toBeInTheDocument()
-    expect(screen.queryByText(/Join a team first/i)).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Connect with Jira/i })).toBeInTheDocument()
   })
 
   it('shows admin-not-connected message when team Jira is not ready', () => {
@@ -80,7 +92,6 @@ describe('JiraIntegrationCard', () => {
     renderCard()
 
     expect(screen.getByText(/admin has not connected team Jira yet/i)).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('Jira API token')).not.toBeInTheDocument()
   })
 
   it('shows connected state with disconnect when jira_connected is true', () => {
@@ -91,7 +102,6 @@ describe('JiraIntegrationCard', () => {
     renderCard()
 
     expect(screen.getByText('Connected')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Disconnect Jira' })).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText('Jira API token')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Disconnect' })).toBeInTheDocument()
   })
 })

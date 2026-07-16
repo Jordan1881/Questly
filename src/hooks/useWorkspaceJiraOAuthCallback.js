@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useWorkspaceStore } from '../stores/workspaceStore'
+import { useToastStore } from '../stores/toastStore'
 
 const ERROR_MESSAGES = {
   denied: 'Jira connection was cancelled.',
@@ -36,6 +37,16 @@ export function useWorkspaceJiraOAuthCallback() {
     if (status === 'success') {
       fetchMine().catch(() => {})
       useWorkspaceStore.setState({ error: null })
+      useToastStore.getState().showSuccess('Jira connection updated.')
+      return
+    }
+
+    // Pending: site/project confirm continues on Admin → Jira.
+    if (status === 'pending') {
+      useWorkspaceStore.setState({ error: null })
+      useToastStore.getState().showSuccess(
+        'Atlassian account linked. Confirm your Jira site below.',
+      )
       return
     }
 

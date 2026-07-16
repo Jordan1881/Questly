@@ -60,6 +60,12 @@ export default function JiraSyncTab() {
     syncJiraTasks,
     fetchWorkspaceJiraOAuthStatus,
     startWorkspaceJiraOAuth,
+    fetchPendingJiraOAuth,
+    fetchPendingJiraOAuthSites,
+    confirmPendingJiraOAuthSite,
+    fetchPendingJiraOAuthProjects,
+    confirmPendingJiraOAuthProject,
+    cancelPendingJiraOAuth,
     lastJiraSyncAt,
     lastJiraSyncResult,
     isLoading,
@@ -72,6 +78,76 @@ export default function JiraSyncTab() {
   const [siteUrl, setSiteUrl] = useState('')
   const [projectKey, setProjectKey] = useState('')
   const [accessToken, setAccessToken] = useState('')
+  const [oauthPending, setOauthPending] = useState(null)
+  const [pendingSites, setPendingSites] = useState([])
+  const [selectedPendingSite, setSelectedPendingSite] = useState('')
+  const [pendingProjects, setPendingProjects] = useState([])
+  const [selectedPendingProject, setSelectedPendingProject] = useState('')
+  const [pendingBusy, setPendingBusy] = useState(false)
+
+  const loadPendingProjects = async (workspaceId) => {
+    const { projects } = await fetchPendingJiraOAuthProjects(workspaceId)
+    setPendingProjects(projects || [])
+    if (projects?.length === 1) {
+      setSelectedPendingProject(projects[0].key)
+    }
+  }
+
+  const loadOauthPending = async (workspaceId) => {
+    if (!workspaceId) {
+      setOauthPending(null)
+      setPendingSites([])
+      setSelectedPendingSite('')
+      setPendingProjects([])
+      setSelectedPendingProject('')
+      return
+    }
+    try {
+      const pending = await fetchPendingJiraOAuth(workspaceId)
+      setOauthPending(pending)
+      if (!pending) {
+        setPendingSites([])
+        setSelectedPendingSite('')
+        setPendingProjects([])
+        setSelectedPendingProject('')
+        return
+      }
+      if (pending.selected_site_url) {
+        setSelectedPendingSite(pending.selected_site_url)
+        setPendingSites([])
+        try {
+          await loadPendingProjects(workspaceId)
+        } catch (err) {
+          setPendingProjects([])
+          setToast({
+            type: 'error',
+            message: err.message || 'Could not load Jira projects for the selected site.',
+          })
+        }
+        return
+      }
+      try {
+        const { sites } = await fetchPendingJiraOAuthSites(workspaceId)
+        setPendingSites(sites || [])
+        setPendingProjects([])
+        if (sites?.length === 1) {
+          setSelectedPendingSite(sites[0].url)
+        }
+      } catch (err) {
+        setPendingSites([])
+        setOauthPending(null)
+        setToast({
+          type: 'error',
+          message: err.message || 'No Atlassian sites found. Use Advanced API token connect.',
+        })
+        setShowManual(true)
+      }
+    } catch {
+      setOauthPending(null)
+      setPendingSites([])
+      setPendingProjects([])
+    }
+  }
 
   useEffect(() => {
     fetchMine().catch(() => {})
@@ -86,7 +162,79 @@ export default function JiraSyncTab() {
     setSiteUrl(workspace.jira_site_url || '')
     setProjectKey(workspace.jira_project_key || '')
     setAccessToken('')
-  }, [workspace])
+    loadOauthPending(workspace.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when workspace identity changes
+  }, [workspace?.id])
+
+  const handleConfirmPendingSite = async () => {
+    if (!workspace?.id || !selectedPendingSite) return
+    setPendingBusy(true)
+    clearError()
+    setToast(null)
+    try {
+      const result = await confirmPendingJiraOAuthSite(workspace.id, selectedPendingSite)
+      setOauthPending(result)
+      setPendingSites([])
+      await loadPendingProjects(workspace.id)
+      setToast({
+        type: 'success',
+        message: `Site confirmed: ${result.selected_site_url}. Choose a project to finish.`,
+      })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to confirm Jira site.' })
+    } finally {
+      setPendingBusy(false)
+    }
+  }
+
+  const handleConfirmPendingProject = async () => {
+    if (!workspace?.id || !selectedPendingProject) return
+    setPendingBusy(true)
+    clearError()
+    setToast(null)
+    try {
+      const result = await confirmPendingJiraOAuthProject(workspace.id, selectedPendingProject)
+      setOauthPending(null)
+      setPendingSites([])
+      setPendingProjects([])
+      setSelectedPendingProject('')
+      setSiteUrl(result.workspace.jira_site_url || '')
+      setProjectKey(result.workspace.jira_project_key || '')
+      if (result.sync) {
+        setToast({
+          type: 'success',
+          message: `Jira connected. Synced ${result.sync.synced} issue${result.sync.synced === 1 ? '' : 's'}.`,
+        })
+      } else {
+        setToast({
+          type: 'error',
+          message: result.sync_error || 'Jira connected, but the first sync failed. Use Sync with Jira.',
+        })
+      }
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to confirm Jira project.' })
+    } finally {
+      setPendingBusy(false)
+    }
+  }
+
+  const handleCancelPending = async () => {
+    if (!workspace?.id) return
+    setPendingBusy(true)
+    try {
+      await cancelPendingJiraOAuth(workspace.id)
+      setOauthPending(null)
+      setPendingSites([])
+      setSelectedPendingSite('')
+      setPendingProjects([])
+      setSelectedPendingProject('')
+      setToast({ type: 'success', message: 'Pending Jira connection cancelled.' })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to cancel pending connection.' })
+    } finally {
+      setPendingBusy(false)
+    }
+  }
 
   const handleOAuthConnect = async () => {
     if (!workspace?.id) return
@@ -94,12 +242,38 @@ export default function JiraSyncTab() {
     setToast(null)
     try {
       await startWorkspaceJiraOAuth(workspace.id, {
-        jira_site_url: siteUrl.trim(),
-        jira_project_key: projectKey.trim(),
-        return_to: '/admin',
+        return_to: '/admin?tab=jira',
       })
     } catch {
-      setToast({ type: 'error', message: 'Failed to start Jira OAuth. Check site URL and project key.' })
+      setToast({ type: 'error', message: 'Failed to start Jira OAuth. Try again or use an API token.' })
+    }
+  }
+
+  const handleOAuthReconnect = async () => {
+    if (!workspace?.id) return
+    clearError()
+    setToast(null)
+    try {
+      await startWorkspaceJiraOAuth(workspace.id, {
+        return_to: '/admin?tab=jira',
+        mode: 'reconnect',
+      })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to start Jira reconnect.' })
+    }
+  }
+
+  const handleOAuthChangeSiteProject = async () => {
+    if (!workspace?.id) return
+    clearError()
+    setToast(null)
+    try {
+      await startWorkspaceJiraOAuth(workspace.id, {
+        return_to: '/admin?tab=jira',
+        mode: 'change',
+      })
+    } catch {
+      setToast({ type: 'error', message: 'Failed to start change site/project. Try again.' })
     }
   }
 
@@ -225,6 +399,112 @@ export default function JiraSyncTab() {
           </div>
         )}
 
+        
+        {oauthPending && pendingSites.length > 0 && !oauthPending.selected_site_url && (
+          <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border-brand)] bg-[color:var(--color-bg-brand-subtle)] px-4 py-4 flex flex-col gap-3">
+            <div>
+              <h4 className="ds-body font-semibold text-[color:var(--color-gray-900)]">Confirm Jira site</h4>
+              <p className="ds-body-sm mt-1 text-[color:var(--color-text-muted)]">
+                Choose the Atlassian site for this workspace. You must confirm even if only one site appears.
+              </p>
+            </div>
+            <ul className="flex flex-col gap-2">
+              {pendingSites.map((site) => (
+                <li key={site.id}>
+                  <label className="flex items-start gap-3 cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)] px-3 py-2.5">
+                    <input
+                      type="radio"
+                      name="pending-jira-site"
+                      className="mt-1"
+                      checked={selectedPendingSite === site.url}
+                      onChange={() => setSelectedPendingSite(site.url)}
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-[color:var(--color-gray-900)] truncate">{site.name}</span>
+                      <span className="block ds-body-sm text-[color:var(--color-text-muted)] truncate">{site.url}</span>
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleConfirmPendingSite}
+                disabled={pendingBusy || !selectedPendingSite}
+                className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold disabled:opacity-55"
+              >
+                {pendingBusy ? 'Saving…' : 'Confirm site'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelPending}
+                disabled={pendingBusy}
+                className="ds-focus-ring px-4 py-2.5 rounded-[var(--radius-md)] ds-body-sm font-semibold text-[color:var(--color-text-muted)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {oauthPending?.selected_site_url && (
+          <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border-brand)] bg-[color:var(--color-bg-brand-subtle)] px-4 py-4 flex flex-col gap-3">
+            <div>
+              <h4 className="ds-body font-semibold text-[color:var(--color-gray-900)]">Confirm Jira project</h4>
+              <p className="ds-body-sm mt-1 text-[color:var(--color-text-muted)]">
+                Site: <strong>{oauthPending.selected_site_url}</strong>. Choose a project to finish connecting.
+                You must confirm even if only one project appears.
+              </p>
+            </div>
+            {pendingProjects.length === 0 ? (
+              <p className="ds-body-sm text-[color:var(--color-text-muted)]">Loading projects…</p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {pendingProjects.map((project) => (
+                  <li key={project.key}>
+                    <label className="flex items-start gap-3 cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)] px-3 py-2.5">
+                      <input
+                        type="radio"
+                        name="pending-jira-project"
+                        className="mt-1"
+                        checked={selectedPendingProject === project.key}
+                        onChange={() => setSelectedPendingProject(project.key)}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-semibold text-[color:var(--color-gray-900)] truncate">
+                          {project.name}
+                        </span>
+                        <span className="block ds-body-sm text-[color:var(--color-text-muted)] truncate">
+                          {project.key}
+                        </span>
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleConfirmPendingProject}
+                disabled={pendingBusy || !selectedPendingProject}
+                className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold disabled:opacity-55"
+              >
+                {pendingBusy ? 'Connecting…' : 'Confirm project'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelPending}
+                disabled={pendingBusy}
+                className="ds-focus-ring px-4 py-2.5 rounded-[var(--radius-md)] ds-body-sm font-semibold text-[color:var(--color-text-muted)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <FieldLabel>Jira site URL</FieldLabel>
@@ -245,14 +525,35 @@ export default function JiraSyncTab() {
 
           {oauthAvailable && !showManual && (
             <div className="flex items-center gap-3 flex-wrap">
-              <button
-                type="button"
-                onClick={handleOAuthConnect}
-                disabled={isLoading || !siteUrl.trim() || !projectKey.trim()}
-                className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
-              >
-                {isLoading ? 'Redirecting…' : isConnected ? 'Reconnect with Atlassian' : 'Connect with Atlassian'}
-              </button>
+              {!isConnected ? (
+                <button
+                  type="button"
+                  onClick={handleOAuthConnect}
+                  disabled={isLoading || pendingBusy || Boolean(oauthPending)}
+                  className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold disabled:opacity-55"
+                >
+                  {isLoading ? 'Redirecting…' : 'Connect with Atlassian'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleOAuthReconnect}
+                    disabled={isLoading || pendingBusy || Boolean(oauthPending)}
+                    className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold disabled:opacity-55"
+                  >
+                    {isLoading ? 'Redirecting…' : 'Reconnect'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOAuthChangeSiteProject}
+                    disabled={isLoading || pendingBusy || Boolean(oauthPending)}
+                    className="ds-focus-ring px-4 py-2.5 rounded-[var(--radius-md)] ds-body-sm font-semibold text-[color:var(--color-gray-800)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)] disabled:opacity-55"
+                  >
+                    Change site or project
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => setShowManual(true)}

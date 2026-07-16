@@ -17,6 +17,7 @@ process.env.JIRA_SITE_URL = 'https://test.atlassian.net'
 process.env.JIRA_PROJECT_KEY = 'QUEST'
 process.env.JIRA_ADMIN_EMAIL = 'admin@test.com'
 process.env.JIRA_ADMIN_API_TOKEN = 'test-token'
+process.env.JIRA_TOKEN_ENCRYPTION_KEY = process.env.JIRA_TOKEN_ENCRYPTION_KEY || 'test-jira-encryption-key'
 
 // Block real outbound HTTP in tests; allow local Postgres/API only.
 const nock = require('nock')

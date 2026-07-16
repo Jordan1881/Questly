@@ -79,7 +79,8 @@ describe('POST /api/workspaces/:id/jira/connect', () => {
     expect(res.body.workspace.jira_access_token).toBeUndefined()
 
     const row = await db('workspaces').where({ id: workspace.id }).first()
-    expect(row.jira_access_token).toBe('admin-jira-token')
+    expect(isEncrypted(row.jira_access_token)).toBe(true)
+    expect(decryptToken(row.jira_access_token)).toBe('admin-jira-token')
     expect(jiraClient.validateCredentials).toHaveBeenCalledWith({
       siteUrl: CONNECT_BODY.jira_site_url,
       email: 'adminconnect@test.com',
@@ -191,7 +192,8 @@ describe('POST /api/auth/me/jira/connect', () => {
     expect(res.body.user.jira_account_id).toBeUndefined()
 
     const row = await db('users').where({ id: devUser.id }).first()
-    expect(row.jira_access_token).toBe('dev-jira-token')
+    expect(isEncrypted(row.jira_access_token)).toBe(true)
+    expect(decryptToken(row.jira_access_token)).toBe('dev-jira-token')
     expect(row.jira_account_id).toBe('jira-acct-1')
   })
 

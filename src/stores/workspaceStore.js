@@ -210,12 +210,67 @@ export const useWorkspaceStore = create((set) => ({
     }
   },
 
-  startWorkspaceJiraOAuth: async (workspaceId, { jira_site_url, jira_project_key, return_to = '/admin' }) => {
-    const params = new URLSearchParams({
-      jira_site_url,
-      jira_project_key,
-      return_to,
+
+  fetchPendingJiraOAuth: async (workspaceId) => {
+    try {
+      return await apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending`)
+    } catch (err) {
+      if (err.status === 404 || err.status === 410) return null
+      throw err
+    }
+  },
+
+  fetchPendingJiraOAuthSites: async (workspaceId) => {
+    return apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/sites`)
+  },
+
+  confirmPendingJiraOAuthSite: async (workspaceId, siteUrl) => {
+    return apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/site`, {
+      method: 'POST',
+      body: JSON.stringify({ site_url: siteUrl }),
     })
+  },
+
+  fetchPendingJiraOAuthProjects: async (workspaceId) => {
+    return apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/projects`)
+  },
+
+  confirmPendingJiraOAuthProject: async (workspaceId, projectKey) => {
+    set({ isLoading: true, error: null })
+    try {
+      const result = await apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/project`, {
+        method: 'POST',
+        body: JSON.stringify({ project_key: projectKey }),
+      })
+      const patch = {
+        workspace: result.workspace,
+        isLoading: false,
+      }
+      if (result.sync) {
+        patch.lastJiraSyncAt = new Date().toISOString()
+        patch.lastJiraSyncResult = result.sync
+      }
+      set(patch)
+      return result
+    } catch (err) {
+      set({ isLoading: false, error: err.message })
+      throw err
+    }
+  },
+
+  cancelPendingJiraOAuth: async (workspaceId) => {
+    await apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending`, { method: 'DELETE' })
+    return { ok: true }
+  },
+
+  startWorkspaceJiraOAuth: async (
+    workspaceId,
+    { jira_site_url, jira_project_key, return_to = '/admin?tab=jira', mode } = {},
+  ) => {
+    const params = new URLSearchParams({ return_to })
+    if (jira_site_url) params.set('jira_site_url', jira_site_url)
+    if (jira_project_key) params.set('jira_project_key', jira_project_key)
+    if (mode) params.set('mode', mode)
     const { authorize_url } = await apiFetch(
       `/api/workspaces/${workspaceId}/jira/oauth/start?${params.toString()}`,
     )

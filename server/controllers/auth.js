@@ -166,7 +166,7 @@ async function me(req, res, next) {
       preferences,
     } = req.user
 
-    const jiraContext = await developerJiraContext(req.user)
+    const jiraContext = await developerJiraContext(internal || req.user)
 
     const payload = {
       user: {
