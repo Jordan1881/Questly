@@ -210,7 +210,33 @@ export const useWorkspaceStore = create((set) => ({
     }
   },
 
-  startWorkspaceJiraOAuth: async (workspaceId, { jira_site_url, jira_project_key, return_to = '/admin' } = {}) => {
+
+  fetchPendingJiraOAuth: async (workspaceId) => {
+    try {
+      return await apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending`)
+    } catch (err) {
+      if (err.status === 404 || err.status === 410) return null
+      throw err
+    }
+  },
+
+  fetchPendingJiraOAuthSites: async (workspaceId) => {
+    return apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/sites`)
+  },
+
+  confirmPendingJiraOAuthSite: async (workspaceId, siteUrl) => {
+    return apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending/site`, {
+      method: 'POST',
+      body: JSON.stringify({ site_url: siteUrl }),
+    })
+  },
+
+  cancelPendingJiraOAuth: async (workspaceId) => {
+    await apiFetch(`/api/workspaces/${workspaceId}/jira/oauth/pending`, { method: 'DELETE' })
+    return { ok: true }
+  },
+
+  startWorkspaceJiraOAuth: async (workspaceId, { jira_site_url, jira_project_key, return_to = '/admin?tab=jira' } = {}) => {
     const params = new URLSearchParams({ return_to })
     if (jira_site_url) params.set('jira_site_url', jira_site_url)
     if (jira_project_key) params.set('jira_project_key', jira_project_key)

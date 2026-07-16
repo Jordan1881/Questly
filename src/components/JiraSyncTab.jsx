@@ -60,6 +60,10 @@ export default function JiraSyncTab() {
     syncJiraTasks,
     fetchWorkspaceJiraOAuthStatus,
     startWorkspaceJiraOAuth,
+    fetchPendingJiraOAuth,
+    fetchPendingJiraOAuthSites,
+    confirmPendingJiraOAuthSite,
+    cancelPendingJiraOAuth,
     lastJiraSyncAt,
     lastJiraSyncResult,
     isLoading,
@@ -72,6 +76,49 @@ export default function JiraSyncTab() {
   const [siteUrl, setSiteUrl] = useState('')
   const [projectKey, setProjectKey] = useState('')
   const [accessToken, setAccessToken] = useState('')
+  const [oauthPending, setOauthPending] = useState(null)
+  const [pendingSites, setPendingSites] = useState([])
+  const [selectedPendingSite, setSelectedPendingSite] = useState('')
+  const [pendingBusy, setPendingBusy] = useState(false)
+
+  const loadOauthPending = async (workspaceId) => {
+    if (!workspaceId) {
+      setOauthPending(null)
+      setPendingSites([])
+      setSelectedPendingSite('')
+      return
+    }
+    try {
+      const pending = await fetchPendingJiraOAuth(workspaceId)
+      setOauthPending(pending)
+      if (!pending) {
+        setPendingSites([])
+        setSelectedPendingSite('')
+        return
+      }
+      if (pending.selected_site_url) {
+        setSelectedPendingSite(pending.selected_site_url)
+      }
+      try {
+        const { sites } = await fetchPendingJiraOAuthSites(workspaceId)
+        setPendingSites(sites || [])
+        if (!pending.selected_site_url && sites?.length === 1) {
+          setSelectedPendingSite(sites[0].url)
+        }
+      } catch (err) {
+        setPendingSites([])
+        setOauthPending(null)
+        setToast({
+          type: 'error',
+          message: err.message || 'No Atlassian sites found. Use Advanced API token connect.',
+        })
+        setShowManual(true)
+      }
+    } catch {
+      setOauthPending(null)
+      setPendingSites([])
+    }
+  }
 
   useEffect(() => {
     fetchMine().catch(() => {})
@@ -86,7 +133,41 @@ export default function JiraSyncTab() {
     setSiteUrl(workspace.jira_site_url || '')
     setProjectKey(workspace.jira_project_key || '')
     setAccessToken('')
-  }, [workspace])
+    loadOauthPending(workspace.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when workspace identity changes
+  }, [workspace?.id])
+
+  const handleConfirmPendingSite = async () => {
+    if (!workspace?.id || !selectedPendingSite) return
+    setPendingBusy(true)
+    clearError()
+    setToast(null)
+    try {
+      const result = await confirmPendingJiraOAuthSite(workspace.id, selectedPendingSite)
+      setOauthPending(result)
+      setToast({ type: 'success', message: `Site confirmed: ${result.selected_site_url}. Project picker comes next.` })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to confirm Jira site.' })
+    } finally {
+      setPendingBusy(false)
+    }
+  }
+
+  const handleCancelPending = async () => {
+    if (!workspace?.id) return
+    setPendingBusy(true)
+    try {
+      await cancelPendingJiraOAuth(workspace.id)
+      setOauthPending(null)
+      setPendingSites([])
+      setSelectedPendingSite('')
+      setToast({ type: 'success', message: 'Pending Jira connection cancelled.' })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to cancel pending connection.' })
+    } finally {
+      setPendingBusy(false)
+    }
+  }
 
   const handleOAuthConnect = async () => {
     if (!workspace?.id) return
@@ -94,7 +175,7 @@ export default function JiraSyncTab() {
     setToast(null)
     try {
       await startWorkspaceJiraOAuth(workspace.id, {
-        return_to: '/admin',
+        return_to: '/admin?tab=jira',
       })
     } catch {
       setToast({ type: 'error', message: 'Failed to start Jira OAuth. Try again or use an API token.' })
@@ -220,6 +301,59 @@ export default function JiraSyncTab() {
         {error && (
           <div className="rounded-[var(--radius-md)] bg-[color:var(--color-error-50)] border border-[color:var(--color-error-200)] px-4 py-3 ds-body-sm text-[color:var(--color-error-600)]">
             {error}
+          </div>
+        )}
+
+        
+        {oauthPending && pendingSites.length > 0 && (
+          <div className="rounded-[var(--radius-lg)] border border-[color:var(--color-border-brand)] bg-[color:var(--color-bg-brand-subtle)] px-4 py-4 flex flex-col gap-3">
+            <div>
+              <h4 className="ds-body font-semibold text-[color:var(--color-gray-900)]">Confirm Jira site</h4>
+              <p className="ds-body-sm mt-1 text-[color:var(--color-text-muted)]">
+                Choose the Atlassian site for this workspace. You must confirm even if only one site appears.
+              </p>
+            </div>
+            <ul className="flex flex-col gap-2">
+              {pendingSites.map((site) => (
+                <li key={site.id}>
+                  <label className="flex items-start gap-3 cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)] px-3 py-2.5">
+                    <input
+                      type="radio"
+                      name="pending-jira-site"
+                      className="mt-1"
+                      checked={selectedPendingSite === site.url}
+                      onChange={() => setSelectedPendingSite(site.url)}
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-[color:var(--color-gray-900)] truncate">{site.name}</span>
+                      <span className="block ds-body-sm text-[color:var(--color-text-muted)] truncate">{site.url}</span>
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleConfirmPendingSite}
+                disabled={pendingBusy || !selectedPendingSite || Boolean(oauthPending?.selected_site_url)}
+                className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold disabled:opacity-55"
+              >
+                {oauthPending?.selected_site_url
+                  ? 'Site confirmed'
+                  : pendingBusy
+                    ? 'Saving…'
+                    : 'Confirm site'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelPending}
+                disabled={pendingBusy}
+                className="ds-focus-ring px-4 py-2.5 rounded-[var(--radius-md)] ds-body-sm font-semibold text-[color:var(--color-text-muted)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)]"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
 

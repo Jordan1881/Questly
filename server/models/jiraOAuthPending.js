@@ -85,7 +85,25 @@ async function getStatus(userId, workspaceId) {
   return {
     status: 'pending',
     expires_at: new Date(raw.expires_at).toISOString(),
+    selected_site_url: raw.selected_site_url || null,
+    selected_cloud_id: raw.selected_cloud_id || null,
   }
+}
+
+async function selectSite(userId, workspaceId, { siteUrl, cloudId }) {
+  const usable = await findUsable(userId, workspaceId)
+  if (!usable) return null
+
+  const [row] = await db('jira_oauth_pending')
+    .where({ user_id: userId, workspace_id: workspaceId })
+    .update({
+      selected_site_url: siteUrl,
+      selected_cloud_id: cloudId,
+      updated_at: db.fn.now(),
+    })
+    .returning('*')
+
+  return mapRow(row)
 }
 
 /**
@@ -112,5 +130,6 @@ module.exports = {
   findRaw,
   deleteFor,
   getStatus,
+  selectSite,
   defaultExpiresAt,
 }
