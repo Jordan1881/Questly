@@ -12,19 +12,17 @@ function isSafeReturnPath(path) {
   return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//')
 }
 
-function createOAuthState({ userId, workspaceId, returnTo, jiraSiteUrl, jiraProjectKey }) {
-  return jwt.sign(
-    {
-      sub: userId,
-      workspaceId,
-      purpose: STATE_PURPOSE,
-      returnTo,
-      jiraSiteUrl,
-      jiraProjectKey,
-    },
-    config.jwt.secret,
-    { expiresIn: '15m' },
-  )
+function createOAuthState({ userId, workspaceId, returnTo, jiraSiteUrl = null, jiraProjectKey = null }) {
+  const payload = {
+    sub: userId,
+    workspaceId,
+    purpose: STATE_PURPOSE,
+    returnTo,
+  }
+  // Optional legacy fields — Phase 1 pickers no longer require them at start.
+  if (jiraSiteUrl) payload.jiraSiteUrl = jiraSiteUrl
+  if (jiraProjectKey) payload.jiraProjectKey = jiraProjectKey
+  return jwt.sign(payload, config.jwt.secret, { expiresIn: '15m' })
 }
 
 function verifyOAuthState(state) {
@@ -69,12 +67,8 @@ async function oauthStart(req, res, next) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
-    const jiraSiteUrl = (req.query.jira_site_url || '').trim()
-    const jiraProjectKey = (req.query.jira_project_key || '').trim()
-    if (!jiraSiteUrl || !jiraProjectKey) {
-      return res.status(400).json({ error: 'jira_site_url and jira_project_key are required' })
-    }
-
+    const jiraSiteUrl = (req.query.jira_site_url || '').trim() || null
+    const jiraProjectKey = (req.query.jira_project_key || '').trim() || null
     const returnTo = isSafeReturnPath(req.query.return_to) ? req.query.return_to : '/admin'
     const state = createOAuthState({
       userId: req.user.id,
@@ -104,16 +98,12 @@ async function oauthCallback(req, res) {
 
     let userId
     let workspaceId
-    let jiraSiteUrl
-    let jiraProjectKey
     try {
       if (!state) throw new Error('Missing OAuth state')
       const verified = verifyOAuthState(state)
       userId = verified.userId
       workspaceId = verified.workspaceId
       returnTo = verified.returnTo
-      jiraSiteUrl = verified.jiraSiteUrl
-      jiraProjectKey = verified.jiraProjectKey
     } catch {
       return redirectToFrontend(res, '/admin', {
         workspace_jira_oauth: 'error',
@@ -167,24 +157,16 @@ async function oauthCallback(req, res) {
       })
     }
 
-    const resources = await atlassianOAuth.fetchAccessibleResources(tokens.access_token)
-    const resource = atlassianOAuth.findResourceForSiteUrl(jiraSiteUrl, resources)
-    if (!resource) {
+    // T0 prefactor: validate Atlassian account only — do not finalize workspace
+    // Jira connect. Pending-session persistence lands in #272+.
+    if (!tokens?.access_token) {
       return redirectToFrontend(res, returnTo, {
         workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: 'site_not_granted',
+        workspace_jira_oauth_reason: 'exchange_failed',
       })
     }
 
-    await WorkspaceModel.connectJiraOAuth(workspaceId, {
-      jira_site_url: jiraSiteUrl,
-      jira_project_key: jiraProjectKey,
-      jira_access_token: tokens.access_token,
-      jira_refresh_token: tokens.refresh_token || null,
-      jira_cloud_id: resource.id,
-    })
-
-    redirectToFrontend(res, returnTo, { workspace_jira_oauth: 'success' })
+    redirectToFrontend(res, returnTo, { workspace_jira_oauth: 'pending' })
   } catch (err) {
     redirectToFrontend(res, returnTo, {
       workspace_jira_oauth: 'error',

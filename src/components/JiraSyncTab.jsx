@@ -94,12 +94,10 @@ export default function JiraSyncTab() {
     setToast(null)
     try {
       await startWorkspaceJiraOAuth(workspace.id, {
-        jira_site_url: siteUrl.trim(),
-        jira_project_key: projectKey.trim(),
         return_to: '/admin',
       })
     } catch {
-      setToast({ type: 'error', message: 'Failed to start Jira OAuth. Check site URL and project key.' })
+      setToast({ type: 'error', message: 'Failed to start Jira OAuth. Try again or use an API token.' })
     }
   }
 
@@ -248,7 +246,7 @@ export default function JiraSyncTab() {
               <button
                 type="button"
                 onClick={handleOAuthConnect}
-                disabled={isLoading || !siteUrl.trim() || !projectKey.trim()}
+                disabled={isLoading}
                 className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
               >
                 {isLoading ? 'Redirecting…' : isConnected ? 'Reconnect with Atlassian' : 'Connect with Atlassian'}
