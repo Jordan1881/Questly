@@ -37,10 +37,11 @@ export function useWorkspaceJiraOAuthCallback() {
     if (status === 'success') {
       fetchMine().catch(() => {})
       useWorkspaceStore.setState({ error: null })
+      useToastStore.getState().showSuccess('Jira connection updated.')
       return
     }
 
-    // T1+: OAuth validated; site/project confirm continues on this page.
+    // Pending: site/project confirm continues on Admin → Jira.
     if (status === 'pending') {
       useWorkspaceStore.setState({ error: null })
       useToastStore.getState().showSuccess(

@@ -249,6 +249,34 @@ export default function JiraSyncTab() {
     }
   }
 
+  const handleOAuthReconnect = async () => {
+    if (!workspace?.id) return
+    clearError()
+    setToast(null)
+    try {
+      await startWorkspaceJiraOAuth(workspace.id, {
+        return_to: '/admin?tab=jira',
+        mode: 'reconnect',
+      })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to start Jira reconnect.' })
+    }
+  }
+
+  const handleOAuthChangeSiteProject = async () => {
+    if (!workspace?.id) return
+    clearError()
+    setToast(null)
+    try {
+      await startWorkspaceJiraOAuth(workspace.id, {
+        return_to: '/admin?tab=jira',
+        mode: 'change',
+      })
+    } catch {
+      setToast({ type: 'error', message: 'Failed to start change site/project. Try again.' })
+    }
+  }
+
   const handleConnect = async (e) => {
     e.preventDefault()
     if (!workspace?.id) return
@@ -497,14 +525,35 @@ export default function JiraSyncTab() {
 
           {oauthAvailable && !showManual && (
             <div className="flex items-center gap-3 flex-wrap">
-              <button
-                type="button"
-                onClick={handleOAuthConnect}
-                disabled={isLoading}
-                className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
-              >
-                {isLoading ? 'Redirecting…' : isConnected ? 'Reconnect with Atlassian' : 'Connect with Atlassian'}
-              </button>
+              {!isConnected ? (
+                <button
+                  type="button"
+                  onClick={handleOAuthConnect}
+                  disabled={isLoading || pendingBusy || Boolean(oauthPending)}
+                  className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold disabled:opacity-55"
+                >
+                  {isLoading ? 'Redirecting…' : 'Connect with Atlassian'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleOAuthReconnect}
+                    disabled={isLoading || pendingBusy || Boolean(oauthPending)}
+                    className="ds-btn-primary ds-focus-ring px-5 py-2.5 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold disabled:opacity-55"
+                  >
+                    {isLoading ? 'Redirecting…' : 'Reconnect'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOAuthChangeSiteProject}
+                    disabled={isLoading || pendingBusy || Boolean(oauthPending)}
+                    className="ds-focus-ring px-4 py-2.5 rounded-[var(--radius-md)] ds-body-sm font-semibold text-[color:var(--color-gray-800)] border border-[color:var(--color-border-soft)] bg-[color:var(--color-card-surface)] disabled:opacity-55"
+                  >
+                    Change site or project
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => setShowManual(true)}

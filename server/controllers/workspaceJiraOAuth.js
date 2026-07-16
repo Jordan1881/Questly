@@ -15,7 +15,14 @@ function isSafeReturnPath(path) {
   return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//')
 }
 
-function createOAuthState({ userId, workspaceId, returnTo, jiraSiteUrl = null, jiraProjectKey = null }) {
+function createOAuthState({
+  userId,
+  workspaceId,
+  returnTo,
+  jiraSiteUrl = null,
+  jiraProjectKey = null,
+  mode = null,
+}) {
   const payload = {
     sub: userId,
     workspaceId,
@@ -25,6 +32,7 @@ function createOAuthState({ userId, workspaceId, returnTo, jiraSiteUrl = null, j
   // Optional legacy fields — Phase 1 pickers no longer require them at start.
   if (jiraSiteUrl) payload.jiraSiteUrl = jiraSiteUrl
   if (jiraProjectKey) payload.jiraProjectKey = jiraProjectKey
+  if (mode) payload.mode = mode
   return jwt.sign(payload, config.jwt.secret, { expiresIn: '15m' })
 }
 
@@ -40,6 +48,7 @@ function verifyOAuthState(state) {
     returnTo: isSafeReturnPath(payload.returnTo) ? payload.returnTo : '/admin',
     jiraSiteUrl: payload.jiraSiteUrl,
     jiraProjectKey: payload.jiraProjectKey,
+    mode: payload.mode === 'reconnect' || payload.mode === 'change' ? payload.mode : null,
   }
 }
 
@@ -73,12 +82,24 @@ async function oauthStart(req, res, next) {
     const jiraSiteUrl = (req.query.jira_site_url || '').trim() || null
     const jiraProjectKey = (req.query.jira_project_key || '').trim() || null
     const returnTo = isSafeReturnPath(req.query.return_to) ? req.query.return_to : '/admin'
+    const modeRaw = (req.query.mode || '').trim()
+    const mode = modeRaw === 'reconnect' || modeRaw === 'change' ? modeRaw : null
+
+    if (mode === 'reconnect') {
+      if (!WorkspaceModel.isJiraConnected(workspace) || workspace.jira_auth_type !== 'oauth') {
+        return res.status(400).json({
+          error: 'Reconnect requires an existing OAuth Jira connection on this workspace',
+        })
+      }
+    }
+
     const state = createOAuthState({
       userId: req.user.id,
       workspaceId: workspace.id,
       returnTo,
       jiraSiteUrl,
       jiraProjectKey,
+      mode,
     })
 
     res.json({
@@ -101,12 +122,14 @@ async function oauthCallback(req, res) {
 
     let userId
     let workspaceId
+    let mode = null
     try {
       if (!state) throw new Error('Missing OAuth state')
       const verified = verifyOAuthState(state)
       userId = verified.userId
       workspaceId = verified.workspaceId
       returnTo = verified.returnTo
+      mode = verified.mode
     } catch {
       return redirectToFrontend(res, '/admin', {
         workspace_jira_oauth: 'error',
@@ -165,6 +188,35 @@ async function oauthCallback(req, res) {
         workspace_jira_oauth: 'error',
         workspace_jira_oauth_reason: 'exchange_failed',
       })
+    }
+
+    if (mode === 'reconnect') {
+      if (!WorkspaceModel.isJiraConnected(workspace) || !workspace.jira_site_url) {
+        return redirectToFrontend(res, returnTo, {
+          workspace_jira_oauth: 'error',
+          workspace_jira_oauth_reason: 'not_connected',
+        })
+      }
+
+      const resources = await atlassianOAuth.fetchAccessibleResources(tokens.access_token)
+      const resource = atlassianOAuth.findResourceForSiteUrl(workspace.jira_site_url, resources)
+      if (!resource) {
+        return redirectToFrontend(res, returnTo, {
+          workspace_jira_oauth: 'error',
+          workspace_jira_oauth_reason: 'site_not_granted',
+        })
+      }
+
+      await WorkspaceModel.connectJiraOAuth(workspace.id, {
+        jira_site_url: workspace.jira_site_url,
+        jira_project_key: workspace.jira_project_key,
+        jira_access_token: tokens.access_token,
+        jira_refresh_token: tokens.refresh_token || workspace.jira_refresh_token,
+        jira_cloud_id: resource.id || workspace.jira_cloud_id,
+      })
+      await JiraOAuthPending.deleteFor(userId, workspaceId)
+
+      return redirectToFrontend(res, returnTo, { workspace_jira_oauth: 'success' })
     }
 
     await JiraOAuthPending.upsert({
