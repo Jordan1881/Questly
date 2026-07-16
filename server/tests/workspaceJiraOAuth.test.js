@@ -496,3 +496,116 @@ describe('pending OAuth projects (T3)', () => {
     expect(listRes.body.error).toMatch(/site/i)
   })
 })
+
+describe('reconnect vs change site/project (T4)', () => {
+  async function seedConnectedOAuthWorkspace(suffix) {
+    const { token, workspace, adminUser } = await createWorkspaceAsAdmin(suffix)
+    const WorkspaceModel = require('../models/workspace')
+    await WorkspaceModel.connectJiraOAuth(workspace.id, {
+      jira_site_url: 'https://acme.atlassian.net',
+      jira_project_key: 'QUEST',
+      jira_access_token: 'old-access',
+      jira_refresh_token: 'old-refresh',
+      jira_cloud_id: 'cloud-acme',
+    })
+    const connected = await WorkspaceModel.findById(workspace.id)
+    return { token, workspace: connected, adminUser }
+  }
+
+  test('reconnect refreshes tokens and preserves site/project', async () => {
+    const { token, workspace, adminUser } = await seedConnectedOAuthWorkspace('ws-reconnect')
+
+    const startRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/start?mode=reconnect&return_to=/admin`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(startRes.status).toBe(200)
+    const authorizeUrl = new URL(startRes.body.authorize_url)
+    const state = authorizeUrl.searchParams.get('state')
+
+    nock('https://auth.atlassian.com')
+      .post('/oauth/token')
+      .reply(200, {
+        access_token: 'reconnected-access',
+        refresh_token: 'reconnected-refresh',
+        expires_in: 3600,
+      })
+    nock('https://api.atlassian.com')
+      .get('/me')
+      .reply(200, { account_id: 'atlassian-admin-123', email: 'adminws-reconnect@test.com' })
+      .get('/oauth/token/accessible-resources')
+      .reply(200, [
+        { id: 'cloud-acme', url: 'https://acme.atlassian.net', name: 'Acme' },
+      ])
+
+    const cbRes = await request(app)
+      .get(`/api/workspaces/jira/oauth/callback?code=auth-code&state=${encodeURIComponent(state)}`)
+      .expect(302)
+
+    expect(cbRes.headers.location).toContain('workspace_jira_oauth=success')
+
+    const ws = await db('workspaces').where({ id: workspace.id }).first()
+    expect(ws.jira_site_url).toBe('https://acme.atlassian.net')
+    expect(ws.jira_project_key).toBe('QUEST')
+    expect(ws.jira_cloud_id).toBe('cloud-acme')
+    expect(ws.jira_access_token).not.toBe('old-access')
+
+    const { decryptToken } = require('../lib/jiraTokenCrypto')
+    expect(decryptToken(ws.jira_access_token)).toBe('reconnected-access')
+    expect(decryptToken(ws.jira_refresh_token)).toBe('reconnected-refresh')
+
+    const pending = await db('jira_oauth_pending')
+      .where({ user_id: adminUser.id, workspace_id: workspace.id })
+      .first()
+    expect(pending).toBeFalsy()
+  })
+
+  test('change mode parks pending so site/project can be overwritten', async () => {
+    const { token, workspace, adminUser } = await seedConnectedOAuthWorkspace('ws-change')
+
+    const startRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/start?mode=change&return_to=/admin`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(startRes.status).toBe(200)
+    const authorizeUrl = new URL(startRes.body.authorize_url)
+    const state = authorizeUrl.searchParams.get('state')
+
+    nock('https://auth.atlassian.com')
+      .post('/oauth/token')
+      .reply(200, {
+        access_token: 'change-access',
+        refresh_token: 'change-refresh',
+        expires_in: 3600,
+      })
+    nock('https://api.atlassian.com')
+      .get('/me')
+      .reply(200, { account_id: 'atlassian-admin-123', email: 'adminws-change@test.com' })
+
+    const cbRes = await request(app)
+      .get(`/api/workspaces/jira/oauth/callback?code=auth-code&state=${encodeURIComponent(state)}`)
+      .expect(302)
+
+    expect(cbRes.headers.location).toContain('workspace_jira_oauth=pending')
+
+    const pending = await db('jira_oauth_pending')
+      .where({ user_id: adminUser.id, workspace_id: workspace.id })
+      .first()
+    expect(pending).toBeTruthy()
+
+    const ws = await db('workspaces').where({ id: workspace.id }).first()
+    expect(ws.jira_site_url).toBe('https://acme.atlassian.net')
+    expect(ws.jira_project_key).toBe('QUEST')
+  })
+
+  test('reconnect is rejected when workspace Jira is not connected', async () => {
+    const { token, workspace } = await createWorkspaceAsAdmin('ws-reconnect-empty')
+
+    const startRes = await request(app)
+      .get(`/api/workspaces/${workspace.id}/jira/oauth/start?mode=reconnect`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(startRes.status).toBe(400)
+    expect(startRes.body.error).toMatch(/reconnect requires an existing/i)
+  })
+})
