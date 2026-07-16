@@ -4,6 +4,7 @@ const UserModel = require('../models/user')
 const WorkspaceModel = require('../models/workspace')
 const atlassianOAuth = require('../services/atlassianOAuth')
 const { userCanAdminWorkspace } = require('../lib/workspaceAuth')
+const JiraOAuthPending = require('../models/jiraOAuthPending')
 
 const STATE_PURPOSE = 'workspace-jira-oauth'
 const WORKSPACE_CALLBACK_URL = () => config.atlassian.workspaceCallbackUrl
@@ -157,14 +158,19 @@ async function oauthCallback(req, res) {
       })
     }
 
-    // T0 prefactor: validate Atlassian account only — do not finalize workspace
-    // Jira connect. Pending-session persistence lands in #272+.
     if (!tokens?.access_token) {
       return redirectToFrontend(res, returnTo, {
         workspace_jira_oauth: 'error',
         workspace_jira_oauth_reason: 'exchange_failed',
       })
     }
+
+    await JiraOAuthPending.upsert({
+      userId,
+      workspaceId,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token || null,
+    })
 
     redirectToFrontend(res, returnTo, { workspace_jira_oauth: 'pending' })
   } catch (err) {
@@ -176,10 +182,59 @@ async function oauthCallback(req, res) {
   }
 }
 
+async function assertAdminWorkspace(req, res) {
+  const workspace = await WorkspaceModel.findById(req.params.id)
+  if (!workspace) {
+    res.status(404).json({ error: 'Workspace not found' })
+    return null
+  }
+  if (!(await userCanAdminWorkspace(req.user, workspace))) {
+    res.status(403).json({ error: 'Forbidden' })
+    return null
+  }
+  return workspace
+}
+
+async function getPending(req, res, next) {
+  try {
+    const workspace = await assertAdminWorkspace(req, res)
+    if (!workspace) return
+
+    const status = await JiraOAuthPending.getStatus(req.user.id, workspace.id)
+    if (status.status === 'missing') {
+      return res.status(404).json({ error: 'No pending OAuth session' })
+    }
+    if (status.status === 'expired') {
+      return res.status(410).json({ error: 'Pending OAuth session expired' })
+    }
+
+    res.json({
+      pending: true,
+      expires_at: status.expires_at,
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function cancelPending(req, res, next) {
+  try {
+    const workspace = await assertAdminWorkspace(req, res)
+    if (!workspace) return
+
+    await JiraOAuthPending.deleteFor(req.user.id, workspace.id)
+    res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   oauthStatus,
   oauthStart,
   oauthCallback,
+  getPending,
+  cancelPending,
   createOAuthState,
   verifyOAuthState,
 }
