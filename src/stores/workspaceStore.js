@@ -93,6 +93,11 @@ export const useWorkspaceStore = create((set) => ({
       set({ joinRequest: join_request, isLoading: false })
       return join_request
     } catch (err) {
+      // Admin (or other non-developer) callers get 403 — not a user-facing failure.
+      if (err.status === 403 || err.status === 401) {
+        set({ joinRequest: null, isLoading: false })
+        return null
+      }
       set({ isLoading: false, error: err.message })
       throw err
     }
