@@ -46,9 +46,14 @@ export default function Workspace() {
   const [joinTarget, setJoinTarget] = useState(null)
 
   useEffect(() => {
-    if (isAdminShell) fetchMine().catch(() => {})
-    fetchMyJoinRequest().catch(() => {})
-  }, [fetchMine, fetchMyJoinRequest, isAdminShell])
+    clearError()
+    if (isAdminShell) {
+      fetchMine().catch(() => {})
+    } else {
+      // Developer-only endpoint — calling it as admin yields 403 "Forbidden".
+      fetchMyJoinRequest().catch(() => {})
+    }
+  }, [fetchMine, fetchMyJoinRequest, isAdminShell, clearError])
 
   const activateCreated = async (workspaceId) => {
     if (!workspaceId) return
