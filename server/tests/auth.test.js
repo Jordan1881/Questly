@@ -129,6 +129,29 @@ describe('POST /api/auth/login', () => {
     expect(res.body.user.jira_connected).toBe(true)
   })
 
+  test('still logs in when encrypted Jira tokens cannot be decrypted', async () => {
+    const { encryptToken } = require('../lib/jiraTokenCrypto')
+    const savedKey = process.env.JIRA_TOKEN_ENCRYPTION_KEY
+    process.env.JIRA_TOKEN_ENCRYPTION_KEY = 'login-regression-key'
+    const encrypted = encryptToken('secret-jira-token')
+    await db('users').where({ email: 'dev@test.com' }).update({
+      jira_access_token: encrypted,
+      jira_refresh_token: encryptToken('secret-refresh-token'),
+      jira_account_id: 'jira-acct-1',
+    })
+    delete process.env.JIRA_TOKEN_ENCRYPTION_KEY
+
+    try {
+      const res = await loginUser()
+      expect(res.status).toBe(200)
+      expect(res.body.token).toBeDefined()
+      expect(res.body.user.email).toBe('dev@test.com')
+    } finally {
+      if (savedKey === undefined) delete process.env.JIRA_TOKEN_ENCRYPTION_KEY
+      else process.env.JIRA_TOKEN_ENCRYPTION_KEY = savedKey
+    }
+  })
+
   test('includes jira_connected false when developer has not linked Jira', async () => {
     const res = await loginUser()
 
