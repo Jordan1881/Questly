@@ -33,6 +33,12 @@ The browser talks to Vercel for static assets; API calls go to Railway via `VITE
 - Story points → difficulty → XP: 1–2 Easy/20, 3–5 Medium/40, 8+ Hard/70.
 - Jira tokens at rest are encrypted when `JIRA_TOKEN_ENCRYPTION_KEY` is set (T159).
 
+### System ownership and limitations
+
+**Jira is the source of truth for issues**: project scope, issue details, assignees, story points, priority, dates, and displayed workflow status. **Questly is the source of truth for completion and rewards**: per-member quest completion, XP, levels, Coins, purchases, and coupon fulfilment.
+
+Questly intentionally does not replace Jira boards, workflows, comments, or issue editing. Completing a quest does not currently transition its Jira issue; a later sync refreshes the displayed Jira status. Sync is admin-initiated rather than webhook- or schedule-driven. These limits keep the project focused on secure multi-tenant integration and the complete work-to-reward loop.
+
 ## Testing strategy
 
 | Layer | Tool | Coverage |
@@ -57,7 +63,7 @@ CI (`.github/workflows/ci.yml`): backend tests → frontend coverage → E2E on 
 
 - Global Jira env vars are fine for demos but not multi-tenant SaaS — workspace DB credentials are the target model (#179).
 - Join approval must not throw when Jira lookup fails; developer Jira connect is optional until workspace approval.
-- Sync upserts by `jira_issue_id` only — stale tasks from old workspaces need assignment filtering (#203).
+- Jira issue IDs are not globally unique across tenants; the sync now upserts and prunes by `workspace_id` plus `jira_issue_id` (#203).
 - Join approval must not throw when Jira is unconfigured (CI E2E).
 - Playwright needs `workers: 1` and production build (`serve`) to match CI.
 - Lifetime XP (level), season score (sprint XP), and spendable coins must be clearly labeled in UI (dashboard vs profile vs shop).

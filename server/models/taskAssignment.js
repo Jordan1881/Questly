@@ -54,6 +54,19 @@ async function setCompleted(task_id, user_id, completed, trx = db) {
   return assignment ?? null
 }
 
+// Atomically transition an assignment to completed only if it is not already
+// completed. Returns the updated row when THIS call performed the transition,
+// or null when the assignment was already completed (e.g. a concurrent
+// duplicate request won the race). Prevents double-awarding XP/coins.
+async function markCompleted(task_id, user_id, trx = db) {
+  const [assignment] = await trx(TABLE)
+    .where({ task_id, user_id })
+    .whereNull('completed_at')
+    .update({ completed_at: trx.fn.now() })
+    .returning('*')
+  return assignment ?? null
+}
+
 async function listByTask(task_id) {
   return db(TABLE).where({ task_id })
 }
@@ -71,5 +84,6 @@ module.exports = {
   listByTask,
   findForUser,
   setCompleted,
+  markCompleted,
   removeUncompleted,
 }

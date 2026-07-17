@@ -384,6 +384,7 @@ Full runbook: **[DEPLOY.md](DEPLOY.md)** — env vars, OAuth callbacks, migratio
 | Document | Description |
 |----------|-------------|
 | [docs/README.md](docs/README.md) | Documentation index |
+| [docs/PROJECT-OVERVIEW.md](docs/PROJECT-OVERVIEW.md) | Presentation overview — architecture, user stories, metrics, scope |
 | [docs/API.md](docs/API.md) | REST API reference |
 | [docs/WRITEUP.md](docs/WRITEUP.md) | Architecture deep-dive |
 | [docs/DEMO.md](docs/DEMO.md) | Demo script & talking points |

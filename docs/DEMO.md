@@ -1,6 +1,17 @@
 # Questly Demo Walkthrough
 
-Estimated total: **~15 minutes** for all five E2E journeys.
+Estimated total: **~17 minutes** for the introduction and five E2E journeys.
+
+## Introduction — Problem, architecture, Jira connection (~2 min)
+
+1. Show the [presentation overview](./PROJECT-OVERVIEW.md) and state the ownership rule: Jira owns issues; Questly owns completion and rewards.
+2. Sign in as an admin and open **Admin → Jira**.
+3. Start OAuth, select an auto-discovered Jira site and project, then confirm the connection.
+4. Run one sync and open the resulting quests.
+
+**Talking points:** Questly is a motivation layer rather than a Jira replacement; credentials are workspace-scoped and encrypted; story points determine quest difficulty and XP.
+
+**Expected UI:** Connected Jira site/project, successful sync summary, and imported quests.
 
 ## Journey 1 — Join, complete task, XP (~3 min)
 
@@ -52,3 +63,5 @@ Estimated total: **~15 minutes** for all five E2E journeys.
 - Use 1280×720 viewport; hide OS notifications.
 - Pre-create admin workspace or use fresh E2E seed emails.
 - For live Jira demo, connect workspace in Admin → Jira first.
+- Keep the production URLs and backup screenshots ready in case Jira or hosting is temporarily unavailable.
+- End with the repository metrics from `PROJECT-OVERVIEW.md`; describe test-file counts as evidence, not as test-case counts.

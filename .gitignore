@@ -12,7 +12,10 @@ dist
 dist-ssr
 *.local
 
-# Backend env (never commit secrets)
+# Environment files (never commit secrets)
+.env
+.env.*
+!.env.example
 server/.env
 server/uploads/
 
@@ -35,6 +38,11 @@ test-results/
 !.vscode/extensions.json
 .idea
 .DS_Store
+# Finder conflict copies
+* 2.js
+* 2.jsx
+* 2.cjs
+* 2.json
 *.suo
 *.ntvs*
 *.njsproj
