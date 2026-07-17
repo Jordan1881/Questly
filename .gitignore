@@ -32,6 +32,7 @@ server/coverage/
 # Build / test artifacts
 dist/
 test-results/
+playwright-report/
 
 # Editor directories and files
 .vscode/*
@@ -48,4 +49,3 @@ test-results/
 *.njsproj
 *.sln
 *.sw?
-test-results/
