@@ -166,7 +166,10 @@ async function updateCompletion(req, res, next) {
 
     const result = await db.transaction(async (trx) => {
       if (completed && !wasCompleted && requiresApproval) {
-        const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, true, trx)
+        const updated = await TaskAssignmentModel.markCompleted(task.id, req.user.id, trx)
+        if (!updated) {
+          return { alreadyCompleted: true }
+        }
         await XpApprovalRequestModel.createPending(
           {
             workspace_id: task.workspace_id,
@@ -221,7 +224,18 @@ async function updateCompletion(req, res, next) {
         }
       }
 
-      const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, completed, trx)
+      let updated
+      if (completed) {
+        // Atomic guard: only the request that flips completed_at from NULL wins,
+        // so concurrent duplicate submits cannot double-award XP/coins.
+        updated = await TaskAssignmentModel.markCompleted(task.id, req.user.id, trx)
+        if (!updated) {
+          return { alreadyCompleted: true }
+        }
+      } else {
+        updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, false, trx)
+      }
+
       const reward = await taskRewards.applyCompletionChange(trx, {
         userId: req.user.id,
         task,
@@ -249,6 +263,10 @@ async function updateCompletion(req, res, next) {
         },
       }
     })
+
+    if (result.alreadyCompleted) {
+      return res.status(409).json({ error: 'Task is already completed' })
+    }
 
     const pendingAfter = completed && requiresApproval && !wasCompleted
       ? await XpApprovalRequestModel.findPendingByTaskAndUser(task.id, req.user.id)

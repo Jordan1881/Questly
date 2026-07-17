@@ -20,6 +20,7 @@ https://github.com/Jordan1881/Questly
 | API documentation | [docs/API.md](./API.md) |
 | ER diagram | [docs/questly-schema.mermaid](./questly-schema.mermaid) |
 | Project write-up | [docs/WRITEUP.md](./WRITEUP.md) |
+| Presentation overview | [docs/PROJECT-OVERVIEW.md](./PROJECT-OVERVIEW.md) |
 | Demo script | [docs/DEMO.md](./DEMO.md) |
 | UI screenshots | [docs/screenshots/](./screenshots/) |
 | E2E tests | `e2e/journey-*.spec.js` (5 journeys) |
@@ -40,4 +41,4 @@ npx playwright test --pass-with-no-tests
 
 ## Demo video
 
-Record using [docs/DEMO.md](./DEMO.md) talking points; attach link here when available.
+**Status:** recording pending. Record using the [demo walkthrough](./DEMO.md), upload the final video, and replace this sentence with the public or institution-accessible URL before submission.
