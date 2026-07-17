@@ -8,6 +8,7 @@ import {
   seedTask,
   seedWorkspaceJira,
   taskCardByTitle,
+  waitForQuestXpAwarded,
 } from './helpers/api.mjs'
 
 const ts = Date.now()
@@ -65,6 +66,7 @@ test('Journey 1 — join workspace, team Jira banner, complete task, XP on dashb
 
   const taskCard = taskCardByTitle(page, 'E2E Journey Task')
   await taskCard.getByRole('button', { name: /mark complete/i }).click()
+  await waitForQuestXpAwarded(page, 40)
 
   await page.goto('/dashboard')
   await expect(page.getByText('completed').first()).toBeVisible({ timeout: 10000 })

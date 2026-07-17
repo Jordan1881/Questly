@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { setupApprovedDeveloper, seedTask, reconcileAssignments, taskCardByTitle } from './helpers/api.mjs'
+import { setupApprovedDeveloper, seedTask, reconcileAssignments, taskCardByTitle, waitForQuestXpAwarded } from './helpers/api.mjs'
 
 const ts = Date.now()
 const PASSWORD = 'Password123!'
@@ -41,6 +41,7 @@ test('Journey 5 — assignee sync adds task; remove assignee drops uncompleted a
 
   const taskCard = taskCardByTitle(page, 'Assignee Sync Task')
   await taskCard.getByRole('button', { name: /mark complete/i }).click()
+  await waitForQuestXpAwarded(page, 20)
   await expect(taskCard.getByRole('button', { name: /mark incomplete/i })).toBeVisible({ timeout: 10000 })
 
   await reconcileAssignments(task.id, [])
