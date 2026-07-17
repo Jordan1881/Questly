@@ -1,3 +1,5 @@
+import { expect } from '@playwright/test'
+
 const API_BASE = process.env.PLAYWRIGHT_API_URL || 'http://localhost:3001'
 
 export async function api(path, { method = 'GET', token, body } = {}) {
@@ -136,6 +138,21 @@ export function taskCardByTitle(page, title) {
     .getByRole('heading', { name: title, exact: true })
     .locator('xpath=ancestor::div[contains(@class,"ds-card")]')
     .first()
+}
+
+/**
+ * Wait for quest completion to persist. Optimistic UI flips the button immediately,
+ * so callers must not navigate until this toast appears or the request is aborted.
+ */
+export async function waitForQuestXpAwarded(page, xp) {
+  await expect(page.getByRole('status')).toContainText(new RegExp(`\\+${xp}\\s*XP`, 'i'), {
+    timeout: 15000,
+  })
+}
+
+/** Wait for reward purchase to persist before navigating away. */
+export async function waitForPurchaseSuccess(page) {
+  await expect(page.getByRole('status')).toContainText(/purchased/i, { timeout: 15000 })
 }
 
 /** Clear persisted auth and sign in via the login form. */

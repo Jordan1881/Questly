@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { setupApprovedDeveloper, seedTask, signInViaUi, taskCardByTitle } from './helpers/api.mjs'
+import { setupApprovedDeveloper, seedTask, signInViaUi, taskCardByTitle, waitForQuestXpAwarded } from './helpers/api.mjs'
 
 const ts = Date.now()
 const PASSWORD = 'Password123!'
@@ -39,6 +39,7 @@ test('Journey 4 — admin creates sprint, closes sprint, developer sprint XP res
   await page.goto('/tasks')
   const taskCard = taskCardByTitle(page, 'Sprint XP Task')
   await taskCard.getByRole('button', { name: /mark complete/i }).click()
+  await waitForQuestXpAwarded(page, 40)
   await expect(taskCard.getByRole('button', { name: /mark incomplete/i })).toBeVisible({ timeout: 10000 })
 
   await page.goto('/profile')
