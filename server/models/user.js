@@ -26,8 +26,9 @@ function strip(user) {
 }
 
 async function findByEmail(email) {
-  const row = await db(TABLE).where({ email }).first()
-  return decryptUserTokens(row)
+  // Auth lookups must not decrypt Jira tokens — a missing/wrong
+  // JIRA_TOKEN_ENCRYPTION_KEY would otherwise turn every login into a 500.
+  return db(TABLE).where({ email }).first()
 }
 
 async function findById(id) {
