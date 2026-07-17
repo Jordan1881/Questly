@@ -83,7 +83,15 @@ async function login(req, res, next) {
     }
 
     const row = await UserModel.findByEmail(email)
-    const valid = row && (await bcrypt.compare(password, row.password_hash))
+    let valid = false
+    if (row?.password_hash) {
+      try {
+        valid = await bcrypt.compare(password, row.password_hash)
+      } catch {
+        // Corrupt/missing hash must not become a 500 — treat as bad credentials.
+        valid = false
+      }
+    }
     if (!valid) {
       return res.status(401).json({ error: INVALID_CREDENTIALS })
     }

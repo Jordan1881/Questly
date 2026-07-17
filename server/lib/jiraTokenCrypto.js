@@ -53,19 +53,43 @@ function decryptToken(value) {
 
 function decryptUserTokens(user) {
   if (!user) return user
-  return {
-    ...user,
-    jira_access_token: decryptToken(user.jira_access_token),
-    jira_refresh_token: decryptToken(user.jira_refresh_token),
+  try {
+    return {
+      ...user,
+      jira_access_token: decryptToken(user.jira_access_token),
+      jira_refresh_token: decryptToken(user.jira_refresh_token),
+    }
+  } catch (err) {
+    // Prefer a logged-in session over a hard failure when the encryption key
+    // is missing/rotated — Jira calls can fail later with a clear reconnect cue.
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[jiraTokenCrypto] failed to decrypt user tokens:', err.message)
+    }
+    return {
+      ...user,
+      jira_access_token: null,
+      jira_refresh_token: null,
+    }
   }
 }
 
 function decryptWorkspaceTokens(workspace) {
   if (!workspace) return workspace
-  return {
-    ...workspace,
-    jira_access_token: decryptToken(workspace.jira_access_token),
-    jira_refresh_token: decryptToken(workspace.jira_refresh_token),
+  try {
+    return {
+      ...workspace,
+      jira_access_token: decryptToken(workspace.jira_access_token),
+      jira_refresh_token: decryptToken(workspace.jira_refresh_token),
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[jiraTokenCrypto] failed to decrypt workspace tokens:', err.message)
+    }
+    return {
+      ...workspace,
+      jira_access_token: null,
+      jira_refresh_token: null,
+    }
   }
 }
 
