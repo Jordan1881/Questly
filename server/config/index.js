@@ -60,5 +60,11 @@ module.exports = {
     developerAccountId:
       process.env.JIRA_DEVELOPER_ACCOUNT_ID || process.env.JIRA_ACCOUNT_ID || null,
     storyPointsFieldId: process.env.JIRA_STORY_POINTS_FIELD_ID || null,
+    // Reliability knobs for outbound calls to Atlassian (external dependency).
+    requestTimeoutMs: Number(process.env.JIRA_REQUEST_TIMEOUT_MS) || 10000,
+    maxRetries: Number.isFinite(Number(process.env.JIRA_MAX_RETRIES))
+      ? Number(process.env.JIRA_MAX_RETRIES)
+      : 2,
+    pageSize: Number(process.env.JIRA_PAGE_SIZE) || 100,
   },
 }

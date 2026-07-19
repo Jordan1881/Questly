@@ -9,6 +9,11 @@ const { applyStreakUpdate } = require('../services/streak')
 const WorkspaceMembershipModel = require('../models/workspaceMembership')
 const { canAccessWorkspace, userCanAdminWorkspace } = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
+const { parsePagination, setTotalCount } = require('../lib/pagination')
+const { createTaskService } = require('../services/taskService')
+
+// Composition root: inject the concrete data-access model into the service.
+const taskService = createTaskService({ taskAssignmentModel: TaskAssignmentModel })
 
 function formatDueDate(value) {
   if (!value) return null
@@ -52,6 +57,17 @@ async function listByWorkspace(req, res, next) {
     if (req.query.status) filters.status = req.query.status
     if (req.query.difficulty) filters.difficulty = req.query.difficulty
     if (req.query.assignee) filters.assignee = req.query.assignee
+
+    const pagination = parsePagination(req.query)
+    if (pagination.active) {
+      const total = await TaskModel.countByWorkspace(workspace.id, filters)
+      const rows = await TaskModel.listByWorkspace(workspace.id, filters, {
+        limit: pagination.limit,
+        offset: pagination.offset,
+      })
+      setTotalCount(res, total)
+      return res.json({ tasks: rows.map((row) => formatTask(row)) })
+    }
 
     const rows = await TaskModel.listByWorkspace(workspace.id, filters)
     res.json({ tasks: rows.map((row) => formatTask(row)) })
@@ -99,7 +115,14 @@ async function listMine(req, res, next) {
       return res.status(404).json({ error: 'You are not in a workspace yet' })
     }
 
-    const rows = await TaskAssignmentModel.listForUser(req.user.id, workspaceId)
+    const pagination = parsePagination(req.query)
+    const { rows, total } = await taskService.listForUser({
+      userId: req.user.id,
+      workspaceId,
+      pagination,
+    })
+
+    if (total !== null) setTotalCount(res, total)
     res.json({ tasks: rows.map(formatTask) })
   } catch (err) {
     next(err)

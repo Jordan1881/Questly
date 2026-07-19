@@ -40,9 +40,7 @@ async function pruneStaleJiraTasks(workspace_id, activeJiraIssueIds = []) {
   return query.del()
 }
 
-async function listByWorkspace(workspace_id, filters = {}) {
-  let query = db(TABLE).where({ workspace_id })
-
+function applyWorkspaceFilters(query, filters = {}) {
   if (filters.status) {
     query = query.where({ status: filters.status })
   }
@@ -54,8 +52,27 @@ async function listByWorkspace(workspace_id, filters = {}) {
       this.select('task_id').from('task_assignments').where({ user_id: filters.assignee })
     })
   }
+  return query
+}
 
-  return query.orderBy('updated_at', 'desc')
+async function listByWorkspace(workspace_id, filters = {}, { limit, offset } = {}) {
+  let query = applyWorkspaceFilters(db(TABLE).where({ workspace_id }), filters).orderBy(
+    'updated_at',
+    'desc',
+  )
+
+  if (limit != null) {
+    query = query.limit(limit).offset(offset || 0)
+  }
+
+  return query
+}
+
+async function countByWorkspace(workspace_id, filters = {}) {
+  const row = await applyWorkspaceFilters(db(TABLE).where({ workspace_id }), filters)
+    .count({ count: '*' })
+    .first()
+  return Number(row?.count ?? 0)
 }
 
 module.exports = {
@@ -63,5 +80,6 @@ module.exports = {
   findById,
   setStatus,
   listByWorkspace,
+  countByWorkspace,
   pruneStaleJiraTasks,
 }

@@ -11,11 +11,13 @@ const {
 } = require('../controllers/jiraOAuth')
 const verifyToken = require('../middleware/verifyToken')
 const { loginLimiter, registerLimiter, jiraConnectLimiter } = require('../middleware/rateLimit')
+const { validateBody } = require('../middleware/validate')
+const { loginSchema } = require('../validation/schemas')
 
 const router = Router()
 
 router.post('/register', registerLimiter, register)
-router.post('/login', loginLimiter, login)
+router.post('/login', loginLimiter, validateBody(loginSchema), login)
 router.get('/me', verifyToken, me)
 router.get('/jira/oauth/status', verifyToken, oauthStatus)
 router.get('/jira/oauth/start', verifyToken, oauthStart)
