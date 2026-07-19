@@ -71,6 +71,7 @@ async function review(req, res, next) {
 
       if (status === 'rejected') {
         await TaskAssignmentModel.setCompleted(task.id, approvalRequest.user_id, false, trx)
+        await TaskModel.setStatus(task.id, 'to_do', trx)
         const balances = await taskRewards.getUserBalances(
           approvalRequest.user_id,
           trx,

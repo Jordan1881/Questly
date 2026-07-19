@@ -1,27 +1,36 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router'
 import Hero from '../pages/Hero'
 import SignIn from '../pages/SignIn'
 import SignUp from '../pages/SignUp'
-import Dashboard from '../pages/Dashboard'
-import TaskList from '../pages/TaskList'
-import RewardShop from '../pages/RewardShop'
-import Profile from '../pages/Profile'
-import Settings from '../pages/Settings'
-import Admin from '../pages/Admin'
-import Workspace from '../pages/Workspace'
-import WorkspaceCreate from '../pages/WorkspaceCreate'
-import WorkspaceJoin from '../pages/WorkspaceJoin'
-import PrivacyPolicy from '../pages/PrivacyPolicy'
-import TermsOfService from '../pages/TermsOfService'
 import ProtectedRoute from '../components/ProtectedRoute'
 import WorkspaceScopedRoute from '../components/WorkspaceScopedRoute'
 import MultiWorkspaceRedirect from '../components/MultiWorkspaceRedirect'
+import PageLoader from '../components/PageLoader'
+
+// Authenticated + secondary pages are code-split so the initial (public) bundle
+// stays small. Landing/auth pages above load eagerly for a fast first paint.
+const Dashboard = lazy(() => import('../pages/Dashboard'))
+const TaskList = lazy(() => import('../pages/TaskList'))
+const RewardShop = lazy(() => import('../pages/RewardShop'))
+const Profile = lazy(() => import('../pages/Profile'))
+const Settings = lazy(() => import('../pages/Settings'))
+const Admin = lazy(() => import('../pages/Admin'))
+const Workspace = lazy(() => import('../pages/Workspace'))
+const WorkspaceCreate = lazy(() => import('../pages/WorkspaceCreate'))
+const WorkspaceJoin = lazy(() => import('../pages/WorkspaceJoin'))
+const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('../pages/TermsOfService'))
+
+function withSuspense(element) {
+  return <Suspense fallback={<PageLoader />}>{element}</Suspense>
+}
 
 function scoped(pageId, element, requiredRole) {
   return (
     <ProtectedRoute requiredRole={requiredRole}>
       <WorkspaceScopedRoute>
-        {element}
+        {withSuspense(element)}
       </WorkspaceScopedRoute>
     </ProtectedRoute>
   )
@@ -31,7 +40,7 @@ function flat(pageId, element, requiredRole) {
   return (
     <ProtectedRoute requiredRole={requiredRole}>
       <MultiWorkspaceRedirect pageId={pageId}>
-        {element}
+        {withSuspense(element)}
       </MultiWorkspaceRedirect>
     </ProtectedRoute>
   )
@@ -39,8 +48,8 @@ function flat(pageId, element, requiredRole) {
 
 export const router = createBrowserRouter([
   { path: '/', element: <Hero /> },
-  { path: '/privacy', element: <PrivacyPolicy /> },
-  { path: '/terms', element: <TermsOfService /> },
+  { path: '/privacy', element: withSuspense(<PrivacyPolicy />) },
+  { path: '/terms', element: withSuspense(<TermsOfService />) },
   { path: '/login', element: <SignIn /> },
   { path: '/signin', element: <Navigate to="/login" replace /> },
   { path: '/signup', element: <SignUp /> },
@@ -77,7 +86,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MultiWorkspaceRedirect pageId="workspace">
-          <Workspace />
+          {withSuspense(<Workspace />)}
         </MultiWorkspaceRedirect>
       </ProtectedRoute>
     ),
@@ -115,7 +124,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <WorkspaceScopedRoute>
-          <Workspace />
+          {withSuspense(<Workspace />)}
         </WorkspaceScopedRoute>
       </ProtectedRoute>
     ),
@@ -124,7 +133,7 @@ export const router = createBrowserRouter([
     path: '/workspace/create',
     element: (
       <ProtectedRoute requiredRole="admin" skipRoleWhenMulti>
-        <WorkspaceCreate />
+        {withSuspense(<WorkspaceCreate />)}
       </ProtectedRoute>
     ),
   },
@@ -132,7 +141,7 @@ export const router = createBrowserRouter([
     path: '/workspace/join',
     element: (
       <ProtectedRoute requiredRole="developer" skipRoleWhenMulti>
-        <WorkspaceJoin />
+        {withSuspense(<WorkspaceJoin />)}
       </ProtectedRoute>
     ),
   },

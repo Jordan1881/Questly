@@ -116,7 +116,7 @@ describe('POST /api/tasks/sync/:workspaceId', () => {
   })
 
   test('developer cannot sync tasks', async () => {
-    const { adminToken, devToken, workspace } = await createWorkspaceWithDeveloper('forbidden')
+    const { devToken, workspace } = await createWorkspaceWithDeveloper('forbidden')
 
     const res = await request(app)
       .post(`/api/tasks/sync/${workspace.id}`)
@@ -374,11 +374,15 @@ describe('PATCH /api/tasks/:id/completion', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.task.done).toBe(true)
+    expect(res.body.task.status).toBe('done')
 
     const assignment = await db('task_assignments')
       .where({ task_id: taskId })
       .first()
     expect(assignment.completed_at).not.toBeNull()
+
+    const taskRow = await db('tasks').where({ id: taskId }).first()
+    expect(taskRow.status).toBe('done')
   })
 
   test('completing a task awards XP and coins', async () => {
@@ -442,10 +446,14 @@ describe('PATCH /api/tasks/:id/completion', () => {
     expect(res.body.reward.xpDelta).toBeLessThan(0)
     expect(res.body.user.current_sprint_xp).toBe(0)
     expect(res.body.user.coin_balance).toBe(0)
+    expect(res.body.task.status).toBe('to_do')
 
     const devUser = await db('users').where({ id: devUserId }).first()
     expect(devUser.current_sprint_xp).toBe(0)
     expect(devUser.coin_balance).toBe(0)
+
+    const taskRow = await db('tasks').where({ id: taskId }).first()
+    expect(taskRow.status).toBe('to_do')
   })
 
   test('second completion on same assignment returns 409 without duplicate XP', async () => {

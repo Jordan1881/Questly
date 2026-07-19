@@ -21,7 +21,7 @@ async function purchaseReward({ userId, rewardId, workspaceId = null }) {
       }
 
       const membershipMode = isMultiWorkspaceEnabled() && workspaceId
-      let coinBalance = 0
+      let coinBalance
 
       if (membershipMode) {
         const membership = await trx('workspace_memberships')

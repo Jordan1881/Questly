@@ -71,7 +71,7 @@ describe('security access control', () => {
   test('cross-workspace GET /api/tasks/:id returns 403', async () => {
     const { token: adminA } = await registerAndLogin('admin', 'wsa')
     const wsA = await createWorkspace(adminA, 'wsa')
-    const { token: devA, user: devUserA } = await registerAndLogin('developer', 'wsadev')
+    const { user: devUserA } = await registerAndLogin('developer', 'wsadev')
     await db('users').where({ id: devUserA.id }).update({ workspace_id: wsA.id })
 
     const [task] = await db('tasks')
@@ -102,7 +102,7 @@ describe('security access control', () => {
   test('task completion in wrong workspace returns 403', async () => {
     const { token: adminA } = await registerAndLogin('admin', 'tca')
     const wsA = await createWorkspace(adminA, 'tca')
-    const { token: devA, user: devUserA } = await registerAndLogin('developer', 'tcadev')
+    const { user: devUserA } = await registerAndLogin('developer', 'tcadev')
     await db('users').where({ id: devUserA.id }).update({ workspace_id: wsA.id })
 
     const [task] = await db('tasks')

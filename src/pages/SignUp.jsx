@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import signUpImg from '../assets/signUp-img.png'
+import signUpImg from '../assets/signUp-img.webp'
 import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
 import { LegalAgreementText } from '../components/LegalFooterLinks'

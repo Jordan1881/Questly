@@ -98,7 +98,13 @@ describe('DELETE /api/users/me/purchases/:id', () => {
     ).body.workspace
 
     const dev = await registerAndLogin('developer', 'pdeldev')
-    const { purchase } = await seedPurchase(dev, adminToken, workspace.id)
+    const { reward, purchase } = await seedPurchase(dev, adminToken, workspace.id)
+
+    // The sole coupon was burned on purchase, which auto-disables the reward.
+    const couponBefore = await db('reward_coupons').where({ reward_id: reward.id }).first()
+    expect(couponBefore.is_redeemed).toBe(true)
+    const rewardBefore = await db('rewards').where({ id: reward.id }).first()
+    expect(rewardBefore.is_available).toBe(false)
 
     const delRes = await request(app)
       .delete(`/api/users/me/purchases/${purchase.id}`)
@@ -109,6 +115,12 @@ describe('DELETE /api/users/me/purchases/:id', () => {
 
     const row = await db('purchases').where({ id: purchase.id }).first()
     expect(row.deleted_at).not.toBeNull()
+
+    // Undoing the purchase restocks the coupon and re-opens the reward.
+    const couponAfter = await db('reward_coupons').where({ id: couponBefore.id }).first()
+    expect(couponAfter.is_redeemed).toBe(false)
+    const rewardAfter = await db('rewards').where({ id: reward.id }).first()
+    expect(rewardAfter.is_available).toBe(true)
 
     const listRes = await request(app)
       .get('/api/users/me/purchases')
