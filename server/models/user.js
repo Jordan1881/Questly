@@ -43,8 +43,19 @@ async function create({ email, username, password_hash, role }) {
   return stripSensitiveFields(user)
 }
 
-async function listByWorkspace(workspace_id) {
-  return db(TABLE).where({ workspace_id }).select(PUBLIC_FIELDS)
+async function listByWorkspace(workspace_id, { limit, offset } = {}) {
+  let query = db(TABLE).where({ workspace_id }).select(PUBLIC_FIELDS)
+
+  if (limit != null) {
+    query = query.limit(limit).offset(offset || 0)
+  }
+
+  return query
+}
+
+async function countByWorkspace(workspace_id) {
+  const row = await db(TABLE).where({ workspace_id }).count({ count: '*' }).first()
+  return Number(row?.count ?? 0)
 }
 
 async function listDevelopersByWorkspace(workspace_id) {
@@ -205,6 +216,7 @@ module.exports = {
   findByIdInternal,
   create,
   listByWorkspace,
+  countByWorkspace,
   listDevelopersByWorkspace,
   findByJiraAccountId,
   findByJiraAccountIdGlobal,

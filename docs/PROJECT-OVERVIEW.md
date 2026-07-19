@@ -1,5 +1,16 @@
 # Questly — Presentation Overview
 
+## Team & contributions
+
+Questly is a two-person capstone built as a pair. Primary ownership was split by
+area so we could work in parallel, but most features were designed together and
+many commits are co-authored to reflect that pairing (see [`CONTRIBUTORS.md`](../CONTRIBUTORS.md)).
+
+| Contributor | GitHub | Primary area |
+|-------------|--------|--------------|
+| Yarden (Jordan) Biton | [@Jordan1881](https://github.com/Jordan1881) | Backend, database, security, Jira integration, testing & CI/CD |
+| Or Moskowitz | [@ormosko28](https://github.com/ormosko28) | Frontend, UI/UX, design system (`src/pages/`, `src/components/`, `src/design-system/`), client state (Zustand) & GSAP motion |
+
 ## Project in one sentence
 
 Questly adds a secure, multi-tenant motivation layer to Jira Cloud: real issues become quests, completed work earns XP and Coins, and Coins unlock team-managed rewards.

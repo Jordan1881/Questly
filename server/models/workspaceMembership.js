@@ -142,8 +142,8 @@ async function touchLastUsed(membershipId, trx = db) {
   })
 }
 
-async function listActiveMembersWithProgress(workspace_id) {
-  return db(`${TABLE} as m`)
+async function listActiveMembersWithProgress(workspace_id, { limit, offset } = {}) {
+  let query = db(`${TABLE} as m`)
     .join('users as u', 'm.user_id', 'u.id')
     .where({ 'm.workspace_id': workspace_id, 'm.status': 'active' })
     .select(
@@ -160,6 +160,20 @@ async function listActiveMembersWithProgress(workspace_id) {
       'm.last_used_at'
     )
     .orderBy('u.username', 'asc')
+
+  if (limit != null) {
+    query = query.limit(limit).offset(offset || 0)
+  }
+
+  return query
+}
+
+async function countActiveMembers(workspace_id) {
+  const row = await db(TABLE)
+    .where({ workspace_id, status: 'active' })
+    .count({ count: '*' })
+    .first()
+  return Number(row?.count ?? 0)
 }
 
 async function resetSprintXpForWorkspace(workspace_id, trx = db) {
@@ -202,6 +216,7 @@ module.exports = {
   ensureMembershipFromUser,
   touchLastUsed,
   listActiveMembersWithProgress,
+  countActiveMembers,
   resetSprintXpForWorkspace,
   setRole,
   deactivate,

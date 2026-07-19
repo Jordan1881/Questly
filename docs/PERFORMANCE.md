@@ -66,12 +66,18 @@ Representative timings against local PostgreSQL 15 (single node, warm pool):
 
 ## Caching
 
-- **What we cache:** Jira story-points field discovery per site (rarely changes,
-  costs an extra round-trip) with a short TTL. Disabled under test for
-  deterministic assertions.
-- **What we do NOT cache:** anything authoritative (balances, XP, task state).
-  Postgres remains the single source of truth; caching derived/expensive-to-fetch
-  data only.
+- **What we cache:**
+  - Jira story-points field discovery per site (rarely changes, costs an extra
+    round-trip) — short TTL, in [`server/services/jiraClient.js`](../server/services/jiraClient.js).
+  - Team leaderboard/standings per workspace — a few seconds of staleness on
+    *other* members' standings is acceptable, so the dashboard doesn't recompute
+    the team query on every load ([`server/controllers/users.js`](../server/controllers/users.js),
+    `loadTeamStandings`). The caller's OWN balances are always read fresh, so a
+    user never sees their own XP lag.
+  - Both are disabled under test for deterministic assertions.
+- **What we do NOT cache:** anything authoritative for the acting user (their own
+  balances, XP, task state). Postgres remains the single source of truth; we cache
+  only derived or expensive-to-fetch data where brief staleness is harmless.
 - The cache is a small in-process TTL map with single-flight loading (no stampede).
   On multiple nodes we would swap it for Redis.
 

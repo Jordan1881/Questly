@@ -1,5 +1,6 @@
 const { validateBody } = require('../middleware/validate')
 const {
+  registerSchema,
   loginSchema,
   taskCompletionSchema,
   sprintCreateSchema,
@@ -60,6 +61,20 @@ describe('validateBody middleware', () => {
     })
     expect(nextCalled).toBe(true)
     expect(req.body.email).toBe('a@b.com')
+  })
+
+  test('register schema requires email/username/password but leaves role to the controller', async () => {
+    const missing = await runMiddleware(validateBody(registerSchema), { email: 'a@b.com' })
+    expect(missing.res.statusCode).toBe(400)
+    expect(missing.res.payload.error).toBe('email, username and password are required')
+
+    // role omitted is allowed here (controller enforces it based on the flag)
+    const ok = await runMiddleware(validateBody(registerSchema), {
+      email: 'a@b.com',
+      username: 'u',
+      password: 'secret',
+    })
+    expect(ok.nextCalled).toBe(true)
   })
 
   test('sprint schema requires a non-empty name and trims it', async () => {

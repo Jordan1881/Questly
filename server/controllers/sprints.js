@@ -8,6 +8,7 @@ const {
   userCanAdminWorkspace,
 } = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
+const { parsePagination, setTotalCount } = require('../lib/pagination')
 
 function mapDateField(value) {
   if (value === undefined) return undefined
@@ -66,6 +67,17 @@ async function listForWorkspace(req, res, next) {
 
     if (!(await userCanAccessWorkspace(req.user, workspace))) {
       return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    const pagination = parsePagination(req.query)
+    if (pagination.active) {
+      const total = await SprintModel.countByWorkspace(workspace.id)
+      const rows = await SprintModel.listByWorkspace(workspace.id, {
+        limit: pagination.limit,
+        offset: pagination.offset,
+      })
+      setTotalCount(res, total)
+      return res.json({ sprints: rows.map(SprintModel.formatSprint) })
     }
 
     const rows = await SprintModel.listByWorkspace(workspace.id)

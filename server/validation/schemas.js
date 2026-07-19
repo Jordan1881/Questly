@@ -3,6 +3,20 @@ const { z } = require('zod')
 // Shared request schemas. Messages are chosen to match the historical inline
 // controller messages so behavior is unchanged for existing clients/tests.
 
+const REGISTER_REQUIRED = 'email, username and password are required'
+
+// email/username/password are required in BOTH flag modes, so they are safe to
+// enforce here. `role` is intentionally left to the controller because its
+// requirement is MULTI_WORKSPACE-flag dependent (ignored when the flag is on).
+const registerSchema = z
+  .object({
+    email: z.string({ error: REGISTER_REQUIRED }).min(1, REGISTER_REQUIRED),
+    username: z.string({ error: REGISTER_REQUIRED }).min(1, REGISTER_REQUIRED),
+    password: z.string({ error: REGISTER_REQUIRED }).min(1, REGISTER_REQUIRED),
+    role: z.string().optional(),
+  })
+  .loose()
+
 const loginSchema = z
   .object({
     email: z.string({ error: 'email and password are required' }).min(1, 'email and password are required'),
@@ -25,6 +39,7 @@ const sprintCreateSchema = z
   .loose()
 
 module.exports = {
+  registerSchema,
   loginSchema,
   taskCompletionSchema,
   sprintCreateSchema,

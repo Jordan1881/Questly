@@ -11,9 +11,22 @@ const { mergePreferences } = require('../lib/userPreferences')
 const avatarStorage = require('../lib/avatarStorage')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 const { buildTeamStandings, computeLevel } = require('../lib/teamStandings')
+const { TTLCache } = require('../lib/cache')
 
 const SALT_ROUNDS = 12
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// The team leaderboard changes only when someone's XP changes; a few seconds of
+// staleness on OTHER members' standings is acceptable (the caller's own balances
+// are always read fresh via attachAuthoritativeBalances). Cache the standings
+// per workspace for a short TTL to avoid recomputing on every dashboard load.
+// Disabled under test for deterministic assertions.
+const STANDINGS_TTL_MS = Number(process.env.STANDINGS_CACHE_TTL_MS) || 10000
+const standingsCache = new TTLCache({ defaultTtlMs: STANDINGS_TTL_MS })
+
+function standingsCacheEnabled() {
+  return process.env.NODE_ENV !== 'test' && STANDINGS_TTL_MS > 0
+}
 
 // Overwrite a formatted profile's balance fields with the authoritative source
 // (workspace_memberships when MULTI_WORKSPACE is on, else the users table) so
@@ -31,15 +44,20 @@ async function attachAuthoritativeBalances(req, profile, fallbackWorkspaceId) {
 async function loadTeamStandings(workspaceId) {
   if (!workspaceId) return []
 
-  if (isMultiWorkspaceEnabled()) {
-    const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(workspaceId)
-    // Developer climb only — match listDevelopersByWorkspace / sprint-reset scope.
-    const developers = members.filter((m) => m.membership_role === 'developer')
+  const load = async () => {
+    if (isMultiWorkspaceEnabled()) {
+      const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(workspaceId)
+      // Developer climb only — match listDevelopersByWorkspace / sprint-reset scope.
+      const developers = members.filter((m) => m.membership_role === 'developer')
+      return buildTeamStandings(developers)
+    }
+
+    const developers = await UserModel.listDevelopersByWorkspace(workspaceId)
     return buildTeamStandings(developers)
   }
 
-  const developers = await UserModel.listDevelopersByWorkspace(workspaceId)
-  return buildTeamStandings(developers)
+  if (!standingsCacheEnabled()) return load()
+  return standingsCache.getOrLoad(`standings:${workspaceId}`, load)
 }
 
 async function xpHistory(req, res, next) {

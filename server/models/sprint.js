@@ -62,11 +62,22 @@ async function findActiveByWorkspace(workspace_id) {
   return db(TABLE).where({ workspace_id, status: 'active' }).first()
 }
 
-async function listByWorkspace(workspace_id) {
-  return db(TABLE)
+async function listByWorkspace(workspace_id, { limit, offset } = {}) {
+  let query = db(TABLE)
     .where({ workspace_id })
     .orderBy('start_date', 'desc')
     .orderBy('created_at', 'desc')
+
+  if (limit != null) {
+    query = query.limit(limit).offset(offset || 0)
+  }
+
+  return query
+}
+
+async function countByWorkspace(workspace_id) {
+  const row = await db(TABLE).where({ workspace_id }).count({ count: '*' }).first()
+  return Number(row?.count ?? 0)
 }
 
 async function update(id, fields) {
@@ -105,6 +116,7 @@ module.exports = {
   findById,
   findActiveByWorkspace,
   listByWorkspace,
+  countByWorkspace,
   update,
   close,
 }
