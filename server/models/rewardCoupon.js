@@ -62,11 +62,22 @@ async function markRedeemed(couponId, trx) {
   return row
 }
 
+// Return a coupon to the available pool — used when a purchase is undone
+// (soft-deleted) so the burned coupon becomes purchasable again.
+async function markUnredeemed(couponId, trx = db) {
+  const [row] = await trx(TABLE)
+    .where({ id: couponId })
+    .update({ is_redeemed: false })
+    .returning('*')
+  return row ?? null
+}
+
 module.exports = {
   insertMany,
   countValidByReward,
   countUnredeemed,
   lockNextValid,
   markRedeemed,
+  markUnredeemed,
   isValidCoupon,
 }

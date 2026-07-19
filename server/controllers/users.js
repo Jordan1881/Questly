@@ -15,6 +15,19 @@ const { buildTeamStandings, computeLevel } = require('../lib/teamStandings')
 const SALT_ROUNDS = 12
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Overwrite a formatted profile's balance fields with the authoritative source
+// (workspace_memberships when MULTI_WORKSPACE is on, else the users table) so
+// every profile response stays consistent with the dashboard.
+async function attachAuthoritativeBalances(req, profile, fallbackWorkspaceId) {
+  const workspaceId = req.workspaceId ?? fallbackWorkspaceId
+  const balances = await taskRewards.getUserBalances(req.user.id, db, workspaceId)
+  profile.currentSprintXp = balances.current_sprint_xp
+  profile.lifetimeXp = balances.lifetime_xp
+  profile.coinBalance = balances.coin_balance
+  profile.level = computeLevel(profile.lifetimeXp)
+  return profile
+}
+
 async function loadTeamStandings(workspaceId) {
   if (!workspaceId) return []
 
@@ -103,7 +116,7 @@ async function getMe(req, res, next) {
     if (!internal) return res.status(404).json({ error: 'User not found' })
 
     const profile = UserModel.formatPublicProfile(internal)
-    profile.level = computeLevel(profile.lifetimeXp)
+    await attachAuthoritativeBalances(req, profile, internal.workspace_id)
 
     const purchases = await PurchaseModel.listForUser(req.user.id)
 
@@ -186,7 +199,7 @@ async function patchMe(req, res, next) {
 
     const updated = await UserModel.updateProfile(req.user.id, patch)
     const profile = UserModel.formatPublicProfile(updated)
-    profile.level = computeLevel(profile.lifetimeXp)
+    await attachAuthoritativeBalances(req, profile, updated.workspace_id)
 
     res.json({ profile })
   } catch (err) {
@@ -209,7 +222,7 @@ async function uploadAvatar(req, res, next) {
 
     const updated = await UserModel.updateProfile(req.user.id, { avatarUrl })
     const profile = UserModel.formatPublicProfile(updated)
-    profile.level = computeLevel(profile.lifetimeXp)
+    await attachAuthoritativeBalances(req, profile, updated.workspace_id)
 
     res.json({ profile, avatarUrl })
   } catch (err) {

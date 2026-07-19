@@ -19,7 +19,7 @@ const PUBLIC_FIELDS = [
   'preferences',
 ]
 
-function strip(user) {
+function stripSensitiveFields(user) {
   if (!user) return null
   const { password_hash, jira_access_token, jira_refresh_token, jira_account_id, ...safe } = user
   return safe
@@ -33,14 +33,14 @@ async function findByEmail(email) {
 
 async function findById(id) {
   const user = await db(TABLE).where({ id }).first()
-  return strip(user)
+  return stripSensitiveFields(user)
 }
 
 async function create({ email, username, password_hash, role }) {
   const [user] = await db(TABLE)
     .insert({ email, username, password_hash, role })
     .returning('*')
-  return strip(user)
+  return stripSensitiveFields(user)
 }
 
 async function listByWorkspace(workspace_id) {
@@ -63,7 +63,7 @@ async function findByIdInternal(id) {
 
 async function assignWorkspace(user_id, workspace_id) {
   const [user] = await db(TABLE).where({ id: user_id }).update({ workspace_id }).returning('*')
-  return strip(user)
+  return stripSensitiveFields(user)
 }
 
 async function updateJiraAccountId(user_id, jira_account_id) {
@@ -74,7 +74,7 @@ async function updateJiraAccountId(user_id, jira_account_id) {
       jira_personal_data_updated_at: db.fn.now(),
     })
     .returning('*')
-  return strip(user)
+  return stripSensitiveFields(user)
 }
 
 async function connectJira(
@@ -94,7 +94,7 @@ async function connectJira(
   }
 
   const [user] = await db(TABLE).where({ id: user_id }).update(patch).returning('*')
-  return strip(decryptUserTokens(user))
+  return stripSensitiveFields(decryptUserTokens(user))
 }
 
 async function disconnectJira(user_id) {
@@ -108,7 +108,7 @@ async function disconnectJira(user_id) {
       jira_personal_data_updated_at: null,
     })
     .returning('*')
-  return strip(user)
+  return stripSensitiveFields(user)
 }
 
 async function listUsersWithJiraPersonalData() {
@@ -138,7 +138,7 @@ function isJiraConnected(user) {
 }
 
 function formatPublicProfile(user) {
-  const safe = strip(user)
+  const safe = stripSensitiveFields(user)
   if (!safe) return null
 
   return {
@@ -196,7 +196,7 @@ async function updatePassword(user_id, password_hash) {
 
 async function updateRole(user_id, role) {
   const [user] = await db(TABLE).where({ id: user_id }).update({ role }).returning('*')
-  return strip(user)
+  return stripSensitiveFields(user)
 }
 
 module.exports = {
@@ -221,5 +221,5 @@ module.exports = {
   updateProfile,
   updatePassword,
   updateRole,
-  strip,
+  stripSensitiveFields,
 }

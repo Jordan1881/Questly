@@ -170,6 +170,7 @@ async function updateCompletion(req, res, next) {
         if (!updated) {
           return { alreadyCompleted: true }
         }
+        await TaskModel.setStatus(task.id, 'done', trx)
         await XpApprovalRequestModel.createPending(
           {
             workspace_id: task.workspace_id,
@@ -208,6 +209,7 @@ async function updateCompletion(req, res, next) {
       if (!completed && wasCompleted && pendingApproval) {
         await XpApprovalRequestModel.cancelPending(task.id, req.user.id, trx)
         const updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, false, trx)
+        await TaskModel.setStatus(task.id, 'to_do', trx)
         const balances = await taskRewards.getUserBalances(req.user.id, trx, workspaceId)
         const profile = await trx('users')
           .where({ id: req.user.id })
@@ -232,8 +234,10 @@ async function updateCompletion(req, res, next) {
         if (!updated) {
           return { alreadyCompleted: true }
         }
+        await TaskModel.setStatus(task.id, 'done', trx)
       } else {
         updated = await TaskAssignmentModel.setCompleted(task.id, req.user.id, false, trx)
+        await TaskModel.setStatus(task.id, 'to_do', trx)
       }
 
       const reward = await taskRewards.applyCompletionChange(trx, {
@@ -274,6 +278,7 @@ async function updateCompletion(req, res, next) {
 
     const row = {
       ...task,
+      status: result.updated.completed_at ? 'done' : 'to_do',
       completed_at: result.updated.completed_at,
       pending_approval_id: pendingAfter?.id ?? null,
       pending_xp_amount: pendingAfter?.xp_amount ?? null,
