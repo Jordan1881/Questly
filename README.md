@@ -397,10 +397,13 @@ Full runbook: **[DEPLOY.md](DEPLOY.md)** — env vars, OAuth callbacks, migratio
 
 ## Team
 
-| Name | Role |
-|------|------|
-| Yarden Biton | Lead Developer |
-| Or Moskowitz | Developer |
+Two-person capstone, built as a pair with primary ownership split by area. Full
+breakdown in [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
+| Name | GitHub | Primary area |
+|------|--------|--------------|
+| Yarden (Jordan) Biton | [@Jordan1881](https://github.com/Jordan1881) | Backend, database, security, Jira, testing & CI |
+| Or Moskowitz | [@ormosko28](https://github.com/ormosko28) | Frontend, UI/UX, design system, client state |
 
 ---
 

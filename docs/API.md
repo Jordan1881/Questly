@@ -4,11 +4,61 @@ Base URL: `http://localhost:3001` (dev) or Railway production URL.
 
 Authentication: `Authorization: Bearer <JWT>` unless noted.
 
+## Conventions
+
+### Versioning
+
+Every route is served under both `/api/*` and the explicit version alias `/api/v1/*`
+(identical today). A future backward-incompatible change ships under `/api/v2` while
+`/api` and `/api/v1` keep serving the current contract, so existing clients never break.
+This is why the app mounts the same router twice in [`server/app.js`](../server/app.js).
+
+### HTTP verbs
+
+| Verb | Meaning in Questly |
+|------|--------------------|
+| GET | Read; never mutates state |
+| POST | Create a resource or trigger an action (`/sync`, `/close`, `/purchase`) |
+| PATCH | Partial update of an existing resource (we deliberately use PATCH over PUT — clients send only changed fields, e.g. task completion or a sprint rename) |
+| DELETE | Remove/disconnect a resource |
+
+PUT is intentionally unused: all updates are partial, so PATCH matches the semantics.
+
+### Status codes
+
+`200` OK · `201` Created · `400` validation error · `401` missing/invalid token ·
+`403` authenticated but not allowed (role/workspace) · `404` not found ·
+`409` conflict (duplicate completion, duplicate active sprint) · `503` external
+dependency (Jira) unavailable. Errors always return `{ "error": "<message>" }`
+via the central handler in [`server/middleware/errorHandler.js`](../server/middleware/errorHandler.js).
+
+### DTOs
+
+Responses never expose raw DB rows. Each resource has a formatter that maps
+snake_case columns to a stable camelCase shape and drops internal/secret columns
+(`formatTask` in [`server/controllers/tasks.js`](../server/controllers/tasks.js),
+`stripSensitiveFields` in [`server/models/user.js`](../server/models/user.js)). This
+decouples the API contract from the schema and guarantees password hashes / Jira
+tokens never leave the model layer.
+
+### Pagination
+
+List endpoints are backward-compatible: send no params and you get the full list
+(unchanged). Send `?limit=<1..200>&offset=<n>` to bound the result; the response then
+includes an `X-Total-Count` header with the unfiltered total. Implemented in
+[`server/lib/pagination.js`](../server/lib/pagination.js).
+
+### Tracing
+
+Every response carries an `X-Request-Id` header (accepts an inbound `X-Request-Id`
+or generates one). Structured logs (pino) include the same id for correlation.
+
 ## Health
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/health` | — | `{ status: "ok" }` |
+| GET | `/api/health` | — | Liveness — `{ status: "ok" }` |
+| GET | `/api/health/ready` | — | Readiness — checks Postgres (`select 1`); `200 { status: "ready" }` or `503 { status: "unavailable" }` |
 
 ## Auth (`/api/auth`)
 
