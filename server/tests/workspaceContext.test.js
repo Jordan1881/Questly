@@ -73,7 +73,7 @@ describe('X-Workspace-Id context + membership XP', () => {
       .send({ name: 'Space B' })
 
     const member = await register('ctx-dev@test.com', 'ctxdev')
-    const join = await request(app)
+    await request(app)
       .post(`/api/workspaces/${wsA.body.workspace.id}/join-requests`)
       .set('Authorization', `Bearer ${member.token}`)
       .send({})
@@ -128,7 +128,7 @@ describe('X-Workspace-Id context + membership XP', () => {
     expect(afterA.last_used_at).toBeTruthy()
 
     // Joining B later: balances stay isolated on A
-    const joinB = await request(app)
+    await request(app)
       .post(`/api/workspaces/${wsB.body.workspace.id}/join-requests`)
       .set('Authorization', `Bearer ${member.token}`)
       .send({})

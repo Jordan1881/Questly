@@ -1,4 +1,6 @@
 const db = require('../config/db')
+const RewardCouponModel = require('./rewardCoupon')
+const RewardModel = require('./reward')
 
 const TABLE = 'purchases'
 
@@ -43,15 +45,34 @@ async function findOwnedById(id, userId) {
 }
 
 async function softDelete(id, userId) {
-  const existing = await findOwnedById(id, userId)
-  if (!existing) return null
+  return db.transaction(async (trx) => {
+    const existing = await trx(TABLE)
+      .where({ id, user_id: userId })
+      .whereNull('deleted_at')
+      .forUpdate()
+      .first()
+    if (!existing) return null
 
-  const [row] = await db(TABLE)
-    .where({ id })
-    .update({ deleted_at: db.fn.now() })
-    .returning('*')
+    const [row] = await trx(TABLE)
+      .where({ id })
+      .update({ deleted_at: trx.fn.now() })
+      .returning('*')
 
-  return row
+    // Undoing a purchase must return its coupon to stock; re-open the reward
+    // when the freed inventory makes it purchasable again (it may have been
+    // auto-disabled at zero stock on the original purchase).
+    if (existing.coupon_id) {
+      await RewardCouponModel.markUnredeemed(existing.coupon_id, trx)
+      if (existing.reward_id) {
+        const validStock = await RewardCouponModel.countValidByReward(existing.reward_id, trx)
+        if (validStock > 0) {
+          await RewardModel.setAvailability(existing.reward_id, true, trx)
+        }
+      }
+    }
+
+    return row
+  })
 }
 
 module.exports = {

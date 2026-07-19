@@ -9,7 +9,7 @@ const {
 } = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 
-function mapDateField(value, fieldName) {
+function mapDateField(value) {
   if (value === undefined) return undefined
   if (value === null || value === '') return null
   return value
@@ -39,8 +39,8 @@ async function createForWorkspace(req, res, next) {
       const sprint = await SprintModel.create({
         workspace_id: workspace.id,
         name: String(name).trim(),
-        start_date: mapDateField(startDate, 'startDate'),
-        end_date: mapDateField(endDate, 'endDate'),
+        start_date: mapDateField(startDate),
+        end_date: mapDateField(endDate),
         created_by: req.user.id,
         status: 'active',
       })
@@ -113,10 +113,10 @@ async function updateSprint(req, res, next) {
       patch.name = String(req.body.name).trim()
     }
     if (Object.prototype.hasOwnProperty.call(req.body, 'startDate')) {
-      patch.start_date = mapDateField(req.body.startDate, 'startDate')
+      patch.start_date = mapDateField(req.body.startDate)
     }
     if (Object.prototype.hasOwnProperty.call(req.body, 'endDate')) {
-      patch.end_date = mapDateField(req.body.endDate, 'endDate')
+      patch.end_date = mapDateField(req.body.endDate)
     }
 
     if (Object.keys(patch).length === 0) {

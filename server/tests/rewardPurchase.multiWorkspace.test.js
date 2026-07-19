@@ -48,7 +48,7 @@ describe('rewardPurchase under MULTI_WORKSPACE', () => {
     expect(ws.status).toBe(201)
 
     const developer = await register('rp-dev@test.com', 'rpdev')
-    const join = await request(app)
+    await request(app)
       .post(`/api/workspaces/${ws.body.workspace.id}/join-requests`)
       .set('Authorization', `Bearer ${developer.token}`)
       .send({})
@@ -126,7 +126,7 @@ describe('rewardPurchase under MULTI_WORKSPACE', () => {
       .send({ name: 'Broke Shop' })
 
     const developer = await register('rp-poor-dev@test.com', 'rppoordev')
-    const join = await request(app)
+    await request(app)
       .post(`/api/workspaces/${ws.body.workspace.id}/join-requests`)
       .set('Authorization', `Bearer ${developer.token}`)
       .send({})

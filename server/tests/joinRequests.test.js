@@ -58,7 +58,7 @@ async function createWorkspaceAsAdmin(name = 'Acme Corp', suffix = '') {
 describe('GET /api/workspaces/:id/members', () => {
   test('workspace admin lists approved members', async () => {
     const { token, workspace } = await createWorkspaceAsAdmin('Members Co', 'members')
-    const { token: devToken } = await registerAndLogin('developer', 'member1')
+    await registerAndLogin('developer', 'member1')
     const devUser = await db('users').where({ email: 'devmember1@test.com' }).first()
     await db('users').where({ id: devUser.id }).update({ workspace_id: workspace.id })
 
@@ -291,7 +291,7 @@ describe('join request flow', () => {
   })
 
   test('GET /api/join-requests/me includes team Jira host for pending request', async () => {
-    const { token: adminToken, workspace } = await createWorkspaceAsAdmin('Pending Host', 'pendinghost')
+    const { workspace } = await createWorkspaceAsAdmin('Pending Host', 'pendinghost')
     await db('workspaces').where({ id: workspace.id }).update({
       jira_site_url: 'https://team.atlassian.net',
       jira_project_key: 'QUEST',

@@ -23,7 +23,7 @@ function signToken(user) {
 }
 
 function buildSessionUser(internal) {
-  const user = UserModel.strip(internal)
+  const user = UserModel.stripSensitiveFields(internal)
   return {
     ...user,
     jira_connected: UserModel.isJiraConnected(internal),

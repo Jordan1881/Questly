@@ -20,6 +20,14 @@ async function findById(id) {
   return db(TABLE).where({ id }).first()
 }
 
+// App-driven local status change (task completion toggles). Kept separate from
+// upsertByJiraIssue so a later Jira sync can still reconcile status without this
+// helper fighting it; per-user completion is preserved via task_assignments.
+async function setStatus(id, status, trx = db) {
+  const [task] = await trx(TABLE).where({ id }).update({ status }).returning('*')
+  return task ?? null
+}
+
 async function pruneStaleJiraTasks(workspace_id, activeJiraIssueIds = []) {
   if (!workspace_id) return 0
 
@@ -53,6 +61,7 @@ async function listByWorkspace(workspace_id, filters = {}) {
 module.exports = {
   upsertByJiraIssue,
   findById,
+  setStatus,
   listByWorkspace,
   pruneStaleJiraTasks,
 }

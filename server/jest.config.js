@@ -1,3 +1,8 @@
+// Pin the test timezone so DATE columns (parsed by pg at local midnight) don't
+// shift a day between a developer's local zone and CI. Set here in the main Jest
+// process so forked workers inherit TZ=UTC at startup.
+process.env.TZ = 'UTC'
+
 module.exports = {
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/tests/setup.js'],
