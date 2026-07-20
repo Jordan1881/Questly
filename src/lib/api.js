@@ -7,6 +7,11 @@
 
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
+/** Absolute API URL for browser navigations (OAuth start links). Empty base = same-origin / Vite proxy. */
+export function apiUrl(path) {
+  return `${API_BASE}${path}`
+}
+
 export class ApiError extends Error {
   constructor(message, status = 0) {
     super(message)
