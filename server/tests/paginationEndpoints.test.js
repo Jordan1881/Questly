@@ -1,6 +1,7 @@
 const request = require('supertest')
 const createApp = require('../app')
 const db = require('../config/db')
+const { cleanupCoreTables } = require('./helpers/cleanup')
 
 const app = createApp()
 
@@ -22,12 +23,7 @@ describe('backward-compatible pagination on list endpoints', () => {
   })
 
   beforeEach(async () => {
-    await db('join_requests').del()
-    await db('sprints').del()
-    await db('task_assignments').del()
-    await db('tasks').del()
-    await db('users').del()
-    await db('workspaces').del()
+    await cleanupCoreTables(db)
 
     const admin = await registerLogin('admin-pge@test.com', 'admin')
     adminToken = admin.token
