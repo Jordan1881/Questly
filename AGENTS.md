@@ -27,6 +27,7 @@ Start Postgres and run migrations once per environment: `cd server && npm run mi
 ### Non-obvious gotchas
 
 - **`server/.env` is gitignored.** On a fresh clone, `cp .env.example server/.env` and set `JWT_SECRET` before starting the API.
+- **Google Sign-In (optional):** set `COGNITO_*` vars in `server/.env` after creating a Cognito User Pool + Google IdP. GCP OAuth Client ID/Secret go into Cognito, not Questly. See `docs/AUTH_COGNITO.md`.
 - **Docker is optional.** CI and `docker-compose.yml` only run Postgres. This Cloud VM may use system PostgreSQL instead; ensure `postgres` user password matches `server/.env` (`DB_PASSWORD=postgres`).
 - **Login uses email**, not username, despite the sign-in label.
 - **Jira connect modal** appears after signup/login; dismiss or skip to reach routes like `/dashboard`.

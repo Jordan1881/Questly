@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
 import LegalFooterLinks from '../components/LegalFooterLinks'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 import JiraAuth from '../overlays/JiraAuth'
 import { useAuthStore } from '../stores/authStore'
 import { resolvePostAuthPath } from '../lib/authRedirect'
@@ -127,6 +128,8 @@ export default function SignIn() {
             <FormButton type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in…' : 'Sign in'}
             </FormButton>
+
+            <GoogleSignInButton />
 
             <LegalFooterLinks className="flex items-center justify-center gap-3 text-[11px] text-[color:var(--color-text-muted)] pt-2" />
           </form>

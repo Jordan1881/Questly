@@ -31,6 +31,8 @@ const {
 } = require('../controllers/membershipLifecycle')
 const verifyToken = require('../middleware/verifyToken')
 const requireRoleUnlessMultiWorkspace = require('../middleware/requireRoleUnlessMultiWorkspace')
+const { validateBody } = require('../middleware/validate')
+const { sprintCreateSchema } = require('../validation/schemas')
 
 const router = Router()
 
@@ -42,7 +44,7 @@ router.get('/jira/oauth/callback', workspaceJiraOAuth.oauthCallback)
 router.get('/by-code/:code', verifyToken, getByCode)
 router.get('/:id/members', verifyToken, requireRoleUnlessMultiWorkspace('admin'), listMembers)
 router.get('/:id/tasks', verifyToken, requireRoleUnlessMultiWorkspace('admin'), listByWorkspace)
-router.post('/:id/sprints', verifyToken, requireRoleUnlessMultiWorkspace('admin'), createForWorkspace)
+router.post('/:id/sprints', verifyToken, requireRoleUnlessMultiWorkspace('admin'), validateBody(sprintCreateSchema), createForWorkspace)
 router.get('/:id/sprints/active', verifyToken, getActiveForWorkspace)
 router.get('/:id/sprints', verifyToken, listForWorkspace)
 router.post('/:id/rewards', verifyToken, requireRoleUnlessMultiWorkspace('admin'), createReward)

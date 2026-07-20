@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import Hero from '../pages/Hero'
 import SignIn from '../pages/SignIn'
 import SignUp from '../pages/SignUp'
+import CognitoCallback from '../pages/CognitoCallback'
 import ProtectedRoute from '../components/ProtectedRoute'
 import WorkspaceScopedRoute from '../components/WorkspaceScopedRoute'
 import MultiWorkspaceRedirect from '../components/MultiWorkspaceRedirect'
@@ -53,6 +54,7 @@ export const router = createBrowserRouter([
   { path: '/login', element: <SignIn /> },
   { path: '/signin', element: <Navigate to="/login" replace /> },
   { path: '/signup', element: <SignUp /> },
+  { path: '/auth/cognito/callback', element: <CognitoCallback /> },
   {
     path: '/dashboard',
     element: flat('dashboard', <Dashboard />, 'developer'),

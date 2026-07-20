@@ -2,7 +2,19 @@ const https = require('https')
 const { URL } = require('url')
 const config = require('../config')
 const { isJiraFallbackEnabled } = require('../lib/jiraConfig')
+const { TTLCache } = require('../lib/cache')
 const { XP_BY_DIFFICULTY, calculateXP } = require('./xp')
+
+// The set of Jira custom fields for a site changes rarely, but field discovery
+// costs a full extra round-trip on every sync. Cache the resolved story-points
+// field id per site for a short TTL. Disabled under test so nock expectations
+// (which assert the field endpoint is hit per sync) stay deterministic.
+const FIELD_CACHE_TTL_MS = Number(process.env.JIRA_FIELD_CACHE_TTL_MS) || 300000
+const fieldCache = new TTLCache({ defaultTtlMs: FIELD_CACHE_TTL_MS })
+
+function fieldCacheEnabled() {
+  return process.env.NODE_ENV !== 'test' && FIELD_CACHE_TTL_MS > 0
+}
 const HIGH_PRIORITY_NAMES = new Set(['highest', 'high'])
 const STORY_POINT_FIELD_NAMES = ['story point estimate', 'story points', 'story point']
 
@@ -82,10 +94,38 @@ function resolveJiraRequest(path, credentials) {
   }
 }
 
-function jiraGet(path, credentials) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// Retry only on transient failures: timeouts, dropped connections, and Jira 5xx.
+// Client errors (4xx) are deterministic and must NOT be retried.
+function isRetryable(err) {
+  if (!err) return false
+  if (err.isTimeout) return true
+  if (['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'EAI_AGAIN', 'EPIPE'].includes(err.code)) {
+    return true
+  }
+  return typeof err.status === 'number' && err.status >= 500
+}
+
+// Single outbound Jira GET with a hard timeout so a hung Atlassian endpoint can
+// never hang a Questly request indefinitely. The timer aborts the socket and
+// settles the promise regardless of transport, so it is deterministic to test.
+function jiraGetOnce(path, credentials, timeoutMs) {
   const { url, headers } = resolveJiraRequest(path, credentials)
 
   return new Promise((resolve, reject) => {
+    let settled = false
+    let timer = null
+
+    const finish = (fn, value) => {
+      if (settled) return
+      settled = true
+      if (timer) clearTimeout(timer)
+      fn(value)
+    }
+
     const req = https.request(
       {
         protocol: url.protocol,
@@ -116,18 +156,46 @@ function jiraGet(path, credentials) {
             const err = new Error(message)
             err.status = res.statusCode
             err.body = body
-            reject(err)
+            finish(reject, err)
             return
           }
 
-          resolve(body)
+          finish(resolve, body)
         })
       },
     )
 
-    req.on('error', reject)
+    timer = setTimeout(() => {
+      const err = new Error(`Jira request timed out after ${timeoutMs}ms`)
+      err.code = 'ETIMEDOUT'
+      err.isTimeout = true
+      req.destroy(err)
+      finish(reject, err)
+    }, timeoutMs)
+    if (typeof timer.unref === 'function') timer.unref()
+
+    req.on('error', (err) => finish(reject, err))
     req.end()
   })
+}
+
+// Public GET with timeout + exponential-backoff retry for idempotent reads.
+async function jiraGet(path, credentials, options = {}) {
+  const timeoutMs = options.timeoutMs ?? config.jira.requestTimeoutMs
+  const maxRetries = options.maxRetries ?? config.jira.maxRetries
+  const baseDelayMs = options.retryBaseMs ?? (Number(process.env.JIRA_RETRY_BASE_MS) || 200)
+
+  let attempt = 0
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      return await jiraGetOnce(path, credentials, timeoutMs)
+    } catch (err) {
+      if (attempt >= maxRetries || !isRetryable(err)) throw err
+      await sleep(Math.min(baseDelayMs * 2 ** attempt, 4000))
+      attempt += 1
+    }
+  }
 }
 
 function getCredentials(overrides = {}) {
@@ -162,12 +230,18 @@ function getCredentials(overrides = {}) {
 async function resolveStoryPointsFieldId(credentials) {
   if (credentials.storyPointsFieldId) return credentials.storyPointsFieldId
 
-  const fields = await jiraGet('/rest/api/3/field', credentials)
-  const match = fields.find((field) =>
-    STORY_POINT_FIELD_NAMES.some((name) => field.name?.toLowerCase().includes(name)),
-  )
+  const load = async () => {
+    const fields = await jiraGet('/rest/api/3/field', credentials)
+    const match = fields.find((field) =>
+      STORY_POINT_FIELD_NAMES.some((name) => field.name?.toLowerCase().includes(name)),
+    )
+    return match?.id || null
+  }
 
-  return match?.id || null
+  if (!fieldCacheEnabled()) return load()
+
+  const key = `spfield:${credentials.cloudId || credentials.siteUrl || 'default'}`
+  return fieldCache.getOrLoad(key, load)
 }
 
 async function fetchProjectIssues(overrides = {}) {
@@ -180,12 +254,32 @@ async function fetchProjectIssues(overrides = {}) {
 
   const jql = encodeURIComponent(`project = ${projectKey} ORDER BY updated DESC`)
   const fieldList = encodeURIComponent(fields.join(','))
-  const body = await jiraGet(
-    `/rest/api/3/search/jql?jql=${jql}&maxResults=100&fields=${fieldList}`,
-    credentials,
-  )
+  const pageSize = config.jira.pageSize
 
-  return mapIssues(body.issues || [], storyPointsFieldId)
+  // Token-based pagination: keep fetching until Jira reports the last page.
+  // Without this, a project with more than one page silently syncs only page 1.
+  const collected = []
+  let nextPageToken = null
+  let pages = 0
+  const MAX_PAGES = 1000
+
+  do {
+    const tokenParam = nextPageToken
+      ? `&nextPageToken=${encodeURIComponent(nextPageToken)}`
+      : ''
+    const body = await jiraGet(
+      `/rest/api/3/search/jql?jql=${jql}&maxResults=${pageSize}&fields=${fieldList}${tokenParam}`,
+      credentials,
+    )
+
+    const issues = body?.issues || []
+    collected.push(...issues)
+
+    nextPageToken = body && body.isLast !== true && body.nextPageToken ? body.nextPageToken : null
+    pages += 1
+  } while (nextPageToken && pages < MAX_PAGES)
+
+  return mapIssues(collected, storyPointsFieldId)
 }
 
 function mapIssues(issues, storyPointsFieldId) {
@@ -303,4 +397,6 @@ module.exports = {
   resolveStoryPointsFieldId,
   mapJiraStatus,
   isHighPriority,
+  jiraGet,
+  isRetryable,
 }

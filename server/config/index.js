@@ -60,5 +60,28 @@ module.exports = {
     developerAccountId:
       process.env.JIRA_DEVELOPER_ACCOUNT_ID || process.env.JIRA_ACCOUNT_ID || null,
     storyPointsFieldId: process.env.JIRA_STORY_POINTS_FIELD_ID || null,
+    // Reliability knobs for outbound calls to Atlassian (external dependency).
+    requestTimeoutMs: Number(process.env.JIRA_REQUEST_TIMEOUT_MS) || 10000,
+    maxRetries: Number.isFinite(Number(process.env.JIRA_MAX_RETRIES))
+      ? Number(process.env.JIRA_MAX_RETRIES)
+      : 2,
+    pageSize: Number(process.env.JIRA_PAGE_SIZE) || 100,
+  },
+  cognito: {
+    region: process.env.COGNITO_REGION || null,
+    userPoolId: process.env.COGNITO_USER_POOL_ID || null,
+    clientId: process.env.COGNITO_CLIENT_ID || null,
+    clientSecret: process.env.COGNITO_CLIENT_SECRET || null,
+    // Host only (no scheme), e.g. questly-dev.auth.eu-central-1.amazoncognito.com
+    domain: process.env.COGNITO_DOMAIN
+      ? String(process.env.COGNITO_DOMAIN).replace(/^https?:\/\//, '').replace(/\/$/, '')
+      : null,
+    redirectUri:
+      process.env.COGNITO_REDIRECT_URI ||
+      (process.env.API_PUBLIC_URL
+        ? `${process.env.API_PUBLIC_URL.replace(/\/$/, '')}/api/auth/cognito/callback`
+        : process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/auth/cognito/callback`
+          : `http://localhost:${Number(process.env.PORT) || 3001}/api/auth/cognito/callback`),
   },
 }

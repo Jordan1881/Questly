@@ -19,8 +19,8 @@ async function findPendingByUserAndWorkspace(user_id, workspace_id) {
   return db(TABLE).where({ user_id, workspace_id, status: 'pending' }).first()
 }
 
-async function listPendingByWorkspace(workspace_id) {
-  return db(`${TABLE} as jr`)
+async function listPendingByWorkspace(workspace_id, { limit, offset } = {}) {
+  let query = db(`${TABLE} as jr`)
     .join('users as u', 'jr.user_id', 'u.id')
     .where({ 'jr.workspace_id': workspace_id, 'jr.status': 'pending' })
     .select(
@@ -33,6 +33,20 @@ async function listPendingByWorkspace(workspace_id) {
       'u.email'
     )
     .orderBy('jr.created_at', 'asc')
+
+  if (limit != null) {
+    query = query.limit(limit).offset(offset || 0)
+  }
+
+  return query
+}
+
+async function countPendingByWorkspace(workspace_id) {
+  const row = await db(TABLE)
+    .where({ workspace_id, status: 'pending' })
+    .count({ count: '*' })
+    .first()
+  return Number(row?.count ?? 0)
 }
 
 async function updateStatus(id, { status, reviewed_by }) {
@@ -53,5 +67,6 @@ module.exports = {
   findPendingByUser,
   findPendingByUserAndWorkspace,
   listPendingByWorkspace,
+  countPendingByWorkspace,
   updateStatus,
 }

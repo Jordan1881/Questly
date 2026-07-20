@@ -1,3 +1,5 @@
+const logger = require('../lib/logger')
+
 function notFound(req, res, next) {
   res.status(404).json({ error: `Route ${req.originalUrl} not found` })
 }
@@ -7,8 +9,13 @@ function errorHandler(err, req, res, next) {
   const status = err.status || 500
   const message = err.message || 'Internal Server Error'
 
-  if (process.env.NODE_ENV !== 'test') {
-    console.error(`[${status}] ${message}`, err.stack)
+  // Log through the structured logger (redaction applied). 5xx are real faults
+  // (log the stack); 4xx are expected client errors (warn, no stack noise).
+  const log = req.log || logger
+  if (status >= 500) {
+    log.error({ err, status, reqId: req.id }, message)
+  } else {
+    log.warn({ status, reqId: req.id }, message)
   }
 
   res.status(status).json({ error: message })

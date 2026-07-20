@@ -10,7 +10,7 @@ async function ensure(task_id, user_id) {
   return assignment
 }
 
-async function listForUser(user_id, workspace_id = null) {
+async function listForUser(user_id, workspace_id = null, { limit, offset } = {}) {
   let query = db(`${TABLE} as ta`)
     .join('tasks as t', 't.id', 'ta.task_id')
     .where('ta.user_id', user_id)
@@ -19,7 +19,7 @@ async function listForUser(user_id, workspace_id = null) {
     query = query.where('t.workspace_id', workspace_id)
   }
 
-  return query
+  query = query
     .leftJoin('xp_approval_requests as xr', function joinPendingApprovals() {
       this.on('xr.task_id', 't.id')
         .andOn('xr.user_id', 'ta.user_id')
@@ -42,6 +42,25 @@ async function listForUser(user_id, workspace_id = null) {
       'xr.xp_amount as pending_xp_amount',
     )
     .orderBy('t.updated_at', 'desc')
+
+  if (limit != null) {
+    query = query.limit(limit).offset(offset || 0)
+  }
+
+  return query
+}
+
+async function countForUser(user_id, workspace_id = null) {
+  let query = db(`${TABLE} as ta`)
+    .join('tasks as t', 't.id', 'ta.task_id')
+    .where('ta.user_id', user_id)
+
+  if (workspace_id) {
+    query = query.where('t.workspace_id', workspace_id)
+  }
+
+  const row = await query.count({ count: '*' }).first()
+  return Number(row?.count ?? 0)
 }
 
 async function findForUser(task_id, user_id) {
@@ -81,6 +100,7 @@ async function removeUncompleted(task_id, user_id) {
 module.exports = {
   ensure,
   listForUser,
+  countForUser,
   listByTask,
   findForUser,
   setCompleted,

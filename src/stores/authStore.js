@@ -67,6 +67,17 @@ export const useAuthStore = create(
       clearError: () => set({ error: null }),
       clearSessionExpired: () => set({ sessionExpired: false }),
 
+      setSessionFromToken: (token) => {
+        if (!token) return
+        set({
+          token,
+          isLoggedIn: true,
+          error: null,
+          sessionExpired: false,
+          isLoading: false,
+        })
+      },
+
       applyMembershipPayload: (payload) => {
         const patch = membershipPatch(payload, get().activeWorkspaceId)
         set(patch)

@@ -6,8 +6,11 @@
 | [API.md](./API.md) | REST API reference |
 | [WRITEUP.md](./WRITEUP.md) | Architecture, Jira integration, testing |
 | [PROJECT-OVERVIEW.md](./PROJECT-OVERVIEW.md) | Presentation-ready architecture, user stories, metrics, and scope |
+| [EXAM-PREP.md](./EXAM-PREP.md) | Defense prep — answers to all project examination questions with code references (Hebrew) |
+| [PERFORMANCE.md](./PERFORMANCE.md) | Performance, bottlenecks, scaling, caching, and reliability notes |
 | [DEMO.md](./DEMO.md) | Demo / E2E talking points |
 | [MULTI_WORKSPACE.md](./MULTI_WORKSPACE.md) | Operator note: enable/rollback multi-workspace flag |
+| [AUTH_COGNITO.md](./AUTH_COGNITO.md) | Google Sign-In via AWS Cognito (Hosted UI + Google IdP) |
 | [questly-schema.mermaid](./questly-schema.mermaid) | ER diagram (Mermaid) |
 
 ## Operations (repo root)

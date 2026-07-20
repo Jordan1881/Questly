@@ -10,6 +10,7 @@ const {
   userCanAccessWorkspace,
 } = require('../lib/workspaceAuth')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
+const { parsePagination, setTotalCount } = require('../lib/pagination')
 
 async function create(req, res, next) {
   try {
@@ -193,8 +194,19 @@ async function listMembers(req, res, next) {
       return res.status(403).json({ error: 'Forbidden' })
     }
 
+    const pagination = parsePagination(req.query)
+    const page = pagination.active
+      ? { limit: pagination.limit, offset: pagination.offset }
+      : {}
+
     if (isMultiWorkspaceEnabled()) {
-      const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(workspace.id)
+      if (pagination.active) {
+        setTotalCount(res, await WorkspaceMembershipModel.countActiveMembers(workspace.id))
+      }
+      const members = await WorkspaceMembershipModel.listActiveMembersWithProgress(
+        workspace.id,
+        page,
+      )
       return res.json({
         members: members.map((row) => ({
           id: row.id,
@@ -210,7 +222,10 @@ async function listMembers(req, res, next) {
       })
     }
 
-    const members = await UserModel.listByWorkspace(workspace.id)
+    if (pagination.active) {
+      setTotalCount(res, await UserModel.countByWorkspace(workspace.id))
+    }
+    const members = await UserModel.listByWorkspace(workspace.id, page)
     res.json({ members })
   } catch (err) {
     next(err)

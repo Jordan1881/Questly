@@ -4,6 +4,7 @@ import signUpImg from '../assets/signUp-img.webp'
 import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
 import { LegalAgreementText } from '../components/LegalFooterLinks'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 import JiraAuth from '../overlays/JiraAuth'
 import { useAuthStore } from '../stores/authStore'
 import { resolvePostAuthPath } from '../lib/authRedirect'
@@ -232,6 +233,8 @@ export default function SignUp() {
             <FormButton type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Creating account…' : 'Create Account'}
             </FormButton>
+
+            <GoogleSignInButton />
 
             <p className="ds-body-sm text-center">
               Already have an account?{' '}
