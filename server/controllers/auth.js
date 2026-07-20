@@ -304,6 +304,12 @@ async function changePassword(req, res, next) {
     }
 
     const internal = await UserModel.findByIdInternal(req.user.id)
+    if (!internal?.password_hash) {
+      return res.status(400).json({
+        error: 'This account uses Google sign-in and has no local password',
+      })
+    }
+
     const valid = await bcrypt.compare(currentPassword, internal.password_hash)
     if (!valid) {
       return res.status(400).json({ error: 'current password is incorrect' })
@@ -318,4 +324,15 @@ async function changePassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, me, logout, connectJira, disconnectJira, changePassword }
+module.exports = {
+  register,
+  login,
+  me,
+  logout,
+  connectJira,
+  disconnectJira,
+  changePassword,
+  signToken,
+  buildSessionUser,
+  attachMultiWorkspaceSession,
+}

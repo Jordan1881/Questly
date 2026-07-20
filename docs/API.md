@@ -68,6 +68,9 @@ or generates one). Structured logs (pino) include the same id for correlation.
 | POST | `/login` | — | `{ email, password }` | 200 `{ token, user }`, 401 |
 | GET | `/me` | any | — | 200, 401 |
 | POST | `/logout` | any | — | 200 |
+| GET | `/cognito/status` | — | — | 200 `{ enabled }` |
+| GET | `/cognito/google/start` | — | — | redirect to Cognito Hosted UI (or 200 `{ authorize_url }` for JSON) |
+| GET | `/cognito/callback` | — | OAuth `code` + `state` | redirect to frontend `/auth/cognito/callback?token=…` |
 | GET | `/jira/oauth/status` | any | — | 200 `{ available }` |
 | GET | `/jira/oauth/start` | developer | `?return_to=/path` | 200 `{ authorize_url }`, 403, 503 |
 | GET | `/jira/oauth/callback` | — | OAuth query params | redirect |

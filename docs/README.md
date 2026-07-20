@@ -10,6 +10,7 @@
 | [PERFORMANCE.md](./PERFORMANCE.md) | Performance, bottlenecks, scaling, caching, and reliability notes |
 | [DEMO.md](./DEMO.md) | Demo / E2E talking points |
 | [MULTI_WORKSPACE.md](./MULTI_WORKSPACE.md) | Operator note: enable/rollback multi-workspace flag |
+| [AUTH_COGNITO.md](./AUTH_COGNITO.md) | Google Sign-In via AWS Cognito (Hosted UI + Google IdP) |
 | [questly-schema.mermaid](./questly-schema.mermaid) | ER diagram (Mermaid) |
 
 ## Operations (repo root)

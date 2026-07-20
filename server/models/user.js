@@ -21,7 +21,14 @@ const PUBLIC_FIELDS = [
 
 function stripSensitiveFields(user) {
   if (!user) return null
-  const { password_hash, jira_access_token, jira_refresh_token, jira_account_id, ...safe } = user
+  const {
+    password_hash,
+    jira_access_token,
+    jira_refresh_token,
+    jira_account_id,
+    cognito_sub,
+    ...safe
+  } = user
   return safe
 }
 
@@ -31,16 +38,25 @@ async function findByEmail(email) {
   return db(TABLE).where({ email }).first()
 }
 
+async function findByCognitoSub(cognito_sub) {
+  return db(TABLE).where({ cognito_sub }).first()
+}
+
 async function findById(id) {
   const user = await db(TABLE).where({ id }).first()
   return stripSensitiveFields(user)
 }
 
-async function create({ email, username, password_hash, role }) {
-  const [user] = await db(TABLE)
-    .insert({ email, username, password_hash, role })
-    .returning('*')
+async function create({ email, username, password_hash = null, role, cognito_sub = null }) {
+  const row = { email, username, password_hash, role }
+  if (cognito_sub) row.cognito_sub = cognito_sub
+  const [user] = await db(TABLE).insert(row).returning('*')
   return stripSensitiveFields(user)
+}
+
+async function linkCognitoSub(user_id, cognito_sub) {
+  const [user] = await db(TABLE).where({ id: user_id }).update({ cognito_sub }).returning('*')
+  return user
 }
 
 async function listByWorkspace(workspace_id, { limit, offset } = {}) {
@@ -212,9 +228,11 @@ async function updateRole(user_id, role) {
 
 module.exports = {
   findByEmail,
+  findByCognitoSub,
   findById,
   findByIdInternal,
   create,
+  linkCognitoSub,
   listByWorkspace,
   countByWorkspace,
   listDevelopersByWorkspace,
