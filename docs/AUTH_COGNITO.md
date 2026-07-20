@@ -42,7 +42,13 @@ Questly never calls Google directly. Only Cognito app-client values go in `serve
 
 3. Cognito → User pool → **Sign-in experience** → **Federated identity provider** → **Add Google**.
 4. Paste the GCP **Client ID** and **Client Secret**.
-5. Map attributes: Google `email` → Cognito `email`, Google `name` → Cognito `name` (or username).
+5. Map attributes:
+   - Google `email` → Cognito `email`
+   - Google `email_verified` → Cognito `email_verified` (recommended)
+   - Google `name` → Cognito `name` (or username)
+
+   Questly also accepts Google-federated tokens when Cognito omits/`false`s
+   `email_verified` — Google accounts verify email before OAuth.
 
 ## 4. App client (Hosted UI)
 

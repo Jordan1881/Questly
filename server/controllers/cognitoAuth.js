@@ -128,7 +128,7 @@ async function callback(req, res) {
       return redirectToFrontend(res, { cognito: 'error', reason: 'missing_claims' })
     }
 
-    if (!cognitoAuth.isEmailVerified(claims.email_verified)) {
+    if (!cognitoAuth.isEmailVerified(claims.email_verified, claims)) {
       return redirectToFrontend(res, { cognito: 'error', reason: 'email_unverified' })
     }
 

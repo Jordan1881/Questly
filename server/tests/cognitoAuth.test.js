@@ -161,7 +161,7 @@ describe('GET /api/auth/cognito/callback', () => {
     expect(row.password_hash).toBeTruthy()
   })
 
-  test('rejects unverified email', async () => {
+  test('rejects unverified email for non-Google tokens', async () => {
     const state = createOAuthState()
     cognitoAuth.exchangeCodeForTokens.mockResolvedValue({ id_token: 'fake-id-token' })
     cognitoAuth.verifyIdToken.mockResolvedValue({
@@ -181,6 +181,31 @@ describe('GET /api/auth/cognito/callback', () => {
 
     const count = await db('users').where({ email: 'unverified@example.com' }).count({ c: '*' }).first()
     expect(Number(count.c)).toBe(0)
+  })
+
+  test('accepts Google-federated email when Cognito omits email_verified', async () => {
+    const state = createOAuthState()
+    cognitoAuth.exchangeCodeForTokens.mockResolvedValue({ id_token: 'fake-id-token' })
+    cognitoAuth.verifyIdToken.mockResolvedValue({
+      sub: 'cognito-sub-google-verified',
+      email: 'jordanstu21@gmail.com',
+      email_verified: false,
+      name: 'Jordan',
+      identities: JSON.stringify([
+        { userId: 'google-sub', providerName: 'Google', providerType: 'Google' },
+      ]),
+    })
+
+    const res = await request(app)
+      .get('/api/auth/cognito/callback')
+      .query({ code: 'auth-code', state })
+
+    expect(res.status).toBe(302)
+    expect(res.headers.location).toContain('token=')
+
+    const row = await db('users').where({ email: 'jordanstu21@gmail.com' }).first()
+    expect(row).toBeTruthy()
+    expect(row.cognito_sub).toBe('cognito-sub-google-verified')
   })
 
   test('rejects invalid state', async () => {

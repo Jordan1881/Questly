@@ -151,8 +151,39 @@ async function verifyIdToken(idToken) {
   return payload
 }
 
-function isEmailVerified(claim) {
-  return claim === true || claim === 'true'
+function parseIdentities(claims) {
+  const raw = claims?.identities
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
+/** True when the Cognito ID token came from Google federation. */
+function isGoogleFederated(claims) {
+  return parseIdentities(claims).some(
+    (id) => id?.providerName === 'Google' || id?.providerType === 'Google',
+  )
+}
+
+/**
+ * Cognito often omits or sets email_verified=false for Google IdP unless
+ * Google's email_verified attribute is mapped. Google accounts always verify
+ * email before OAuth, so trust email when the token is Google-federated.
+ */
+function isEmailVerified(claim, claims = {}) {
+  if (claim === true || claim === 'true') return true
+  if (isGoogleFederated(claims) && typeof claims.email === 'string' && claims.email.trim()) {
+    return true
+  }
+  return false
 }
 
 module.exports = {
@@ -161,6 +192,7 @@ module.exports = {
   exchangeCodeForTokens,
   verifyIdToken,
   isEmailVerified,
+  isGoogleFederated,
   resetVerifierForTests,
   getCognitoSettings,
 }
