@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiFetch } from '../lib/api'
+import { apiFetch, apiUrl } from '../lib/api'
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -15,7 +15,7 @@ const GoogleIcon = () => (
 
 /**
  * Shown only when Cognito Google sign-in is configured on the API.
- * Navigates to /api/auth/cognito/google/start (Vite proxies to the API).
+ * Navigates to the API Cognito Google start URL (VITE_API_URL in prod; Vite proxy locally).
  */
 export default function GoogleSignInButton({ className = '' }) {
   const [enabled, setEnabled] = useState(false)
@@ -44,7 +44,7 @@ export default function GoogleSignInButton({ className = '' }) {
         <span className="flex-1 h-px bg-[color:var(--color-border-soft)]" />
       </div>
       <a
-        href="/api/auth/cognito/google/start"
+        href={apiUrl('/api/auth/cognito/google/start')}
         className="w-full inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] bg-white px-4 py-3 text-[14px] font-medium text-[color:var(--color-gray-900)] hover:bg-[color:var(--color-gray-50)] transition-colors duration-200 ds-focus-ring"
       >
         <GoogleIcon />
