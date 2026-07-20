@@ -128,9 +128,9 @@ async function callback(req, res) {
       return redirectToFrontend(res, { cognito: 'error', reason: 'missing_claims' })
     }
 
-    if (!cognitoAuth.isEmailVerified(claims.email_verified, claims)) {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'email_unverified' })
-    }
+    // Do not require claims.email_verified: Cognito Google IdP often omits it or
+    // sets false unless Google's attribute is mapped. This callback only runs after
+    // a verified cognito-google OAuth state from /cognito/google/start.
 
     let row = await UserModel.findByCognitoSub(sub)
 

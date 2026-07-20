@@ -161,7 +161,7 @@ describe('GET /api/auth/cognito/callback', () => {
     expect(row.password_hash).toBeTruthy()
   })
 
-  test('rejects unverified email for non-Google tokens', async () => {
+  test('accepts email when Cognito email_verified is false (Google start state)', async () => {
     const state = createOAuthState()
     cognitoAuth.exchangeCodeForTokens.mockResolvedValue({ id_token: 'fake-id-token' })
     cognitoAuth.verifyIdToken.mockResolvedValue({
@@ -175,12 +175,14 @@ describe('GET /api/auth/cognito/callback', () => {
       .get('/api/auth/cognito/callback')
       .query({ code: 'auth-code', state })
 
+    // Google Hosted UI start is the only path that mints this state; Cognito's
+    // email_verified claim is unreliable, so we accept email + valid state.
     expect(res.status).toBe(302)
-    expect(res.headers.location).toContain('cognito=error')
-    expect(res.headers.location).toContain('reason=email_unverified')
+    expect(res.headers.location).toContain('token=')
 
-    const count = await db('users').where({ email: 'unverified@example.com' }).count({ c: '*' }).first()
-    expect(Number(count.c)).toBe(0)
+    const row = await db('users').where({ email: 'unverified@example.com' }).first()
+    expect(row).toBeTruthy()
+    expect(row.cognito_sub).toBe('cognito-sub-unverified')
   })
 
   test('accepts Google-federated email when Cognito omits email_verified', async () => {
