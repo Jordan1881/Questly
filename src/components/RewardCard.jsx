@@ -18,7 +18,7 @@ export default function RewardCard({
   return (
     <div className="ds-card ds-card-pad ds-card-lift flex flex-col gap-4 transition-all duration-200">
       <div
-        className="w-14 h-14 rounded-[var(--radius-lg)] flex items-center justify-center shrink-0 overflow-hidden shadow-[var(--shadow-primary-sm)]"
+        className="w-full aspect-[4/3] rounded-[var(--radius-lg)] flex items-center justify-center shrink-0 overflow-hidden shadow-[var(--shadow-primary-sm)]"
         style={{
           background: imageUrl ? 'var(--color-gray-100)' : undefined,
         }}
@@ -27,7 +27,7 @@ export default function RewardCard({
           <img src={imageUrl} alt="" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center ds-brand-gradient">
-            <StarIcon color="white" size={24} />
+            <StarIcon color="white" size={40} />
           </div>
         )}
       </div>
