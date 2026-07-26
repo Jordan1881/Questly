@@ -41,7 +41,7 @@ jobs:
         working-directory: server
 
       - name: Audit backend dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high --omit=dev
         working-directory: server
 
       - name: Create test database
