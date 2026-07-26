@@ -127,12 +127,24 @@ export const useAuthStore = create(
 
       login: async (credentials) => {
         set({ isLoading: true, error: null })
-        try {
-          const payload = await apiFetch('/api/auth/login', {
+        const attempt = () =>
+          apiFetch('/api/auth/login', {
             method: 'POST',
             body: JSON.stringify(credentials),
             skipSessionExpiry: true,
           })
+
+        try {
+          let payload
+          try {
+            payload = await attempt()
+          } catch (err) {
+            // One silent retry: Railway cold start / stale DB socket often 500s once.
+            const retryable =
+              err instanceof ApiError && (err.status === 500 || err.status === 502 || err.status === 0)
+            if (!retryable) throw err
+            payload = await attempt()
+          }
           const { user, token } = payload
           const patch = membershipPatch(payload)
           set({

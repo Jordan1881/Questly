@@ -76,6 +76,29 @@ describe('authStore', () => {
     expect(useAuthStore.getState().sessionExpired).toBe(false)
   })
 
+  it('login retries once after a transient 500 then succeeds', async () => {
+    const fakeUser = { id: '1', email: 'dev@test.com', username: 'dev', role: 'developer' }
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Internal Server Error' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ user: fakeUser, token: 'real-jwt' }),
+      })
+
+    const result = await useAuthStore.getState().login({ email: 'dev@test.com', password: 'pass' })
+
+    expect(result.ok).toBe(true)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(useAuthStore.getState().token).toBe('real-jwt')
+    expect(useAuthStore.getState().error).toBeNull()
+  })
+
   // ── register ─────────────────────────────────────────────────────────────────
 
   it('register calls POST /api/auth/register and stores user + token on success', async () => {

@@ -13,7 +13,11 @@ const { serveAvatar } = require('./lib/avatarServe')
 function createApp() {
   const app = express()
 
-  if (process.env.NODE_ENV === 'production') {
+  // Railway (and most PaaS proxies) set X-Forwarded-For. express-rate-limit
+  // needs trust proxy or the first proxied request can misbehave / log hard errors.
+  const behindProxy =
+    process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT)
+  if (behindProxy) {
     const proxyHops = Number(process.env.TRUST_PROXY_HOPS)
     app.set('trust proxy', Number.isFinite(proxyHops) && proxyHops > 0 ? proxyHops : 1)
   }
