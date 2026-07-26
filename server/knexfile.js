@@ -9,19 +9,42 @@ const base = {
   seeds: {
     directory: './seeds',
   },
-  pool: { min: 2, max: 10 },
+  // Keep a small warm pool, but release idle clients before Railway/Postgres
+  // proxies drop them — stale sockets otherwise make the first query after idle
+  // fail with a 500 (second attempt usually works).
+  pool: {
+    min: 0,
+    max: 10,
+    idleTimeoutMillis: 10_000,
+    createTimeoutMillis: 30_000,
+    acquireTimeoutMillis: 30_000,
+  },
+}
+
+function localConnection() {
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 5432,
+    database: process.env.DB_NAME || 'questly_dev',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+  }
+}
+
+function productionConnection() {
+  if (process.env.DATABASE_URL) {
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    }
+  }
+  return localConnection()
 }
 
 module.exports = {
   development: {
     ...base,
-    connection: {
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME || 'questly_dev',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-    },
+    connection: localConnection(),
   },
 
   test: {
@@ -43,17 +66,6 @@ module.exports = {
 
   production: {
     ...base,
-    connection:
-      process.env.NODE_ENV === 'production' && process.env.DATABASE_URL
-        ? process.env.DATABASE_URL
-        : {
-            host: process.env.DB_HOST || 'localhost',
-            port: Number(process.env.DB_PORT) || 5432,
-            database: process.env.DB_NAME || 'questly_dev',
-            user: process.env.DB_USER || 'postgres',
-            password: process.env.DB_PASSWORD || 'postgres',
-          },
-    pool: { min: 2, max: 10 },
-    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+    connection: productionConnection(),
   },
 }

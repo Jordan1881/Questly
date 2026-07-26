@@ -11,6 +11,7 @@ const { developerJiraContext } = require('../lib/jiraSiteContext')
 const { formatDeveloperConnectError } = require('../lib/jiraConnectErrors')
 const { isMultiWorkspaceEnabled } = require('../lib/featureFlags')
 const { parsePreferences } = require('../lib/userPreferences')
+const { withDbRetry } = require('../lib/dbErrors')
 
 const SALT_ROUNDS = 12
 const INVALID_CREDENTIALS = 'Invalid credentials'
@@ -82,29 +83,40 @@ async function login(req, res, next) {
       return res.status(400).json({ error: 'email and password are required' })
     }
 
-    const row = await UserModel.findByEmail(email)
-    let valid = false
-    if (row?.password_hash) {
-      try {
-        valid = await bcrypt.compare(password, row.password_hash)
-      } catch {
-        // Corrupt/missing hash must not become a 500 — treat as bad credentials.
-        valid = false
+    // One automatic retry covers stale pool sockets after idle (classic
+    // "first login Internal Server Error, second click works" on Railway).
+    const payload = await withDbRetry(async () => {
+      const row = await UserModel.findByEmail(email)
+      let valid = false
+      if (row?.password_hash) {
+        try {
+          valid = await bcrypt.compare(password, row.password_hash)
+        } catch {
+          // Corrupt/missing hash must not become a 500 — treat as bad credentials.
+          valid = false
+        }
       }
-    }
-    if (!valid) {
-      return res.status(401).json({ error: INVALID_CREDENTIALS })
-    }
+      if (!valid) {
+        const err = new Error(INVALID_CREDENTIALS)
+        err.status = 401
+        throw err
+      }
 
-    const token = signToken(row)
-    const payload = { user: buildSessionUser(row), token }
+      const token = signToken(row)
+      const body = { user: buildSessionUser(row), token }
 
-    if (isMultiWorkspaceEnabled()) {
-      await attachMultiWorkspaceSession(payload, row)
-    }
+      if (isMultiWorkspaceEnabled()) {
+        await attachMultiWorkspaceSession(body, row)
+      }
+
+      return body
+    })
 
     res.status(200).json(payload)
   } catch (err) {
+    if (err.status === 401) {
+      return res.status(401).json({ error: err.message || INVALID_CREDENTIALS })
+    }
     next(err)
   }
 }
