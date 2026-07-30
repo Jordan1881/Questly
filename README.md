@@ -18,10 +18,10 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
-  <img src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" alt="Vite 7" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" alt="Vite 8" />
   <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4" />
   <img src="https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white" alt="Express 5" />
   <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
 </p>
 <p align="center">
@@ -62,7 +62,7 @@ Built as a final-year Information Systems capstone, Questly runs in production o
 | Role | Experience |
 |------|------------|
 | **Developer** | Dashboard, task list, reward shop, profile, personal Jira connect |
-| **Admin** | Workspace setup, Jira sync, join requests, sprint management, reward approvals |
+| **Admin** | Workspace setup, Jira sync, join requests, sprint management, reward catalog, optional XP approvals |
 
 ---
 
@@ -87,9 +87,9 @@ Built as a final-year Information Systems capstone, Questly runs in production o
 
 ### Developer
 - **Jira-backed quests** — assigned issues sync with difficulty, XP, due dates, and priority badges
-- **XP & leveling** — lifetime XP drives levels; sprint XP resets each sprint for fair reward-shop spending
+- **XP & leveling** — lifetime XP drives levels; sprint XP resets when an admin closes the sprint
 - **Dual economy** — XP for progression, Coins for purchases (default: 100 XP → 10 Coins)
-- **Reward Shop** — spend coins on real-world coupon rewards (admin approval flow)
+- **Reward Shop** — spend Coins directly on real-world coupon rewards
 - **Task completion** — mark quests done in Questly to earn XP; Jira status is display-only until sync
 - **Team Jira banner** — after join approval, UI shows the admin's Jira site hostname for guided connect
 - **OAuth or API token** — personal Jira connect via Atlassian 3LO or classic API token
@@ -98,7 +98,8 @@ Built as a final-year Information Systems capstone, Questly runs in production o
 - **Workspace & Jira** — connect workspace Jira (API token or OAuth), sync issues, prune stale tasks
 - **Join requests** — approve developers; team `jira_site_url` travels with approval
 - **Sprint management** — open/close sprints; sprint XP resets on close with audit trail
-- **Reward catalog** — upload coupon codes, approve/deny purchase requests
+- **Reward catalog** — create rewards and upload coupon codes
+- **Optional XP approvals** — require admin review before task XP and Coins are awarded
 - **Team dashboard** — leaderboard, member XP, pending approvals
 
 ### Platform
@@ -133,11 +134,18 @@ flowchart TB
     OAuth[OAuth 3LO]
   end
 
-  UI --> FE
+  subgraph identity [Federated identity]
+    Cognito[AWS Cognito]
+    Google[Google Sign-In]
+  end
+
+  FE -->|Static assets| UI
   UI -->|Bearer JWT| API
   API --> DB
   API -->|Workspace credentials| Jira
-  API -->|Developer OAuth| OAuth
+  API -->|Admin and developer OAuth| OAuth
+  API -->|Hosted UI callback| Cognito
+  Cognito --> Google
 ```
 
 ### Core domains
@@ -148,7 +156,7 @@ flowchart TB
 | **Jira sync** | Admin pulls project issues → quests; story points map to difficulty and XP |
 | **Task assignments** | Per-user completion state; shared tasks supported |
 | **XP economy** | Sprint XP (resets), lifetime XP (levels), Coins (reward shop) |
-| **Rewards** | Admin-managed catalog; developer purchases require approval |
+| **Rewards** | Admin-managed coupon catalog; developers purchase directly with Coins |
 
 ### Jira integration model
 
@@ -204,7 +212,7 @@ Decisions made during development, with rationale:
 - **Atlassian distribution** — privacy/terms pages and personal-data reporting API for OAuth app compliance.
 
 ### Frontend architecture
-- **React Router 7** — file-based routes with `ProtectedRoute` role guards; replaced early custom state routing.
+- **React Router 8** — centralized route configuration with `ProtectedRoute` role guards.
 - **Zustand stores** — domain stores (`authStore`, `taskStore`, `rewardStore`, etc.) instead of prop drilling.
 - **Vite dev proxy** — `/api` → `localhost:3001` in development; `VITE_API_URL` baked at build for production.
 
@@ -228,18 +236,18 @@ Decisions made during development, with rationale:
 | Technology | Role |
 |------------|------|
 | [React 19](https://react.dev) | UI framework |
-| [Vite 7](https://vite.dev) | Build tool & dev server |
+| [Vite 8](https://vite.dev) | Build tool & dev server |
 | [Tailwind CSS v4](https://tailwindcss.com) | Utility-first styling |
-| [React Router 7](https://reactrouter.com) | Client-side routing & role guards |
+| [React Router 8](https://reactrouter.com) | Client-side routing & role guards |
 | [Zustand](https://zustand.docs.pmnd.rs) | Lightweight global state |
-| [ESLint 9](https://eslint.org) | Linting (flat config) |
+| [ESLint 10](https://eslint.org) | Linting (flat config) |
 
 ### Backend
 
 | Technology | Role |
 |------------|------|
 | [Node.js](https://nodejs.org) | JavaScript runtime |
-| [Express 4](https://expressjs.com) | HTTP API framework |
+| [Express 5](https://expressjs.com) | HTTP API framework |
 | [Knex.js](https://knexjs.org) | SQL query builder & migrations |
 | [PostgreSQL 15](https://www.postgresql.org) | Primary database |
 | [pg](https://node-postgres.com) | Postgres driver |
@@ -303,7 +311,7 @@ Questly/
 │   ├── controllers/        # Route handlers
 │   ├── models/             # Knex data access
 │   ├── services/           # Jira sync, XP, rewards, OAuth
-│   ├── migrations/         # PostgreSQL schema (16 migrations)
+│   ├── migrations/         # PostgreSQL schema (24 migrations)
 │   └── scripts/            # Prod ops (duplicate task cleanup)
 ├── e2e/                    # Playwright journeys
 ├── docs/                   # API, write-up, demo, screenshots, archive
@@ -319,7 +327,7 @@ Questly/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - PostgreSQL 15 ([Docker Compose](docker-compose.yml) or local install)
 
 ### Quick start
@@ -361,10 +369,12 @@ npx playwright test
 
 | Layer | Tool | What it covers |
 |-------|------|----------------|
-| Frontend units | Vitest + Testing Library | Stores, components, hooks |
-| Backend integration | Jest + Supertest + nock | Routes, models, Jira sync |
-| E2E | Playwright | Auth, onboarding, 5 user journeys |
+| Frontend units | Vitest + Testing Library | 68 suites / 386 tests — stores, components, hooks |
+| Backend integration | Jest + Supertest + nock | 52 suites / 285 tests — routes, models, Jira sync |
+| E2E | Playwright | 9 specifications / 20 tests — auth, onboarding, and user journeys |
 | Security / edge | Jest | Cross-workspace 403, concurrency, edge cases |
+
+**Verified baseline:** 691 automated tests in total.
 
 ---
 
