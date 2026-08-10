@@ -180,9 +180,14 @@ export default function Dashboard() {
   const hasWorkspace = Boolean(user?.workspace_id)
 
   useEffect(() => {
-    if (userRole === 'developer' && hasWorkspace) {
+    if (userRole !== 'developer' || !hasWorkspace) return
+    let cancelled = false
+    // Defer so loadXpHistory's setHistoryLoading is not synchronous in the effect body.
+    Promise.resolve().then(() => {
+      if (cancelled) return
       refreshDashboard().catch(() => {})
-    }
+    })
+    return () => { cancelled = true }
   }, [userRole, hasWorkspace, refreshDashboard])
 
   const stats = useMemo(() => {

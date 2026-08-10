@@ -434,24 +434,14 @@ export default function Admin() {
   const fetchPendingXpApprovals = useWorkspaceStore((s) => s.fetchPendingXpApprovals)
   const [searchParams, setSearchParams] = useSearchParams()
   const [showSidebar, setShowSidebar] = useState(false)
-  const initialTab = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState(
-    () => (ADMIN_TAB_IDS.has(initialTab) ? initialTab : 'team'),
-  )
+  const tabParam = searchParams.get('tab')
+  const activeTab = ADMIN_TAB_IDS.has(tabParam) ? tabParam : 'team'
   const [membersLoading, setMembersLoading] = useState(
     () => useWorkspaceStore.getState().members.length === 0,
   )
   const homePath = pagePath('admin', multiWorkspace ? (routeWorkspaceId || activeWorkspaceId) : null)
 
-  useEffect(() => {
-    const tab = searchParams.get('tab')
-    if (ADMIN_TAB_IDS.has(tab) && tab !== activeTab) {
-      setActiveTab(tab)
-    }
-  }, [searchParams, activeTab])
-
   const selectTab = (id) => {
-    setActiveTab(id)
     const next = new URLSearchParams(searchParams)
     if (id === 'team') next.delete('tab')
     else next.set('tab', id)
@@ -465,7 +455,7 @@ export default function Admin() {
   const loadMembers = (options = {}) => {
     const { showSkeleton = true } = options
     if (showSkeleton) setMembersLoading(true)
-    fetchMine()
+    return fetchMine()
       .then((ws) => {
         if (!ws?.id) return []
         return Promise.all([
@@ -482,8 +472,14 @@ export default function Admin() {
     if (activeTab !== 'team' && activeTab !== 'users') return
     // Wait until URL workspace matches session context so /mine is not called with a stale header.
     if (routeWorkspaceId && activeWorkspaceId && routeWorkspaceId !== activeWorkspaceId) return
-    // Skeleton only when we have nothing yet — avoids Admin panel "twitch" on re-fetch.
-    loadMembers({ showSkeleton: members.length === 0 })
+    let cancelled = false
+    // Defer so setMembersLoading is not synchronous in the effect body.
+    Promise.resolve().then(() => {
+      if (cancelled) return
+      // Skeleton only when we have nothing yet — avoids Admin panel "twitch" on re-fetch.
+      loadMembers({ showSkeleton: useWorkspaceStore.getState().members.length === 0 })
+    })
+    return () => { cancelled = true }
     // Intentionally not keyed on pendingJoinRequests / members updates.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userRole, activeTab, routeWorkspaceId, activeWorkspaceId])

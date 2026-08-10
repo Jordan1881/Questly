@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import FilterBar, { filterTasks } from '../../components/FilterBar'
+import FilterBar from '../../components/FilterBar'
+import { filterTasks } from '../../lib/filterTasks'
 
 const tasks = [
   { id: '1', title: 'Open easy', difficulty: 'EASY', done: false, highPriority: false },

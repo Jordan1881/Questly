@@ -3,6 +3,8 @@ import {
   ApiError,
   resolveErrorMessage,
   apiFetch,
+  apiUrl,
+  warmupApi,
   setApiErrorHandler,
   notifyApiError,
 } from '../../lib/api'
@@ -41,6 +43,25 @@ describe('notifyApiError', () => {
     notifyApiError(new Error('plain'))
     expect(handler).not.toHaveBeenCalled()
     setApiErrorHandler(null)
+  })
+})
+
+describe('warmupApi', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('pings /api/health/ready without blocking on failure', async () => {
+    fetch.mockRejectedValueOnce(new Error('offline'))
+    await expect(warmupApi()).resolves.toBeUndefined()
+    expect(fetch).toHaveBeenCalledWith(
+      apiUrl('/api/health/ready'),
+      expect.objectContaining({ method: 'GET', cache: 'no-store', keepalive: true }),
+    )
   })
 })
 

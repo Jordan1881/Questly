@@ -1,12 +1,18 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import logoHorizontal from '../assets/LOGO-HORIZENTAL.svg'
 import Button from '../design-system/components/Button'
 import LegalFooterLinks from '../components/LegalFooterLinks'
 import { useHeroMotion } from '../components/motion/AnimatedHero'
+import { warmupApi } from '../lib/api'
 
 export default function Hero() {
   const navigate = useNavigate()
   const rootRef = useHeroMotion()
+
+  useEffect(() => {
+    warmupApi()
+  }, [])
 
   return (
     <div

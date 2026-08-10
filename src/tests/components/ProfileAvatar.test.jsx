@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { buildAvatarSrc } from '../../components/ProfileAvatar'
+import { buildAvatarSrc } from '../../lib/avatarSrc'
 
 describe('buildAvatarSrc', () => {
   afterEach(() => {

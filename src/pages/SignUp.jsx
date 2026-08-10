@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import signUpImg from '../assets/signUp-img.webp'
 import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
@@ -8,6 +8,7 @@ import GoogleSignInButton from '../components/GoogleSignInButton'
 import JiraAuth from '../overlays/JiraAuth'
 import { useAuthStore } from '../stores/authStore'
 import { resolvePostAuthPath } from '../lib/authRedirect'
+import { warmupApi } from '../lib/api'
 
 const MIN_PASSWORD_LENGTH = 8
 
@@ -65,6 +66,10 @@ export default function SignUp() {
   const [selectedRole, setSelectedRole] = useState('developer')
   const [showJiraAuth, setShowJiraAuth] = useState(false)
   const [validationError, setValidationError] = useState(null)
+
+  useEffect(() => {
+    warmupApi()
+  }, [])
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
 

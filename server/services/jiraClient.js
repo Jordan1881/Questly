@@ -186,7 +186,6 @@ async function jiraGet(path, credentials, options = {}) {
   const baseDelayMs = options.retryBaseMs ?? (Number(process.env.JIRA_RETRY_BASE_MS) || 200)
 
   let attempt = 0
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       return await jiraGetOnce(path, credentials, timeoutMs)

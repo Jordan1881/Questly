@@ -75,15 +75,24 @@ export default function JiraSyncTab() {
   const [toast, setToast] = useState(null)
   const [oauthAvailable, setOauthAvailable] = useState(false)
   const [showManual, setShowManual] = useState(false)
-  const [siteUrl, setSiteUrl] = useState('')
-  const [projectKey, setProjectKey] = useState('')
+  const [siteUrl, setSiteUrl] = useState(() => workspace?.jira_site_url || '')
+  const [projectKey, setProjectKey] = useState(() => workspace?.jira_project_key || '')
   const [accessToken, setAccessToken] = useState('')
+  const [formWorkspaceId, setFormWorkspaceId] = useState(() => workspace?.id ?? null)
   const [oauthPending, setOauthPending] = useState(null)
   const [pendingSites, setPendingSites] = useState([])
   const [selectedPendingSite, setSelectedPendingSite] = useState('')
   const [pendingProjects, setPendingProjects] = useState([])
   const [selectedPendingProject, setSelectedPendingProject] = useState('')
   const [pendingBusy, setPendingBusy] = useState(false)
+
+  // Reset editable fields when the active workspace identity changes (adjust during render).
+  if (workspace?.id !== formWorkspaceId) {
+    setFormWorkspaceId(workspace?.id ?? null)
+    setSiteUrl(workspace?.jira_site_url || '')
+    setProjectKey(workspace?.jira_project_key || '')
+    setAccessToken('')
+  }
 
   const loadPendingProjects = async (workspaceId) => {
     const { projects } = await fetchPendingJiraOAuthProjects(workspaceId)
@@ -158,11 +167,14 @@ export default function JiraSyncTab() {
   }, [fetchMine, fetchWorkspaceJiraOAuthStatus])
 
   useEffect(() => {
-    if (!workspace) return
-    setSiteUrl(workspace.jira_site_url || '')
-    setProjectKey(workspace.jira_project_key || '')
-    setAccessToken('')
-    loadOauthPending(workspace.id)
+    if (!workspace?.id) return
+    let cancelled = false
+    // Defer so setState inside loadOauthPending is not synchronous in the effect body.
+    Promise.resolve().then(() => {
+      if (cancelled) return
+      loadOauthPending(workspace.id)
+    })
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when workspace identity changes
   }, [workspace?.id])
 

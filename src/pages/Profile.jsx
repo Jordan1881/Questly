@@ -198,9 +198,8 @@ export default function Profile() {
   const fetchPendingJoinRequests = useWorkspaceStore((s) => s.fetchPendingJoinRequests)
   const [showSidebar, setShowSidebar] = useState(false)
   const [xpTransactions, setXpTransactions] = useState([])
-  const [xpHistoryLoading, setXpHistoryLoading] = useState(false)
-
   const isAdmin = userRole === 'admin'
+  const [xpHistoryLoading, setXpHistoryLoading] = useState(() => userRole !== 'admin')
   const displayProfile = profile ?? authUser
   const levelInfo = xpLevelInfo(displayProfile?.lifetimeXp ?? displayProfile?.lifetime_xp ?? 0)
 
@@ -209,13 +208,22 @@ export default function Profile() {
   }, [fetchProfile])
 
   useEffect(() => {
-    if (!isAdmin) {
-      setXpHistoryLoading(true)
-      apiFetch('/api/users/me/xp-history')
-        .then(({ transactions }) => setXpTransactions(transactions))
-        .catch(() => setXpTransactions([]))
-        .finally(() => setXpHistoryLoading(false))
-    }
+    if (isAdmin) return
+    let cancelled = false
+    apiFetch('/api/users/me/xp-history')
+      .then(({ transactions }) => {
+        if (!cancelled) {
+          setXpTransactions(transactions)
+          setXpHistoryLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setXpTransactions([])
+          setXpHistoryLoading(false)
+        }
+      })
+    return () => { cancelled = true }
   }, [isAdmin])
 
   useEffect(() => {
