@@ -64,7 +64,6 @@ describe('backward-compatible pagination on list endpoints', () => {
   test('join-requests: limit bounds rows and sets X-Total-Count', async () => {
     const devs = []
     for (let i = 0; i < 3; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
       const dev = await registerLogin(`jrdev${i}@test.com`, 'developer')
       devs.push(dev.user.id)
     }
@@ -83,9 +82,7 @@ describe('backward-compatible pagination on list endpoints', () => {
 
   test('members: limit bounds rows and sets X-Total-Count', async () => {
     for (let i = 0; i < 3; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
       const dev = await registerLogin(`memdev${i}@test.com`, 'developer')
-      // eslint-disable-next-line no-await-in-loop
       await db('users').where({ id: dev.user.id }).update({ workspace_id: workspaceId })
     }
 

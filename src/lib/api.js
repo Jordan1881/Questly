@@ -12,6 +12,18 @@ export function apiUrl(path) {
   return `${API_BASE}${path}`
 }
 
+/**
+ * Fire-and-forget readiness ping so Railway / Postgres can wake before auth.
+ * Never throws; failures are ignored so the login form stays usable offline.
+ */
+export function warmupApi() {
+  return fetch(apiUrl('/api/health/ready'), {
+    method: 'GET',
+    cache: 'no-store',
+    keepalive: true,
+  }).catch(() => {})
+}
+
 export class ApiError extends Error {
   constructor(message, status = 0) {
     super(message)

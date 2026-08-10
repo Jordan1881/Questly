@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import DifficultyBadge, { DIFFICULTY_STYLES } from '../../components/DifficultyBadge'
+import DifficultyBadge from '../../components/DifficultyBadge'
+import { DIFFICULTY_STYLES } from '../../lib/difficultyStyles'
 
 describe('DifficultyBadge', () => {
   it('exposes styles for all three difficulty levels', () => {

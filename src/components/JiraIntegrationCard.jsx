@@ -69,7 +69,13 @@ export default function JiraIntegrationCard({ showConnectForm = true }) {
   }, [fetchJiraOAuthStatus])
 
   useEffect(() => {
-    loadPending().catch(() => {})
+    let cancelled = false
+    // Defer so setState inside loadPending is not treated as synchronous in the effect body.
+    Promise.resolve().then(() => {
+      if (cancelled) return
+      loadPending().catch(() => {})
+    })
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, location.search])
 

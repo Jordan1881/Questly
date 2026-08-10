@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import AuthLayout, { authInputClass } from '../components/layout/AuthLayout'
 import FormButton from '../design-system/components/FormButton'
@@ -7,6 +7,7 @@ import GoogleSignInButton from '../components/GoogleSignInButton'
 import JiraAuth from '../overlays/JiraAuth'
 import { useAuthStore } from '../stores/authStore'
 import { resolvePostAuthPath } from '../lib/authRedirect'
+import { warmupApi } from '../lib/api'
 
 const EyeIcon = ({ open }) =>
   open ? (
@@ -27,6 +28,10 @@ export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showJiraAuth, setShowJiraAuth] = useState(false)
+
+  useEffect(() => {
+    warmupApi()
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
