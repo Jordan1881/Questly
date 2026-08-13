@@ -20,8 +20,8 @@
 - [x] T001 Initialize Speckit (`specify init --here --integration cursor-agent`) and create branch `001-security-hardening` from `origin/main`
 - [x] T002 [P] Author `specs/001-security-hardening/spec.md`
 - [x] T003 [P] Author `plan.md`, `research.md`, `data-model.md`, `contracts/avatar-upload.md`, `quickstart.md`
-- [ ] T004 Ensure `.scannerwork/` ignored; keep `sonar-project.properties` available for scans (commit with epic or ensure present on phase branches)
-- [ ] T005 Commit Speckit `.specify/` + `specs/001-security-hardening/` + Cursor speckit skills as agreed (when user requests commit)
+- [x] T004 Ensure `.scannerwork/` ignored; keep `sonar-project.properties` available for scans (commit with epic or ensure present on phase branches)
+- [x] T005 Commit Speckit `.specify/` + `specs/001-security-hardening/` + Cursor speckit skills as agreed (when user requests commit)
 
 **Checkpoint**: Planning artifacts complete — implementation not started
 
@@ -31,8 +31,8 @@
 
 **Purpose**: Shared limits module before upload/UI work
 
-- [ ] T006 Create `shared/avatarUploadLimits.json` with `maxBytes: 2097152`, `maxMbLabel`, `allowedMime`, `minSourcePx`
-- [ ] T007 Confirm server can `require('../shared/avatarUploadLimits.json')` and FE can `import` the JSON (adjust path/alias only if needed)
+- [x] T006 Create `shared/avatarUploadLimits.json` with `maxBytes: 2097152`, `maxMbLabel`, `allowedMime`, `minSourcePx`
+- [x] T007 Confirm server can `require('../shared/avatarUploadLimits.json')` and FE can `import` the JSON (adjust path/alias only if needed)
 
 **Checkpoint**: Shared limits readable from FE and BE
 
@@ -48,17 +48,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Add failing API tests in `server/tests/uploadAvatar.test.js` for: happy path, oversize file, oversize/non-numeric Content-Length, magic-byte mismatch, invalid MIME
-- [ ] T009 [P] [US1] Add/adjust FE test in `src/tests/components/EditProfileForm.test.jsx` for >2 MB rejection before `uploadAvatar`
+- [x] T008 [P] [US1] Add failing API tests in `server/tests/uploadAvatar.test.js` for: happy path, oversize file, oversize/non-numeric Content-Length, magic-byte mismatch, invalid MIME
+- [x] T009 [P] [US1] Add/adjust FE test in `src/tests/components/EditProfileForm.test.jsx` for >2 MB rejection before `uploadAvatar`
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Update `server/middleware/uploadAvatar.js` to use shared `maxBytes` for multer `limits.fileSize` and error copy
-- [ ] T011 [US1] Add Content-Length pre-check in upload middleware (reject > max or non-numeric; allow missing)
-- [ ] T012 [US1] Implement zero-dep magic-byte validation for jpeg/png/webp/gif; reject mismatches after multer
-- [ ] T013 [US1] Wire MIME allowlist from shared JSON (keep behavior aligned)
-- [ ] T014 [US1] Update `src/components/EditProfileForm.jsx` helper text + `file.size` guard from shared JSON
-- [ ] T015 [US1] Run server tests; fix until green
+- [x] T010 [US1] Update `server/middleware/uploadAvatar.js` to use shared `maxBytes` for multer `limits.fileSize` and error copy
+- [x] T011 [US1] Add Content-Length pre-check in upload middleware (reject > max or non-numeric; allow missing)
+- [x] T012 [US1] Implement zero-dep magic-byte validation for jpeg/png/webp/gif; reject mismatches after multer
+- [x] T013 [US1] Wire MIME allowlist from shared JSON (keep behavior aligned)
+- [x] T014 [US1] Update `src/components/EditProfileForm.jsx` helper text + `file.size` guard from shared JSON
+- [x] T015 [US1] Run server tests; fix until green
 - [ ] T016 [US1] Restart Sonar if needed; run `sonar-scanner`; confirm **vulnerabilities = 0**; open PR to `main`
 
 **Checkpoint**: US1 done — MVP security fix merged or ready to merge

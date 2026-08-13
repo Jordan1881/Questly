@@ -1,0 +1,11 @@
+{
+  "maxBytes": 2097152,
+  "maxMbLabel": "2 MB",
+  "allowedMime": [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif"
+  ],
+  "minSourcePx": 400
+}

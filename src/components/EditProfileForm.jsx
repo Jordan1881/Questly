@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import ProfileAvatar from './ProfileAvatar'
 import { useAuthStore } from '../stores/authStore'
 import { useProfileStore } from '../stores/profileStore'
+import avatarUploadLimits from '../../shared/avatarUploadLimits.json'
 
 const fieldClass =
   'mt-1 w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--color-border-soft)] text-[length:var(--text-body-sm)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand)]/30'
@@ -49,10 +50,14 @@ function EditProfileFields({
     setUploading(true)
     setSaveMessage(null)
     try {
+      if (file.size > avatarUploadLimits.maxBytes) {
+        throw new Error(`Avatar must be ${avatarUploadLimits.maxMbLabel} or smaller`)
+      }
+
       const minSide = await readImageMinSide(file)
-      if (minSide < 400) {
+      if (minSide < avatarUploadLimits.minSourcePx) {
         throw new Error(
-          `Photo is only ${minSide}px on the short side. Use at least 400×400 pixels for a sharp profile picture.`,
+          `Photo is only ${minSide}px on the short side. Use at least ${avatarUploadLimits.minSourcePx}×${avatarUploadLimits.minSourcePx} pixels for a sharp profile picture.`,
         )
       }
 
@@ -114,7 +119,7 @@ function EditProfileFields({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept={avatarUploadLimits.allowedMime.join(',')}
             className="hidden"
             onChange={handleAvatarChange}
           />
@@ -126,7 +131,10 @@ function EditProfileFields({
           >
             {uploading ? 'Uploading…' : 'Upload photo'}
           </button>
-          <p className="text-[11px] text-[color:var(--color-gray-400)]">JPEG, PNG, WebP, or GIF · max 8 MB · min 400×400 px recommended</p>
+          <p className="text-[11px] text-[color:var(--color-gray-400)]">
+            JPEG, PNG, WebP, or GIF · max {avatarUploadLimits.maxMbLabel} · min{' '}
+            {avatarUploadLimits.minSourcePx}×{avatarUploadLimits.minSourcePx} px recommended
+          </p>
         </div>
       </div>
 
