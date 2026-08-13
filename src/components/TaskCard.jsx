@@ -34,6 +34,18 @@ const JiraBadge = ({ id }) => (
   </span>
 )
 
+function xpAccentColor(task, isCompleted) {
+  if (task.xpPending) return 'var(--color-warning-500)'
+  if (isCompleted) return 'var(--color-success-500)'
+  return 'var(--color-brand)'
+}
+
+function xpTextColor(task, isCompleted) {
+  if (task.xpPending) return 'var(--color-warning-600)'
+  if (isCompleted) return 'var(--color-success-500)'
+  return 'var(--color-brand)'
+}
+
 export default function TaskCard({ task, onToggle }) {
   const isCompleted = task.done
   const cardRef = useRef(null)
@@ -97,6 +109,7 @@ export default function TaskCard({ task, onToggle }) {
             {isCompleted && !task.xpPending && (
               <span className="flex items-center gap-1.5 bg-[color:var(--color-success-50)] text-[color:var(--color-success-500)] text-[length:var(--text-caption)] font-medium px-[10px] py-1 rounded-[var(--radius-md)]">
                 <CheckIcon />
+                {' '}
                 Completed
               </span>
             )}
@@ -122,11 +135,13 @@ export default function TaskCard({ task, onToggle }) {
           <div className="flex items-center gap-4 flex-wrap">
             <span className="flex items-center gap-1.5 text-[length:var(--text-body-sm)] text-[color:var(--color-text-muted)]">
               <ClockIcon />
+              {' '}
               {isCompleted ? `Completed ${task.due}` : `Due ${task.due}`}
             </span>
             {task.highPriority && (
               <span className="flex items-center gap-1.5 text-[length:var(--text-caption)] font-medium text-[color:var(--color-error-500)]">
                 <span className="w-1 h-1 rounded-full bg-[color:var(--color-error-500)] shrink-0" />
+                {' '}
                 High Priority
               </span>
             )}
@@ -134,30 +149,15 @@ export default function TaskCard({ task, onToggle }) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 ml-2 text-right">
-          <StarIcon
-            color={
-              task.xpPending
-                ? 'var(--color-warning-500)'
-                : isCompleted
-                ? 'var(--color-success-500)'
-                : 'var(--color-brand)'
-            }
-            size={20}
-          />
+          <StarIcon color={xpAccentColor(task, isCompleted)} size={20} />
           <span
             className="text-[length:var(--text-h4)] font-bold leading-tight"
-            style={{
-              color: task.xpPending
-                ? 'var(--color-warning-600)'
-                : isCompleted
-                ? 'var(--color-success-500)'
-                : 'var(--color-brand)',
-            }}
+            style={{ color: xpTextColor(task, isCompleted) }}
           >
             {task.xpPending ? (
-              <>+{task.xpPendingAmount ?? task.xp} XP pending approval</>
+              <>+{task.xpPendingAmount ?? task.xp}{' '}XP pending approval</>
             ) : (
-              <>+{task.xp}XP</>
+              <>+{task.xp}{' '}XP</>
             )}
           </span>
         </div>

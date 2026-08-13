@@ -102,7 +102,7 @@ function XPHistoryChart({ data = [] }) {
 
         {/* X-axis labels */}
         {pts.map((pt, i) => (
-          <text key={i} x={pt.x} y={H - 4} textAnchor="middle"
+          <text key={pt.day} x={pt.x} y={H - 4} textAnchor="middle"
             fontSize="11" fill={hoveredIdx === i ? 'var(--color-brand)' : 'var(--color-gray-400)'}
             fontFamily="Poppins, sans-serif"
             style={{ transition: 'fill 0.15s' }}>
@@ -112,7 +112,7 @@ function XPHistoryChart({ data = [] }) {
 
         {/* Invisible hit areas + hover interaction */}
         {pts.map((pt, i) => (
-          <g key={i}
+          <g key={pt.day}
             onMouseEnter={() => setHoveredIdx(i)}
             onMouseLeave={() => setHoveredIdx(null)}
             style={{ cursor: 'pointer' }}>

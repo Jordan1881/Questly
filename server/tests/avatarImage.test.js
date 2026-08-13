@@ -49,6 +49,6 @@ describe('avatarImage', () => {
       }),
     ).rejects.toMatchObject({ code: 'AVATAR_TOO_SMALL' })
 
-    expect(MIN_SOURCE_PX).toBeGreaterThanOrEqual(128)
+    expect(MIN_SOURCE_PX).toBe(400)
   })
 })

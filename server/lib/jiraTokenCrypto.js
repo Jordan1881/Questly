@@ -18,7 +18,12 @@ function encryptToken(plaintext) {
   if (plaintext == null || plaintext === '') return plaintext
 
   const key = encryptionKey()
-  if (!key) return plaintext
+  if (!key) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JIRA_TOKEN_ENCRYPTION_KEY is required to store Jira tokens')
+    }
+    return plaintext
+  }
   if (isEncrypted(plaintext)) return plaintext
 
   const iv = crypto.randomBytes(IV_BYTES)

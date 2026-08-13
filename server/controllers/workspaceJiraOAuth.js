@@ -114,6 +114,51 @@ async function oauthStart(req, res, next) {
   }
 }
 
+function redirectOAuthError(res, returnTo, reason, detail) {
+  const params = {
+    workspace_jira_oauth: 'error',
+    workspace_jira_oauth_reason: reason,
+  }
+  if (detail != null) params.workspace_jira_oauth_detail = detail
+  return redirectToFrontend(res, returnTo, params)
+}
+
+function parseCallbackState(state) {
+  if (!state) throw new Error('Missing OAuth state')
+  return verifyOAuthState(state)
+}
+
+function emailsMismatch(profileEmail, adminEmail) {
+  return (
+    Boolean(profileEmail) &&
+    Boolean(adminEmail) &&
+    profileEmail.toLowerCase() !== adminEmail.toLowerCase()
+  )
+}
+
+async function completeReconnectOAuth({ res, returnTo, workspace, tokens, userId, workspaceId }) {
+  if (!WorkspaceModel.isJiraConnected(workspace) || !workspace.jira_site_url) {
+    return redirectOAuthError(res, returnTo, 'not_connected')
+  }
+
+  const resources = await atlassianOAuth.fetchAccessibleResources(tokens.access_token)
+  const resource = atlassianOAuth.findResourceForSiteUrl(workspace.jira_site_url, resources)
+  if (!resource) {
+    return redirectOAuthError(res, returnTo, 'site_not_granted')
+  }
+
+  await WorkspaceModel.connectJiraOAuth(workspace.id, {
+    jira_site_url: workspace.jira_site_url,
+    jira_project_key: workspace.jira_project_key,
+    jira_access_token: tokens.access_token,
+    jira_refresh_token: tokens.refresh_token || workspace.jira_refresh_token,
+    jira_cloud_id: resource.id || workspace.jira_cloud_id,
+  })
+  await JiraOAuthPending.deleteFor(userId, workspaceId)
+
+  return redirectToFrontend(res, returnTo, { workspace_jira_oauth: 'success' })
+}
+
 async function oauthCallback(req, res) {
   let returnTo = '/admin'
 
@@ -124,99 +169,47 @@ async function oauthCallback(req, res) {
     let workspaceId
     let mode = null
     try {
-      if (!state) throw new Error('Missing OAuth state')
-      const verified = verifyOAuthState(state)
+      const verified = parseCallbackState(state)
       userId = verified.userId
       workspaceId = verified.workspaceId
       returnTo = verified.returnTo
       mode = verified.mode
     } catch {
-      return redirectToFrontend(res, '/admin', {
-        workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: 'invalid_state',
-      })
+      return redirectOAuthError(res, '/admin', 'invalid_state')
     }
 
     if (oauthError) {
       const reason = oauthError === 'access_denied' ? 'denied' : 'oauth_error'
-      return redirectToFrontend(res, returnTo, {
-        workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: reason,
-        workspace_jira_oauth_detail: errorDescription || oauthError,
-      })
+      return redirectOAuthError(res, returnTo, reason, errorDescription || oauthError)
     }
 
     if (!code) {
-      return redirectToFrontend(res, returnTo, {
-        workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: 'missing_code',
-      })
+      return redirectOAuthError(res, returnTo, 'missing_code')
     }
 
     if (!atlassianOAuth.isConfigured(WORKSPACE_CALLBACK_URL())) {
-      return redirectToFrontend(res, returnTo, {
-        workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: 'not_configured',
-      })
+      return redirectOAuthError(res, returnTo, 'not_configured')
     }
 
     const workspace = await WorkspaceModel.findById(workspaceId)
     const admin = await UserModel.findByIdInternal(userId)
     if (!workspace || !admin || !(await userCanAdminWorkspace(admin, workspace))) {
-      return redirectToFrontend(res, returnTo, {
-        workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: 'invalid_workspace',
-      })
+      return redirectOAuthError(res, returnTo, 'invalid_workspace')
     }
 
     const tokens = await atlassianOAuth.exchangeAuthorizationCode(code, WORKSPACE_CALLBACK_URL())
     const profile = await atlassianOAuth.fetchAuthenticatedUser(tokens.access_token)
 
-    if (
-      profile.email &&
-      admin.email &&
-      profile.email.toLowerCase() !== admin.email.toLowerCase()
-    ) {
-      return redirectToFrontend(res, returnTo, {
-        workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: 'wrong_account',
-      })
+    if (emailsMismatch(profile.email, admin.email)) {
+      return redirectOAuthError(res, returnTo, 'wrong_account')
     }
 
     if (!tokens?.access_token) {
-      return redirectToFrontend(res, returnTo, {
-        workspace_jira_oauth: 'error',
-        workspace_jira_oauth_reason: 'exchange_failed',
-      })
+      return redirectOAuthError(res, returnTo, 'exchange_failed')
     }
 
     if (mode === 'reconnect') {
-      if (!WorkspaceModel.isJiraConnected(workspace) || !workspace.jira_site_url) {
-        return redirectToFrontend(res, returnTo, {
-          workspace_jira_oauth: 'error',
-          workspace_jira_oauth_reason: 'not_connected',
-        })
-      }
-
-      const resources = await atlassianOAuth.fetchAccessibleResources(tokens.access_token)
-      const resource = atlassianOAuth.findResourceForSiteUrl(workspace.jira_site_url, resources)
-      if (!resource) {
-        return redirectToFrontend(res, returnTo, {
-          workspace_jira_oauth: 'error',
-          workspace_jira_oauth_reason: 'site_not_granted',
-        })
-      }
-
-      await WorkspaceModel.connectJiraOAuth(workspace.id, {
-        jira_site_url: workspace.jira_site_url,
-        jira_project_key: workspace.jira_project_key,
-        jira_access_token: tokens.access_token,
-        jira_refresh_token: tokens.refresh_token || workspace.jira_refresh_token,
-        jira_cloud_id: resource.id || workspace.jira_cloud_id,
-      })
-      await JiraOAuthPending.deleteFor(userId, workspaceId)
-
-      return redirectToFrontend(res, returnTo, { workspace_jira_oauth: 'success' })
+      return completeReconnectOAuth({ res, returnTo, workspace, tokens, userId, workspaceId })
     }
 
     await JiraOAuthPending.upsert({
@@ -228,11 +221,7 @@ async function oauthCallback(req, res) {
 
     redirectToFrontend(res, returnTo, { workspace_jira_oauth: 'pending' })
   } catch (err) {
-    redirectToFrontend(res, returnTo, {
-      workspace_jira_oauth: 'error',
-      workspace_jira_oauth_reason: 'exchange_failed',
-      workspace_jira_oauth_detail: err.message,
-    })
+    redirectOAuthError(res, returnTo, 'exchange_failed', err.message)
   }
 }
 

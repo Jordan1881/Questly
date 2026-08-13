@@ -85,6 +85,52 @@ async function listPending(req, res, next) {
   }
 }
 
+async function approveJoinMembership(joinRequest, workspace) {
+  const developer = await UserModel.findByIdInternal(joinRequest.user_id)
+  const priorMembership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+    joinRequest.user_id,
+    workspace.id
+  )
+  const existingMemberships = isMultiWorkspaceEnabled()
+    ? await WorkspaceMembershipModel.listActiveByUser(joinRequest.user_id)
+    : []
+  // Never overwrite retained balances when reactivating an inactive membership.
+  const copyProgress =
+    !priorMembership && (!isMultiWorkspaceEnabled() || existingMemberships.length === 0)
+
+  // Legacy primary: always set when flag off. When flag on, only set when unset
+  // so create-first users keep their created workspace (not the later join).
+  if (!isMultiWorkspaceEnabled() || !developer.workspace_id) {
+    await UserModel.assignWorkspace(joinRequest.user_id, workspace.id)
+  }
+
+  await WorkspaceMembershipModel.ensureMembershipFromUser(developer, {
+    workspace_id: workspace.id,
+    role: priorMembership?.role === 'admin' ? 'admin' : 'developer',
+    copyProgress,
+  })
+  const jiraOverrides = await buildWorkspaceJiraOverrides(workspace)
+  await ensureDeveloperJiraAccountId(
+    await UserModel.findByIdInternal(joinRequest.user_id),
+    jiraOverrides
+  )
+}
+
+async function buildReviewPayload(updated, status, joinRequest, workspace) {
+  const payload = { join_request: updated }
+  if (status !== 'approved') return payload
+
+  payload.workspace = WorkspaceModel.sanitize(workspace)
+  if (isMultiWorkspaceEnabled()) {
+    const membership = await WorkspaceMembershipModel.findByUserAndWorkspace(
+      joinRequest.user_id,
+      workspace.id
+    )
+    payload.membership = WorkspaceMembershipModel.toPublicMembership(membership, workspace)
+  }
+  return payload
+}
+
 async function review(req, res, next) {
   try {
     const workspace = await WorkspaceModel.findById(req.params.id)
@@ -116,49 +162,10 @@ async function review(req, res, next) {
     })
 
     if (status === 'approved') {
-      const developer = await UserModel.findByIdInternal(joinRequest.user_id)
-      const priorMembership = await WorkspaceMembershipModel.findByUserAndWorkspace(
-        joinRequest.user_id,
-        workspace.id
-      )
-      const existingMemberships = isMultiWorkspaceEnabled()
-        ? await WorkspaceMembershipModel.listActiveByUser(joinRequest.user_id)
-        : []
-      // Never overwrite retained balances when reactivating an inactive membership.
-      const copyProgress =
-        !priorMembership && (!isMultiWorkspaceEnabled() || existingMemberships.length === 0)
-
-      // Legacy primary: always set when flag off. When flag on, only set when unset
-      // so create-first users keep their created workspace (not the later join).
-      if (!isMultiWorkspaceEnabled() || !developer.workspace_id) {
-        await UserModel.assignWorkspace(joinRequest.user_id, workspace.id)
-      }
-
-      await WorkspaceMembershipModel.ensureMembershipFromUser(developer, {
-        workspace_id: workspace.id,
-        role: priorMembership?.role === 'admin' ? 'admin' : 'developer',
-        copyProgress,
-      })
-      const jiraOverrides = await buildWorkspaceJiraOverrides(workspace)
-      await ensureDeveloperJiraAccountId(
-        await UserModel.findByIdInternal(joinRequest.user_id),
-        jiraOverrides
-      )
+      await approveJoinMembership(joinRequest, workspace)
     }
 
-    const payload = { join_request: updated }
-    if (status === 'approved') {
-      payload.workspace = WorkspaceModel.sanitize(workspace)
-      if (isMultiWorkspaceEnabled()) {
-        const membership = await WorkspaceMembershipModel.findByUserAndWorkspace(
-          joinRequest.user_id,
-          workspace.id
-        )
-        payload.membership = WorkspaceMembershipModel.toPublicMembership(membership, workspace)
-      }
-    }
-
-    res.json(payload)
+    res.json(await buildReviewPayload(updated, status, joinRequest, workspace))
   } catch (err) {
     next(err)
   }

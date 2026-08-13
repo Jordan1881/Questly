@@ -94,4 +94,29 @@ describe('JWT helpers', () => {
     expect(res.status).toBe(401)
     expect(res.body.error).toBe('Invalid or expired token')
   })
+
+  test('verifyToken middleware rejects OAuth state JWTs used as Bearer sessions', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: 'oauthstate@test.com',
+        username: 'oauthstate',
+        password: 'password123',
+        role: 'developer',
+      })
+
+    const user = await db('users').where({ email: 'oauthstate@test.com' }).first()
+    const oauthState = jwt.sign(
+      { sub: user.id, purpose: 'jira-oauth', returnTo: '/dashboard' },
+      config.jwt.secret,
+      { expiresIn: '15m' },
+    )
+
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${oauthState}`)
+
+    expect(res.status).toBe(401)
+    expect(res.body.error).toBe('Invalid or expired token')
+  })
 })

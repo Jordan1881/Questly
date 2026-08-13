@@ -3,6 +3,7 @@ import { useLocation } from 'react-router'
 import logo from '../assets/LOGO.svg'
 import jiraLogo from '../assets/jira-original-wordmark.svg'
 import JiraButton from '../design-system/components/JiraButton'
+import DismissBackdrop from '../components/DismissBackdrop'
 import { useAuthStore } from '../stores/authStore'
 
 const ATLASSIAN_TOKEN_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens'
@@ -66,10 +67,10 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(4px)' }}
-      onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
+      <DismissBackdrop onClick={onClose} disabled={isLoading} />
       <div
-        className="flex flex-col items-center gap-8"
+        className="relative z-[1] flex flex-col items-center gap-8"
         style={{ animation: 'heroFadeUp 0.35s ease both' }}
       >
 
@@ -192,7 +193,7 @@ export default function JiraAuth({ onClose, onConnect, onSkip }) {
                   >
                     Create an API token at Atlassian
                   </a>
-                  . Use the same email as your Questly account.
+                  {'. '}Use the same email as your Questly account.
                 </p>
                 <JiraButton onClick={handleManualConnect} disabled={isLoading}>
                   {isLoading ? 'Connecting…' : 'Connect with token'}

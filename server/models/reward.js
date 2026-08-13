@@ -4,6 +4,15 @@ const RewardCouponModel = require('./rewardCoupon')
 const TABLE = 'rewards'
 const PATCHABLE_FIELDS = ['title', 'description', 'coin_cost', 'image_url']
 
+const FIELD_TO_CAMEL = {
+  coin_cost: 'coinCost',
+  image_url: 'imageUrl',
+}
+
+function patchFieldKey(field) {
+  return FIELD_TO_CAMEL[field] || field
+}
+
 function formatReward(row, extras = {}) {
   if (!row) return null
 
@@ -44,7 +53,7 @@ async function findById(id) {
 async function update(id, patch) {
   const updatePatch = {}
   PATCHABLE_FIELDS.forEach((field) => {
-    const camel = field === 'coin_cost' ? 'coinCost' : field === 'image_url' ? 'imageUrl' : field
+    const camel = patchFieldKey(field)
     if (patch[camel] !== undefined) updatePatch[field] = patch[camel]
     if (patch[field] !== undefined) updatePatch[field] = patch[field]
   })

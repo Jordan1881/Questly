@@ -75,84 +75,98 @@ async function startGoogle(req, res, next) {
   }
 }
 
+function redirectCognitoError(res, reason, detail) {
+  return redirectToFrontend(res, {
+    cognito: 'error',
+    reason,
+    detail: detail || undefined,
+  })
+}
+
+async function exchangeAndVerifyIdToken(code) {
+  let tokens
+  try {
+    tokens = await cognitoAuth.exchangeCodeForTokens(code)
+  } catch {
+    return { error: 'exchange_failed' }
+  }
+
+  if (!tokens?.id_token) {
+    return { error: 'missing_id_token' }
+  }
+
+  try {
+    const claims = await cognitoAuth.verifyIdToken(tokens.id_token)
+    return { claims }
+  } catch {
+    return { error: 'invalid_id_token' }
+  }
+}
+
+async function findOrProvisionCognitoUser({ sub, email, name }) {
+  let row = await UserModel.findByCognitoSub(sub)
+  if (row) return row
+
+  const byEmail = await UserModel.findByEmail(email)
+  if (byEmail) {
+    return UserModel.linkCognitoSub(byEmail.id, sub)
+  }
+
+  const username = await ensureUniqueUsername(usernameFromClaims({ email, name }))
+  await UserModel.create({
+    email,
+    username,
+    password_hash: null,
+    role: 'developer',
+    cognito_sub: sub,
+  })
+  return UserModel.findByCognitoSub(sub)
+}
+
 async function callback(req, res) {
   try {
     const { code, state, error: oauthError, error_description: errorDescription } = req.query
 
     if (oauthError) {
-      return redirectToFrontend(res, {
-        cognito: 'error',
-        reason: oauthError,
-        detail: errorDescription || undefined,
-      })
+      return redirectCognitoError(res, oauthError, errorDescription || undefined)
     }
 
     if (!cognitoAuth.isConfigured()) {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'not_configured' })
+      return redirectCognitoError(res, 'not_configured')
     }
 
     try {
       if (!state) throw new Error('Missing OAuth state')
       verifyOAuthState(state)
     } catch {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'invalid_state' })
+      return redirectCognitoError(res, 'invalid_state')
     }
 
     if (!code) {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'missing_code' })
+      return redirectCognitoError(res, 'missing_code')
     }
 
-    let tokens
-    try {
-      tokens = await cognitoAuth.exchangeCodeForTokens(code)
-    } catch {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'exchange_failed' })
+    const tokenResult = await exchangeAndVerifyIdToken(code)
+    if (tokenResult.error) {
+      return redirectCognitoError(res, tokenResult.error)
     }
 
-    if (!tokens?.id_token) {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'missing_id_token' })
-    }
-
-    let claims
-    try {
-      claims = await cognitoAuth.verifyIdToken(tokens.id_token)
-    } catch {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'invalid_id_token' })
-    }
-
+    const claims = tokenResult.claims
     const sub = claims.sub
     const email = typeof claims.email === 'string' ? claims.email.trim().toLowerCase() : ''
     const name = claims.name || claims['cognito:username']
 
     if (!sub || !email) {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'missing_claims' })
+      return redirectCognitoError(res, 'missing_claims')
     }
 
     // Do not require claims.email_verified: Cognito Google IdP often omits it or
     // sets false unless Google's attribute is mapped. This callback only runs after
     // a verified cognito-google OAuth state from /cognito/google/start.
 
-    let row = await UserModel.findByCognitoSub(sub)
-
+    const row = await findOrProvisionCognitoUser({ sub, email, name })
     if (!row) {
-      const byEmail = await UserModel.findByEmail(email)
-      if (byEmail) {
-        row = await UserModel.linkCognitoSub(byEmail.id, sub)
-      } else {
-        const username = await ensureUniqueUsername(usernameFromClaims({ email, name }))
-        await UserModel.create({
-          email,
-          username,
-          password_hash: null,
-          role: 'developer',
-          cognito_sub: sub,
-        })
-        row = await UserModel.findByCognitoSub(sub)
-      }
-    }
-
-    if (!row) {
-      return redirectToFrontend(res, { cognito: 'error', reason: 'user_upsert_failed' })
+      return redirectCognitoError(res, 'user_upsert_failed')
     }
 
     const token = signToken(row)
@@ -164,7 +178,7 @@ async function callback(req, res) {
 
     return redirectToFrontend(res, { token })
   } catch {
-    return redirectToFrontend(res, { cognito: 'error', reason: 'unexpected' })
+    return redirectCognitoError(res, 'unexpected')
   }
 }
 

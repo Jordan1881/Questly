@@ -68,7 +68,8 @@ describe('AnimatedModal', () => {
       </AnimatedModal>,
     )
     expect(screen.getByText('content')).toBeInTheDocument()
-    const overlay = screen.getByRole('presentation')
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument()
+    const overlay = screen.getByText('content').closest('.fixed')
     expect(overlay).toHaveClass('extra')
   })
 
@@ -124,8 +125,21 @@ describe('AnimatedModal', () => {
         <p>content</p>
       </AnimatedModal>,
     )
-    fireEvent.click(screen.getByRole('presentation'))
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     expect(onBackdropClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('invokes onBackdropClick when the dismiss control is activated via keyboard', () => {
+    const onBackdropClick = vi.fn()
+    render(
+      <AnimatedModal open onBackdropClick={onBackdropClick}>
+        <p>content</p>
+      </AnimatedModal>,
+    )
+    const dismiss = screen.getByRole('button', { name: 'Dismiss' })
+    fireEvent.keyDown(dismiss, { key: 'Enter', code: 'Enter' })
+    fireEvent.click(dismiss)
+    expect(onBackdropClick).toHaveBeenCalled()
   })
 
   it('does not invoke onBackdropClick when the panel content is clicked', () => {

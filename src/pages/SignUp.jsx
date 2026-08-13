@@ -24,11 +24,12 @@ const EyeIcon = ({ open }) =>
     </svg>
   )
 
-function PasswordInput({ placeholder, value, onChange }) {
+function PasswordInput({ id, placeholder, value, onChange }) {
   const [show, setShow] = useState(false)
   return (
     <div className="relative">
       <input
+        id={id}
         type={show ? 'text' : 'password'}
         placeholder={placeholder}
         value={value}
@@ -189,8 +190,14 @@ export default function SignUp() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Email Address</label>
+              <label
+                htmlFor="signup-email"
+                className="text-[14px] font-medium text-[color:var(--color-gray-900)]"
+              >
+                Email Address
+              </label>
               <input
+                id="signup-email"
                 type="email"
                 placeholder="Enter your email"
                 value={form.email}
@@ -202,8 +209,14 @@ export default function SignUp() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Username</label>
+              <label
+                htmlFor="signup-username"
+                className="text-[14px] font-medium text-[color:var(--color-gray-900)]"
+              >
+                Username
+              </label>
               <input
+                id="signup-username"
                 type="text"
                 placeholder="Create a username"
                 value={form.username}
@@ -216,8 +229,14 @@ export default function SignUp() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Password</label>
+              <label
+                htmlFor="signup-password"
+                className="text-[14px] font-medium text-[color:var(--color-gray-900)]"
+              >
+                Password
+              </label>
               <PasswordInput
+                id="signup-password"
                 placeholder="Create a password"
                 value={form.password}
                 onChange={set('password')}
@@ -225,8 +244,14 @@ export default function SignUp() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Confirm Password</label>
+              <label
+                htmlFor="signup-confirm-password"
+                className="text-[14px] font-medium text-[color:var(--color-gray-900)]"
+              >
+                Confirm Password
+              </label>
               <PasswordInput
+                id="signup-confirm-password"
                 placeholder="Re-enter your password"
                 value={form.confirmPassword}
                 onChange={set('confirmPassword')}

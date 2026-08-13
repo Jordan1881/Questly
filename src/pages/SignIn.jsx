@@ -89,8 +89,14 @@ export default function SignIn() {
             )}
 
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Email</label>
+              <label
+                htmlFor="signin-email"
+                className="text-[14px] font-medium text-[color:var(--color-gray-900)]"
+              >
+                Email
+              </label>
               <input
+                id="signin-email"
                 type="email"
                 placeholder="Enter your email"
                 value={email}
@@ -102,9 +108,15 @@ export default function SignIn() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Password</label>
+              <label
+                htmlFor="signin-password"
+                className="text-[14px] font-medium text-[color:var(--color-gray-900)]"
+              >
+                Password
+              </label>
               <div className="relative">
                 <input
+                  id="signin-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
                   value={password}

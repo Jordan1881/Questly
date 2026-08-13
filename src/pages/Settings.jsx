@@ -53,9 +53,13 @@ function PasswordSection() {
       <p className="ds-body-sm mb-5">Change your account password.</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md">
-        <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-          Current password
+        <label
+          htmlFor="settings-current-password"
+          className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]"
+        >
+          Current password{' '}
           <input
+            id="settings-current-password"
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
@@ -63,9 +67,13 @@ function PasswordSection() {
             required
           />
         </label>
-        <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-          New password
+        <label
+          htmlFor="settings-new-password"
+          className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]"
+        >
+          New password{' '}
           <input
+            id="settings-new-password"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -74,9 +82,13 @@ function PasswordSection() {
             minLength={8}
           />
         </label>
-        <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-          Confirm new password
+        <label
+          htmlFor="settings-confirm-password"
+          className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]"
+        >
+          Confirm new password{' '}
           <input
+            id="settings-confirm-password"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -155,13 +167,19 @@ function NotificationsSection() {
       <h2 className="ds-subsection-title mb-1">Notifications</h2>
       <p className="ds-body-sm mb-5">Choose which in-app celebrations you want to see.</p>
 
-      <label className="flex items-start gap-3 cursor-pointer">
+      <label
+        htmlFor="settings-level-up-notifications"
+        aria-label="Level-up celebrations"
+        className="flex items-start gap-3 cursor-pointer"
+      >
         <input
+          id="settings-level-up-notifications"
           type="checkbox"
           checked={levelUpNotifications}
           onChange={handleToggle}
           disabled={saving}
           className="mt-1 h-4 w-4 accent-[color:var(--color-brand)]"
+          aria-label="Level-up celebrations"
         />
         <span>
           <span className="block text-[length:var(--text-body-sm)] font-medium text-[color:var(--color-gray-800)]">

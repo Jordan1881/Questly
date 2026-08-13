@@ -139,6 +139,15 @@ describe('Sidebar', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
+  it('calls onClose when the dismiss backdrop is activated', () => {
+    const onClose = vi.fn()
+    renderSidebar({ onClose })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss menu' }))
+
+    expect(onClose).toHaveBeenCalled()
+  })
+
   it('logs out and navigates home', async () => {
     const onClose = vi.fn()
     renderSidebar({ onClose })

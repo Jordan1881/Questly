@@ -68,7 +68,8 @@ function isHighPriority(priorityName) {
 }
 
 function buildAuthHeader(email, apiToken) {
-  return `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`
+  const credentials = Buffer.from(`${email}:${apiToken}`).toString('base64')
+  return `Basic ${credentials}`
 }
 
 function resolveJiraRequest(path, credentials) {

@@ -9,9 +9,41 @@ required.forEach((key) => {
   }
 })
 
+function defaultLocalPort() {
+  return Number(process.env.PORT) || 3001
+}
+
+function stripTrailingSlash(url) {
+  return url.replace(/\/$/, '')
+}
+
+/** Prefer API_PUBLIC_URL, then Railway domain, else localhost. */
+function resolvePublicCallback(pathSuffix) {
+  if (process.env.API_PUBLIC_URL) {
+    return `${stripTrailingSlash(process.env.API_PUBLIC_URL)}${pathSuffix}`
+  }
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}${pathSuffix}`
+  }
+  return `http://localhost:${defaultLocalPort()}${pathSuffix}`
+}
+
+function resolveApiPublicUrl() {
+  if (process.env.API_PUBLIC_URL) return process.env.API_PUBLIC_URL
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+  }
+  return null
+}
+
+function resolveCognitoDomain() {
+  if (!process.env.COGNITO_DOMAIN) return null
+  return String(process.env.COGNITO_DOMAIN).replace(/^https?:\/\//, '').replace(/\/$/, '')
+}
+
 module.exports = {
   env: process.env.NODE_ENV || 'development',
-  port: Number(process.env.PORT) || 3001,
+  port: defaultLocalPort(),
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 5432,
@@ -26,28 +58,16 @@ module.exports = {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
-  apiPublicUrl:
-    process.env.API_PUBLIC_URL ||
-    (process.env.RAILWAY_PUBLIC_DOMAIN
-      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-      : null),
+  apiPublicUrl: resolveApiPublicUrl(),
   atlassian: {
     clientId: process.env.ATLASSIAN_CLIENT_ID || null,
     clientSecret: process.env.ATLASSIAN_CLIENT_SECRET || null,
     callbackUrl:
       process.env.ATLASSIAN_OAUTH_CALLBACK_URL ||
-      (process.env.API_PUBLIC_URL
-        ? `${process.env.API_PUBLIC_URL.replace(/\/$/, '')}/api/auth/jira/oauth/callback`
-        : process.env.RAILWAY_PUBLIC_DOMAIN
-          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/auth/jira/oauth/callback`
-          : `http://localhost:${Number(process.env.PORT) || 3001}/api/auth/jira/oauth/callback`),
+      resolvePublicCallback('/api/auth/jira/oauth/callback'),
     workspaceCallbackUrl:
       process.env.ATLASSIAN_WORKSPACE_OAUTH_CALLBACK_URL ||
-      (process.env.API_PUBLIC_URL
-        ? `${process.env.API_PUBLIC_URL.replace(/\/$/, '')}/api/workspaces/jira/oauth/callback`
-        : process.env.RAILWAY_PUBLIC_DOMAIN
-          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/workspaces/jira/oauth/callback`
-          : `http://localhost:${Number(process.env.PORT) || 3001}/api/workspaces/jira/oauth/callback`),
+      resolvePublicCallback('/api/workspaces/jira/oauth/callback'),
     reportingRefreshToken: process.env.ATLASSIAN_REPORTING_REFRESH_TOKEN || null,
   },
   jira: {
@@ -73,15 +93,9 @@ module.exports = {
     clientId: process.env.COGNITO_CLIENT_ID || null,
     clientSecret: process.env.COGNITO_CLIENT_SECRET || null,
     // Host only (no scheme), e.g. questly-dev.auth.eu-central-1.amazoncognito.com
-    domain: process.env.COGNITO_DOMAIN
-      ? String(process.env.COGNITO_DOMAIN).replace(/^https?:\/\//, '').replace(/\/$/, '')
-      : null,
+    domain: resolveCognitoDomain(),
     redirectUri:
       process.env.COGNITO_REDIRECT_URI ||
-      (process.env.API_PUBLIC_URL
-        ? `${process.env.API_PUBLIC_URL.replace(/\/$/, '')}/api/auth/cognito/callback`
-        : process.env.RAILWAY_PUBLIC_DOMAIN
-          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/auth/cognito/callback`
-          : `http://localhost:${Number(process.env.PORT) || 3001}/api/auth/cognito/callback`),
+      resolvePublicCallback('/api/auth/cognito/callback'),
   },
 }

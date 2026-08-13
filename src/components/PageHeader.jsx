@@ -45,11 +45,12 @@ export default function PageHeader({ onOpenSidebar }) {
 
   // Multi-workspace: developers get a Workspace hub (create/join another).
   // Legacy flag-off: keep Join Workspace only when they have no workspace yet.
-  const devLinks = multi
-    ? [{ id: 'workspace', label: 'Workspace' }, ...DEV_NAV_LINKS]
-    : !hasWorkspace
-      ? [...DEV_NAV_LINKS, { id: 'workspacejoin', label: 'Join Workspace' }]
-      : DEV_NAV_LINKS
+  let devLinks = DEV_NAV_LINKS
+  if (multi) {
+    devLinks = [{ id: 'workspace', label: 'Workspace' }, ...DEV_NAV_LINKS]
+  } else if (!hasWorkspace) {
+    devLinks = [...DEV_NAV_LINKS, { id: 'workspacejoin', label: 'Join Workspace' }]
+  }
   const NAV_LINKS = shellRole === 'admin' ? ADMIN_NAV_LINKS : devLinks
   const displayName = getDisplayUsername(user, shellRole)
   const avatarUrl = getAvatarUrl(user)

@@ -14,7 +14,8 @@ const { buildTeamStandings, computeLevel } = require('../lib/teamStandings')
 const { TTLCache } = require('../lib/cache')
 
 const SALT_ROUNDS = 12
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Bounded lengths avoid super-linear backtracking on crafted invalid input (S8786).
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,63}$/
 
 // The team leaderboard changes only when someone's XP changes; a few seconds of
 // staleness on OTHER members' standings is acceptable (the caller's own balances
@@ -153,69 +154,92 @@ function validateAge(age) {
   return { value: parsed }
 }
 
+async function applyUsernameToPatch(patch, username, userId) {
+  const trimmed = String(username).trim()
+  if (trimmed.length < 2 || trimmed.length > 50) {
+    return { status: 400, error: 'username must be 2–50 characters' }
+  }
+  const taken = await UserModel.findByUsername(trimmed, userId)
+  if (taken) return { status: 400, error: 'username is already taken' }
+  patch.username = trimmed
+  return null
+}
+
+async function applyPreferencesToPatch(patch, preferences, userId) {
+  if (typeof preferences !== 'object' || preferences === null || Array.isArray(preferences)) {
+    return { status: 400, error: 'preferences must be an object' }
+  }
+  const internal = await UserModel.findByIdInternal(userId)
+  patch.preferences = mergePreferences(internal?.preferences, preferences)
+  return null
+}
+
+async function verifyEmailChange(userId, currentEmail, trimmedEmail, currentPassword) {
+  if (trimmedEmail === currentEmail.toLowerCase()) return null
+  if (!currentPassword) {
+    return { status: 400, error: 'currentPassword is required to change email' }
+  }
+  const internal = await UserModel.findByIdInternal(userId)
+  const valid = await bcrypt.compare(currentPassword, internal.password_hash)
+  if (!valid) return { status: 400, error: 'current password is incorrect' }
+  const taken = await UserModel.findByEmail(trimmedEmail)
+  if (taken && taken.id !== userId) {
+    return { status: 409, error: 'Email already registered' }
+  }
+  return null
+}
+
+async function applyEmailToPatch(patch, email, currentPassword, user) {
+  const trimmedEmail = String(email).trim().toLowerCase()
+  if (!EMAIL_RE.test(trimmedEmail)) {
+    return { status: 400, error: 'email is invalid' }
+  }
+  const changeError = await verifyEmailChange(user.id, user.email, trimmedEmail, currentPassword)
+  if (changeError) return changeError
+  patch.email = trimmedEmail
+  return null
+}
+
+async function buildProfilePatch(req) {
+  const { username, avatarUrl, email, age, preferences, currentPassword } = req.body
+  const patch = {}
+
+  if (username !== undefined) {
+    const err = await applyUsernameToPatch(patch, username, req.user.id)
+    if (err) return err
+  }
+
+  if (avatarUrl !== undefined) {
+    patch.avatarUrl = avatarUrl ? String(avatarUrl).trim() : null
+  }
+
+  if (age !== undefined) {
+    const ageResult = validateAge(age)
+    if (ageResult.error) return { status: 400, error: ageResult.error }
+    patch.age = ageResult.value
+  }
+
+  if (preferences !== undefined) {
+    const err = await applyPreferencesToPatch(patch, preferences, req.user.id)
+    if (err) return err
+  }
+
+  if (email !== undefined) {
+    const err = await applyEmailToPatch(patch, email, currentPassword, req.user)
+    if (err) return err
+  }
+
+  return { patch }
+}
+
 async function patchMe(req, res, next) {
   try {
-    const { username, avatarUrl, email, age, preferences, currentPassword } = req.body
-    const patch = {}
-
-    if (username !== undefined) {
-      const trimmed = String(username).trim()
-      if (trimmed.length < 2 || trimmed.length > 50) {
-        return res.status(400).json({ error: 'username must be 2–50 characters' })
-      }
-
-      const taken = await UserModel.findByUsername(trimmed, req.user.id)
-      if (taken) {
-        return res.status(400).json({ error: 'username is already taken' })
-      }
-      patch.username = trimmed
+    const result = await buildProfilePatch(req)
+    if (result.error) {
+      return res.status(result.status).json({ error: result.error })
     }
 
-    if (avatarUrl !== undefined) {
-      patch.avatarUrl = avatarUrl ? String(avatarUrl).trim() : null
-    }
-
-    if (age !== undefined) {
-      const ageResult = validateAge(age)
-      if (ageResult.error) return res.status(400).json({ error: ageResult.error })
-      patch.age = ageResult.value
-    }
-
-    if (preferences !== undefined) {
-      if (typeof preferences !== 'object' || preferences === null || Array.isArray(preferences)) {
-        return res.status(400).json({ error: 'preferences must be an object' })
-      }
-      const internal = await UserModel.findByIdInternal(req.user.id)
-      patch.preferences = mergePreferences(internal?.preferences, preferences)
-    }
-
-    if (email !== undefined) {
-      const trimmedEmail = String(email).trim().toLowerCase()
-      if (!EMAIL_RE.test(trimmedEmail)) {
-        return res.status(400).json({ error: 'email is invalid' })
-      }
-
-      if (trimmedEmail !== req.user.email.toLowerCase()) {
-        if (!currentPassword) {
-          return res.status(400).json({ error: 'currentPassword is required to change email' })
-        }
-
-        const internal = await UserModel.findByIdInternal(req.user.id)
-        const valid = await bcrypt.compare(currentPassword, internal.password_hash)
-        if (!valid) {
-          return res.status(400).json({ error: 'current password is incorrect' })
-        }
-
-        const taken = await UserModel.findByEmail(trimmedEmail)
-        if (taken && taken.id !== req.user.id) {
-          return res.status(409).json({ error: 'Email already registered' })
-        }
-      }
-
-      patch.email = trimmedEmail
-    }
-
-    const updated = await UserModel.updateProfile(req.user.id, patch)
+    const updated = await UserModel.updateProfile(req.user.id, result.patch)
     const profile = UserModel.formatPublicProfile(updated)
     await attachAuthoritativeBalances(req, profile, updated.workspace_id)
 
