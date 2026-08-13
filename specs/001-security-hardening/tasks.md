@@ -59,7 +59,7 @@
 - [x] T013 [US1] Wire MIME allowlist from shared JSON (keep behavior aligned)
 - [x] T014 [US1] Update `src/components/EditProfileForm.jsx` helper text + `file.size` guard from shared JSON
 - [x] T015 [US1] Run server tests; fix until green
-- [ ] T016 [US1] Restart Sonar if needed; run `sonar-scanner`; confirm **vulnerabilities = 0**; open PR to `main`
+- [x] T016 [US1] Restart Sonar if needed; run `sonar-scanner`; confirm **vulnerabilities = 0**; open PR to `main`
 
 **Checkpoint**: US1 done — MVP security fix merged or ready to merge
 
