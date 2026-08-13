@@ -22,6 +22,7 @@ test('multi-workspace switch via Workspace tab lands on role home', async ({ pag
     role: 'admin',
   })
 
+  // Skip when the API under test has MULTI_WORKSPACE disabled — this suite needs memberships.
   test.skip(!(await multiWorkspaceEnabled(token)), 'MULTI_WORKSPACE is off on the API')
 
   const alpha = await createWorkspace(token, `Alpha MW ${ts}`)

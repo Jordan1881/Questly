@@ -23,6 +23,12 @@ function rewardToForm(reward) {
   }
 }
 
+function submitLabel(submitting, isEditing) {
+  if (submitting) return 'Saving…'
+  if (isEditing) return 'Save changes'
+  return 'Create reward'
+}
+
 export default function RewardManagementTab() {
   const workspace = useWorkspaceStore((s) => s.workspace)
   const fetchMine = useWorkspaceStore((s) => s.fetchMine)
@@ -187,7 +193,7 @@ export default function RewardManagementTab() {
               disabled={submitting}
               className="ds-btn-primary ds-focus-ring px-4 py-2 rounded-[var(--radius-md)] text-[length:var(--text-body)] font-semibold"
             >
-              {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Create reward'}
+              {submitLabel(submitting, isEditing)}
             </button>
             {isEditing && (
               <button

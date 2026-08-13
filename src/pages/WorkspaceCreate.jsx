@@ -92,8 +92,14 @@ export default function WorkspaceCreate() {
           )}
 
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-medium text-[color:var(--color-gray-900)]">Workspace Name</label>
+            <label
+              htmlFor="workspace-create-page-name"
+              className="text-[14px] font-medium text-[color:var(--color-gray-900)]"
+            >
+              Workspace Name
+            </label>
             <input
+              id="workspace-create-page-name"
               type="text"
               placeholder="e.g. Acme Engineering"
               value={name}

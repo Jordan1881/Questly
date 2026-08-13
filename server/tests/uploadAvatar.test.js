@@ -62,23 +62,25 @@ describe('uploadAvatarMiddleware', () => {
   })
 
   test('rejects files larger than the shared maxBytes limit', async () => {
-    const oversized = Buffer.concat([avatarPng, Buffer.alloc(MAX_BYTES)])
+    expect(MAX_BYTES).toBe(limits.maxBytes)
+    const oversized = Buffer.concat([avatarPng, Buffer.alloc(limits.maxBytes)])
 
     const res = await request(app).post('/avatar').attach('avatar', oversized, 'huge.png')
 
     expect(res.status).toBe(400)
-    expect(res.body.error).toMatch(/2 MB/i)
+    expect(res.body.error).toMatch(new RegExp(limits.maxMbLabel, 'i'))
   })
 
   test('rejects when Content-Length is present and exceeds maxBytes', async () => {
+    expect(MAX_BYTES).toBe(limits.maxBytes)
     const res = await request(app)
       .post('/avatar')
       .set('Content-Type', 'multipart/form-data; boundary=----questly')
-      .set('Content-Length', String(MAX_BYTES + 1))
+      .set('Content-Length', String(limits.maxBytes + 1))
       .send('------questly--\r\n')
 
     expect(res.status).toBe(400)
-    expect(res.body.error).toMatch(/2 MB/i)
+    expect(res.body.error).toMatch(new RegExp(limits.maxMbLabel, 'i'))
   })
 
   test('rejects non-numeric Content-Length', async () => {

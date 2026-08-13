@@ -160,10 +160,10 @@ describe('JiraAuth overlay', () => {
 
   it('calls onClose when clicking the backdrop', async () => {
     const onClose = vi.fn()
-    const { container } = renderOverlay({ onClose })
+    renderOverlay({ onClose })
 
     await screen.findByRole('button', { name: 'Connect with Jira' })
-    fireEvent.click(container.firstChild)
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 

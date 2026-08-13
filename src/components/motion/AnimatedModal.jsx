@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap, registerGsap, MOTION, prefersReducedMotion } from '../../design-system/motion'
+import DismissBackdrop from '../DismissBackdrop'
 
 registerGsap()
 
@@ -44,10 +45,9 @@ export default function AnimatedModal({ open, children, className = '', onBackdr
       ref={overlayRef}
       className={`fixed inset-0 z-[90] flex items-center justify-center ${className}`}
       style={{ background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(4px)' }}
-      onClick={onBackdropClick}
-      role="presentation"
     >
-      <div ref={panelRef} onClick={(e) => e.stopPropagation()}>
+      <DismissBackdrop onClick={onBackdropClick} />
+      <div ref={panelRef} className="relative z-[1]">
         {children}
       </div>
     </div>

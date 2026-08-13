@@ -57,11 +57,11 @@ describe('PurchaseConfirm overlay', () => {
 
   it('invokes onCancel when the backdrop is clicked', () => {
     const onCancel = vi.fn()
-    const { container } = render(
+    render(
       <PurchaseConfirm reward={reward} currentCoins={100} onConfirm={() => {}} onCancel={onCancel} />,
     )
 
-    fireEvent.click(container.firstChild)
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
@@ -88,6 +88,7 @@ describe('PurchaseConfirm overlay', () => {
 
     expect(screen.getByRole('button', { name: 'Purchasing…' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Confirm purchase' })).not.toBeInTheDocument()
   })
 })

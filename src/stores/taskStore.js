@@ -11,6 +11,58 @@ function levelFromLifetime(lifetimeXp) {
   return Math.floor(Math.max(0, lifetimeXp ?? 0) / 1000) + 1
 }
 
+function applyOptimisticToggle(set, id, completed) {
+  set((s) => ({
+    tasks: s.tasks.map((t) =>
+      t.id === id
+        ? {
+            ...t,
+            done: completed,
+            xpPending: completed ? t.xpPending : false,
+            xpPendingAmount: completed ? t.xpPendingAmount : null,
+          }
+        : t,
+    ),
+  }))
+}
+
+function syncUserFromCompletion(user) {
+  useXpStore.getState().syncFromUser(user)
+  const currentUser = useAuthStore.getState().user
+  useAuthStore.setState({ user: { ...currentUser, ...user } })
+}
+
+function maybeQueueLevelUp(user, prevLifetime) {
+  const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
+  const oldLevel = levelFromLifetime(prevLifetime)
+  if (newLevel > oldLevel && isLevelUpNotificationsEnabled(user)) {
+    useLevelUpStore.getState().queueShow(newLevel, MOTION.taskComplete.levelUpDeferMs)
+  }
+}
+
+function notifyCompletionReward(completed, reward, user, prevLifetime) {
+  if (completed && reward?.pending) {
+    useToastStore.getState().showSuccess(`+${reward.pendingXp} XP pending approval`)
+    return
+  }
+  if (reward?.pendingCancelled) {
+    useToastStore.getState().showSuccess('XP approval request cancelled')
+    return
+  }
+  if (completed && reward?.xpDelta > 0) {
+    useToastStore.getState().showSuccess(`+${reward.xpDelta} XP`)
+    maybeQueueLevelUp(user, prevLifetime)
+  }
+}
+
+function resolveLevelUp(completed, user, prevLifetime) {
+  if (!completed || !user) return null
+  const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
+  const oldLevel = levelFromLifetime(prevLifetime)
+  if (newLevel > oldLevel && isLevelUpNotificationsEnabled(user)) return newLevel
+  return null
+}
+
 export const useTaskStore = create((set, get) => ({
   tasks: [],
   isLoading: false,
@@ -39,18 +91,7 @@ export const useTaskStore = create((set, get) => ({
     if (!task) return
 
     const completed = !task.done
-    set((s) => ({
-      tasks: s.tasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              done: completed,
-              xpPending: completed ? t.xpPending : false,
-              xpPendingAmount: completed ? t.xpPendingAmount : null,
-            }
-          : t,
-      ),
-    }))
+    applyOptimisticToggle(set, id, completed)
 
     const prevLifetime = useAuthStore.getState().user?.lifetime_xp ?? 0
 
@@ -63,30 +104,15 @@ export const useTaskStore = create((set, get) => ({
         tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
       }))
       if (user) {
-        useXpStore.getState().syncFromUser(user)
-        const currentUser = useAuthStore.getState().user
-        useAuthStore.setState({ user: { ...currentUser, ...user } })
-
-        if (completed && reward?.pending) {
-          useToastStore.getState().showSuccess(`+${reward.pendingXp} XP pending approval`)
-        } else if (reward?.pendingCancelled) {
-          useToastStore.getState().showSuccess('XP approval request cancelled')
-        } else if (completed && reward?.xpDelta > 0) {
-          useToastStore.getState().showSuccess(`+${reward.xpDelta} XP`)
-          const newLevel = levelFromLifetime(user.lifetime_xp ?? prevLifetime)
-          const oldLevel = levelFromLifetime(prevLifetime)
-          if (newLevel > oldLevel && isLevelUpNotificationsEnabled(user)) {
-            useLevelUpStore.getState().queueShow(newLevel, MOTION.taskComplete.levelUpDeferMs)
-          }
-        }
+        syncUserFromCompletion(user)
+        notifyCompletionReward(completed, reward, user, prevLifetime)
       }
-      const newLevel = user ? levelFromLifetime(user.lifetime_xp ?? prevLifetime) : null
-      const oldLevel = levelFromLifetime(prevLifetime)
-      const levelUp =
-        completed && user && newLevel > oldLevel && isLevelUpNotificationsEnabled(user)
-          ? newLevel
-          : null
-      return { task: updated, user, reward, levelUp }
+      return {
+        task: updated,
+        user,
+        reward,
+        levelUp: resolveLevelUp(completed, user, prevLifetime),
+      }
     } catch (err) {
       set((s) => ({
         tasks: s.tasks.map((t) => (t.id === id ? task : t)),

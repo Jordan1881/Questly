@@ -1,3 +1,5 @@
+import DismissBackdrop from '../components/DismissBackdrop'
+
 export default function PurchaseConfirm({
   reward,
   currentCoins,
@@ -13,9 +15,9 @@ export default function PurchaseConfirm({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(4px)' }}
-      onClick={(e) => e.target === e.currentTarget && onCancel?.()}
     >
-      <div className="ds-card rounded-[var(--radius-lg)] w-[420px] p-8 flex flex-col gap-5 shadow-[var(--shadow-soft-md)]">
+      <DismissBackdrop onClick={onCancel} disabled={isLoading} />
+      <div className="ds-card relative z-[1] rounded-[var(--radius-lg)] w-[420px] p-8 flex flex-col gap-5 shadow-[var(--shadow-soft-md)]">
         <h2 className="text-[length:var(--text-h4)] font-semibold text-[color:var(--color-gray-800)]">
           Confirm purchase
         </h2>

@@ -13,9 +13,18 @@ export default defineConfig({
       command: 'node --require dotenv/config index.js',
       cwd: './server',
       port: 3001,
-      reuseExistingServer: true,
-      timeout: 10000,
-      env: { E2E_SEED_ENABLED: 'true' },
+      // CI starts the API itself with matching env; locally start fresh so RATE_LIMIT_* apply.
+      reuseExistingServer: !!process.env.CI,
+      timeout: 15000,
+      env: {
+        E2E_SEED_ENABLED: 'true',
+        // Default journeys assume legacy single-workspace routes.
+        MULTI_WORKSPACE: 'false',
+        // Rate limits stay enabled (security); raise ceilings for seed-heavy E2E.
+        RATE_LIMIT_LOGIN_MAX: '1000',
+        RATE_LIMIT_REGISTER_MAX: '1000',
+        RATE_LIMIT_JIRA_CONNECT_MAX: '1000',
+      },
     },
     {
       command: 'npm run build && npx serve -s dist -l 5173',

@@ -20,6 +20,9 @@ export default defineConfig({
       env: {
         E2E_SEED_ENABLED: 'true',
         MULTI_WORKSPACE: 'true',
+        RATE_LIMIT_LOGIN_MAX: '1000',
+        RATE_LIMIT_REGISTER_MAX: '1000',
+        RATE_LIMIT_JIRA_CONNECT_MAX: '1000',
       },
     },
     {

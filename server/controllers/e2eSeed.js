@@ -2,7 +2,8 @@ const db = require('../config/db')
 const { reconcileTaskAssignments } = require('../services/taskAssignmentReconcile')
 
 function assertE2eEnabled(_req, res, next) {
-  if (process.env.E2E_SEED_ENABLED !== 'true') {
+  // Never expose seed routes in production, even if the flag is mis-set.
+  if (process.env.NODE_ENV === 'production' || process.env.E2E_SEED_ENABLED !== 'true') {
     return res.status(404).json({ error: 'Not found' })
   }
   next()

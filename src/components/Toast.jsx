@@ -20,12 +20,12 @@ export default function Toast() {
   const style = STYLES[type] ?? STYLES.success
 
   return (
-    <div
+    <output
       className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-[var(--radius-lg)] text-[14px] font-semibold shadow-[var(--shadow-soft-md)] ${style.className}`}
       style={{ background: style.background }}
-      role={type === 'error' ? 'alert' : 'status'}
+      role={type === 'error' ? 'alert' : undefined}
     >
       {message}
-    </div>
+    </output>
   )
 }

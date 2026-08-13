@@ -75,16 +75,16 @@
 
 ### Tests for User Story 2
 
-- [ ] T017 [P] [US2] Add/extend component tests for keyboard activation of backdrop dismiss where practical (`Sidebar`, `AnimatedModal`, overlays)
+- [X] T017 [P] [US2] Add/extend component tests for keyboard activation of backdrop dismiss where practical (`Sidebar`, `AnimatedModal`, overlays)
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Add shared `src/components/DismissBackdrop.jsx` (`<button type="button" aria-label="Dismiss">`) or equivalent
-- [ ] T019 [P] [US2] Replace clickable overlay `div` in `src/components/Sidebar.jsx`
-- [ ] T020 [P] [US2] Replace backdrop handling in `src/components/motion/AnimatedModal.jsx`
-- [ ] T021 [P] [US2] Replace backdrop in `src/overlays/PurchaseConfirm.jsx`
-- [ ] T022 [P] [US2] Replace backdrop in `src/overlays/JiraAuth.jsx`
-- [ ] T023 [US2] Re-scan Sonar; confirm four a11y bugs cleared; open PR
+- [X] T018 [US2] Add shared `src/components/DismissBackdrop.jsx` (`<button type="button" aria-label="Dismiss">`) or equivalent
+- [X] T019 [P] [US2] Replace clickable overlay `div` in `src/components/Sidebar.jsx`
+- [X] T020 [P] [US2] Replace backdrop handling in `src/components/motion/AnimatedModal.jsx`
+- [X] T021 [P] [US2] Replace backdrop in `src/overlays/PurchaseConfirm.jsx`
+- [X] T022 [P] [US2] Replace backdrop in `src/overlays/JiraAuth.jsx`
+- [X] T023 [US2] Re-scan Sonar; confirm four a11y bugs cleared; open PR
 
 **Checkpoint**: US2 done
 
@@ -100,14 +100,14 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Create `specs/001-security-hardening/review/auth-jira-checklist.md` and mark each area Reviewed
-- [ ] T025 [P] [US3] Review authn (`verifyToken`, JWT secret handling) and authz (role/workspace middleware)
-- [ ] T026 [P] [US3] Review Jira OAuth/state/pending flow and `jiraTokenCrypto` / token storage
-- [ ] T027 [P] [US3] Review avatar static/local serving and upload auth requirements
-- [ ] T028 [P] [US3] Review `e2e/seed` gating and rate limiters; secret leakage in errors/logs
-- [ ] T029 [US3] Fix all Critical/High findings with tests where applicable
-- [ ] T030 [US3] File Medium findings as follow-up issues/tasks
-- [ ] T031 [US3] Sonar re-scan; confirm no new High security issues; open PR
+- [X] T024 [US3] Create `specs/001-security-hardening/review/auth-jira-checklist.md` and mark each area Reviewed
+- [X] T025 [P] [US3] Review authn (`verifyToken`, JWT secret handling) and authz (role/workspace middleware)
+- [X] T026 [P] [US3] Review Jira OAuth/state/pending flow and `jiraTokenCrypto` / token storage
+- [X] T027 [P] [US3] Review avatar static/local serving and upload auth requirements
+- [X] T028 [P] [US3] Review `e2e/seed` gating and rate limiters; secret leakage in errors/logs
+- [X] T029 [US3] Fix all Critical/High findings with tests where applicable
+- [X] T030 [US3] File Medium findings as follow-up issues/tasks
+- [X] T031 [US3] Sonar re-scan; confirm no new High security issues; open PR
 
 **Checkpoint**: US3 done
 
@@ -123,13 +123,13 @@
 
 ### Implementation for User Story 4
 
-- [ ] T032 [US4] Export current Critical+Major smell list from Sonar into the epic folder
-- [ ] T033 [US4] Batch fixes by rule/area (e.g. cognitive complexity in `JiraSyncTab.jsx`); keep PRs reviewable
-- [ ] T034 [P] [US4] Fix Critical smells
-- [ ] T035 [US4] Fix Major smells (or document accepts)
-- [ ] T036 [US4] Opportunistically fix cheap Minors; note remaining Minors
-- [ ] T037 [US4] Write `specs/001-security-hardening/acceptances.md` for any accepted smells
-- [ ] T038 [US4] Final Sonar re-scan gate; open PR(s)
+- [X] T032 [US4] Export current Critical+Major smell list from Sonar into the epic folder
+- [X] T033 [US4] Batch fixes by rule/area (e.g. cognitive complexity in `JiraSyncTab.jsx`); keep PRs reviewable
+- [X] T034 [P] [US4] Fix Critical smells
+- [X] T035 [US4] Fix Major smells (or document accepts)
+- [X] T036 [US4] Opportunistically fix cheap Minors; note remaining Minors
+- [X] T037 [US4] Write `specs/001-security-hardening/acceptances.md` for any accepted smells
+- [X] T038 [US4] Final Sonar re-scan gate; open PR(s)
 
 **Checkpoint**: Epic complete
 
@@ -137,8 +137,8 @@
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T039 [P] Ensure epic quickstart.md matches final commands/paths
-- [ ] T040 [P] Revoke any Sonar token that was pasted in chat; use a fresh env token for scans
+- [X] T039 [P] Ensure epic quickstart.md matches final commands/paths
+- [X] T040 [P] Revoke any Sonar token that was pasted in chat; use a fresh env token for scans
 - [ ] T041 Verify `.specify/` and `specs/001-security-hardening/` are on `main` after epic PRs land
 
 ---

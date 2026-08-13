@@ -290,9 +290,10 @@ function XPSettingsTab() {
           </p>
         </div>
 
-        <label className="flex items-center justify-between gap-4 cursor-pointer">
+        <label className="flex items-center justify-between gap-4 cursor-pointer" htmlFor="admin-require-xp-approval">
           <span className="text-[length:var(--text-body)] font-medium text-[color:var(--color-gray-700)]">Require admin approval for task XP</span>
           <input
+            id="admin-require-xp-approval"
             type="checkbox"
             checked={requireXpApproval}
             onChange={(e) => setRequireXpApproval(e.target.checked)}
@@ -456,14 +457,15 @@ export default function Admin() {
     const { showSkeleton = true } = options
     if (showSkeleton) setMembersLoading(true)
     return fetchMine()
-      .then((ws) => {
+      .then(async (ws) => {
         if (!ws?.id) return []
-        return Promise.all([
+        await Promise.all([
           fetchMembers(ws.id),
           fetchPendingXpApprovals(ws.id),
         ])
+        return []
       })
-      .catch(() => {})
+      .catch(() => [])
       .finally(() => setMembersLoading(false))
   }
 

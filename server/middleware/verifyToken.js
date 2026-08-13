@@ -16,6 +16,11 @@ async function verifyToken(req, res, next) {
     return res.status(401).json({ error: 'Invalid or expired token' })
   }
 
+  // OAuth state JWTs share JWT_SECRET but must never authorize API sessions.
+  if (payload.purpose) {
+    return res.status(401).json({ error: 'Invalid or expired token' })
+  }
+
   const user = await UserModel.findById(payload.sub)
   if (!user) {
     return res.status(401).json({ error: 'Invalid or expired token' })

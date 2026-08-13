@@ -29,8 +29,19 @@ describe('jiraTokenCrypto', () => {
     expect(isEncrypted('legacy-plain-token')).toBe(false)
   })
 
-  test('encryptToken is no-op when encryption key is unset', () => {
+  test('encryptToken is no-op when encryption key is unset outside production', () => {
+    const savedEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
     delete process.env.JIRA_TOKEN_ENCRYPTION_KEY
     expect(encryptToken('plain-only')).toBe('plain-only')
+    process.env.NODE_ENV = savedEnv
+  })
+
+  test('encryptToken fails closed in production when encryption key is unset', () => {
+    const savedEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    delete process.env.JIRA_TOKEN_ENCRYPTION_KEY
+    expect(() => encryptToken('plain-only')).toThrow(/JIRA_TOKEN_ENCRYPTION_KEY/)
+    process.env.NODE_ENV = savedEnv
   })
 })

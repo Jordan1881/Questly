@@ -81,11 +81,9 @@ export default function XpApprovalsTab() {
             <tbody>
               {pendingXpApprovals.map((request) => {
                 const status = rowStatus[request.id]
-                const rowBg = status === 'approved'
-                  ? 'bg-[color:var(--color-success-50)]'
-                  : status === 'rejected'
-                  ? 'bg-[color:var(--color-error-50)]'
-                  : 'hover:bg-[color:var(--color-bg-subtle)]'
+                let rowBg = 'hover:bg-[color:var(--color-bg-subtle)]'
+                if (status === 'approved') rowBg = 'bg-[color:var(--color-success-50)]'
+                else if (status === 'rejected') rowBg = 'bg-[color:var(--color-error-50)]'
                 return (
                   <tr key={request.id} className={`border-b border-[color:var(--color-border-soft)] transition-colors ${rowBg}`}>
                     <td className={TD}>

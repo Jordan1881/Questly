@@ -139,9 +139,13 @@ function EditProfileFields({
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md">
-        <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-          Display name
+        <label
+          htmlFor="edit-profile-username"
+          className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]"
+        >
+          Display name{' '}
           <input
+            id="edit-profile-username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className={fieldClass}
@@ -151,9 +155,13 @@ function EditProfileFields({
           />
         </label>
 
-        <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-          Email
+        <label
+          htmlFor="edit-profile-email"
+          className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]"
+        >
+          Email{' '}
           <input
+            id="edit-profile-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -163,9 +171,13 @@ function EditProfileFields({
         </label>
 
         {emailChanged && (
-          <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-            Current password
+          <label
+            htmlFor="edit-profile-current-password"
+            className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]"
+          >
+            Current password{' '}
             <input
+              id="edit-profile-current-password"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -176,9 +188,13 @@ function EditProfileFields({
           </label>
         )}
 
-        <label className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]">
-          Age
+        <label
+          htmlFor="edit-profile-age"
+          className="text-[length:var(--text-caption)] font-medium text-[color:var(--color-gray-700)]"
+        >
+          Age{' '}
           <input
+            id="edit-profile-age"
             type="number"
             min={13}
             max={120}

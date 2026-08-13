@@ -9,6 +9,7 @@ import { getLifetimeXp } from '../lib/displayUser'
 import { xpLevelInfo } from '../lib/xpLevel'
 import { gsap, registerGsap, MOTION, prefersReducedMotion } from '../design-system/motion'
 import { getShellRole, pagePath, pathMatchesPage } from '../lib/workspaceNav'
+import DismissBackdrop from './DismissBackdrop'
 
 registerGsap()
 
@@ -113,11 +114,14 @@ export default function Sidebar({ isOpen, onClose }) {
   const workspaceId = multi ? activeWorkspaceId : null
   const hasWorkspace = multi ? Boolean(activeWorkspaceId) : Boolean(user?.workspace_id)
   const levelInfo = xpLevelInfo(getLifetimeXp(user))
-  const NAV_LINKS = shellRole === 'admin'
-    ? ADMIN_NAV_LINKS
-    : multi
-      ? DEV_NAV_LINKS_MULTI
-      : (!hasWorkspace ? DEV_NAV_LINKS_WITH_JOIN : DEV_NAV_LINKS)
+  let NAV_LINKS = DEV_NAV_LINKS
+  if (shellRole === 'admin') {
+    NAV_LINKS = ADMIN_NAV_LINKS
+  } else if (multi) {
+    NAV_LINKS = DEV_NAV_LINKS_MULTI
+  } else if (!hasWorkspace) {
+    NAV_LINKS = DEV_NAV_LINKS_WITH_JOIN
+  }
 
   const handleNav = (id) => {
     navigate(pagePath(id, workspaceId))
@@ -165,11 +169,14 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      <div
+      <DismissBackdrop
         onClick={onClose}
+        label="Dismiss menu"
         className="fixed inset-0 z-40 bg-black/20 transition-opacity duration-300"
         style={{ opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none' }}
         aria-hidden={!isOpen}
+        tabIndex={isOpen ? 0 : -1}
+        disabled={!isOpen}
       />
 
       <div

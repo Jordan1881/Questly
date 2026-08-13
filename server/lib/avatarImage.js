@@ -1,8 +1,9 @@
 const sharp = require('sharp')
+const { minSourcePx } = require('../../shared/avatarUploadLimits.json')
 
 const AVATAR_SIZE = 1024
 const WEBP_QUALITY = 92
-const MIN_SOURCE_PX = 200
+const MIN_SOURCE_PX = minSourcePx
 
 /**
  * Normalize uploads to a square, retina-ready WebP avatar.
