@@ -13,8 +13,9 @@ export default defineConfig({
       command: 'node --require dotenv/config index.js',
       cwd: './server',
       port: 3001,
-      reuseExistingServer: true,
-      timeout: 10000,
+      // CI starts the API itself with matching env; locally start fresh so RATE_LIMIT_* apply.
+      reuseExistingServer: !!process.env.CI,
+      timeout: 15000,
       env: {
         E2E_SEED_ENABLED: 'true',
         // Default journeys assume legacy single-workspace routes.
