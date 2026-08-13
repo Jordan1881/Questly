@@ -17,6 +17,8 @@ export default defineConfig({
       timeout: 10000,
       env: {
         E2E_SEED_ENABLED: 'true',
+        // Default journeys assume legacy single-workspace routes.
+        MULTI_WORKSPACE: 'false',
         // Rate limits stay enabled (security); raise ceilings for seed-heavy E2E.
         RATE_LIMIT_LOGIN_MAX: '1000',
         RATE_LIMIT_REGISTER_MAX: '1000',
