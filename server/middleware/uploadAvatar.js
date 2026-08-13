@@ -1,5 +1,5 @@
 const multer = require('multer')
-const limits = require('../../shared/avatarUploadLimits.json')
+const limits = require('../lib/avatarUploadLimits')
 
 const MAX_BYTES = limits.maxBytes
 const ALLOWED_MIME = new Set(limits.allowedMime)

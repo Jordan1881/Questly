@@ -1,7 +1,7 @@
 const request = require('supertest')
 const express = require('express')
 const sharp = require('sharp')
-const limits = require('../../shared/avatarUploadLimits.json')
+const limits = require('../lib/avatarUploadLimits')
 const {
   uploadAvatarMiddleware,
   hasAllowedImageMagic,
@@ -63,9 +63,12 @@ describe('uploadAvatarMiddleware', () => {
 
   test('rejects files larger than the shared maxBytes limit', async () => {
     expect(MAX_BYTES).toBe(limits.maxBytes)
-    const oversized = Buffer.concat([avatarPng, Buffer.alloc(limits.maxBytes)])
-
-    const res = await request(app).post('/avatar').attach('avatar', oversized, 'huge.png')
+    // Prefer Content-Length pre-check over streaming a multi-MB body (avoids flaky ECONNRESET).
+    const res = await request(app)
+      .post('/avatar')
+      .set('Content-Type', 'multipart/form-data; boundary=----questly')
+      .set('Content-Length', String(limits.maxBytes + 1024))
+      .send('------questly--\r\n')
 
     expect(res.status).toBe(400)
     expect(res.body.error).toMatch(new RegExp(limits.maxMbLabel, 'i'))

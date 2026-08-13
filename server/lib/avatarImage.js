@@ -1,5 +1,5 @@
 const sharp = require('sharp')
-const { minSourcePx } = require('../../shared/avatarUploadLimits.json')
+const { minSourcePx } = require('./avatarUploadLimits')
 
 const AVATAR_SIZE = 1024
 const WEBP_QUALITY = 92
