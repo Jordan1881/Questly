@@ -33,6 +33,7 @@ server/coverage/
 dist/
 test-results/
 playwright-report/
+.scannerwork/
 
 # Editor directories and files
 .vscode/*
