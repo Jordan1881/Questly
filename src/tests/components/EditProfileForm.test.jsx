@@ -187,6 +187,20 @@ describe('EditProfileForm', () => {
     expect(await screen.findByText('Profile photo updated.')).toBeInTheDocument()
   })
 
+  it('rejects an avatar that is too large before uploading', async () => {
+    const user = userEvent.setup()
+    render(<EditProfileForm />)
+
+    const huge = new File([new Uint8Array(3 * 1024 * 1024)], 'huge.png', { type: 'image/png' })
+    const input = document.querySelector('input[type="file"]')
+    await user.upload(input, huge)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Avatar must be 2 MB or smaller/i)).toBeInTheDocument()
+    })
+    expect(profileState.uploadAvatar).not.toHaveBeenCalled()
+  })
+
   it('rejects an avatar that is too small', async () => {
     imageBehavior.w = 200
     imageBehavior.h = 200
