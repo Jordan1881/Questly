@@ -15,7 +15,13 @@ export default defineConfig({
       port: 3001,
       reuseExistingServer: true,
       timeout: 10000,
-      env: { E2E_SEED_ENABLED: 'true' },
+      env: {
+        E2E_SEED_ENABLED: 'true',
+        // Rate limits stay enabled (security); raise ceilings for seed-heavy E2E.
+        RATE_LIMIT_LOGIN_MAX: '1000',
+        RATE_LIMIT_REGISTER_MAX: '1000',
+        RATE_LIMIT_JIRA_CONNECT_MAX: '1000',
+      },
     },
     {
       command: 'npm run build && npx serve -s dist -l 5173',
