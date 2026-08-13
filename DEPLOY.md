@@ -35,6 +35,8 @@ Questly runs as two apps:
 2. **Settings** → **Root Directory** → set to `server`
 3. Save and deploy
 
+Avatar upload limits are loaded from `server/shared/avatarUploadLimits.json` (mirrored at repo-root `shared/` for the Vite frontend). Requiring only the repo-root path crashes Railway boot (`Cannot find module`), because that file sits outside the `server` root directory.
+
 ### Environment variables
 
 Open **Questly → Variables** and set:
